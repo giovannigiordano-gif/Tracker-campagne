@@ -12,3 +12,8 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Colori di stato dedotti (il sito non ne ha): verde/ambra/rosso più scuri e freddi dell'arancio per non confondersi col colore del marchio.
 - Nessuna ombra nel sistema: il sito separa con il colore, non con le ombre.
 - Raggio delle card portato a 22px, come sul sito.
+
+## Fase 2 — Audit
+- Audit con il metodo Impeccable (5 aree, voto 12/20) più le regole di UX/UI Pro Max; contrasti misurati con la formula WCAG invece che a occhio.
+- Il detector automatico di Impeccable non ha trovato problemi: i rilievi vengono da codice, browser e misure.
+- La skill UX/UI Pro Max non ha potuto usare il suo motore di ricerca (Python non installato sul computer): ho letto direttamente le sue linee guida e i file di dati.

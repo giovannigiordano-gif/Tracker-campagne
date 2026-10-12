@@ -87,7 +87,7 @@ export function TrendPanel({
         )}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={punti} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
-            <CartesianGrid vertical={false} stroke="var(--border)" />
+            <CartesianGrid vertical={false} stroke="var(--viz-griglia)" />
             <XAxis
               dataKey="etichetta"
               tickFormatter={formatGiornoBreve}

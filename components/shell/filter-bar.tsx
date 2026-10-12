@@ -49,7 +49,7 @@ export function FilterBar() {
   const dateValide = !!da && !!a && da <= a;
   const pillola = (attiva: boolean) =>
     cn(
-      "h-8 rounded-control px-3.5 text-sm font-semibold transition-[background-color,color] motion-fast pointer-coarse:h-10",
+      "h-8 rounded-control px-3.5 text-sm font-semibold transition-[background-color,color,transform] motion-fast active:scale-[0.96] pointer-coarse:h-10",
       attiva ? "bg-titolo text-background" : "text-muted-foreground hover:text-titolo"
     );
 

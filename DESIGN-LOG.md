@@ -52,3 +52,12 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Su telefono i valori lunghi del pannello dei numeri usano la forma compatta (68,8K €) invece di essere tagliati.
 - Testi nel tono SalesProcess: seconda persona, frasi brevi, verbi d'azione ("Aggiorna i dati", "Verifica e salva", "Rimuovi dall'app"), "clienti seguiti", "Da controllare". Slogan del marchio solo nello stato vuoto iniziale ("Più clienti, più dati. Inizia dal primo.") e nella firma del menu.
 - I passaggi per creare il token sono una lista numerata (è davvero una sequenza) dentro un "Come si crea il token" apribile.
+
+## Fase 5 — Rifinitura dell'interfaccia
+- Icone: solo Lucide anche nell'ordinamento delle tabelle (frecce su/giù al posto di ▲▼↕) e nella paginazione (frecce con etichetta per i lettori di schermo).
+- Tabelle: righe alte 44px (comode al tocco), intestazioni con lo stile delle etichette, numeri allineati a destra con cifre tabellari, riga evidenziata al passaggio del mouse con la tinta arancio.
+- Stato "premuto" uguale ovunque (leggero rimpicciolimento) su pulsanti, pillole, schede e scelta del tema.
+- Griglia dei grafici con un token dedicato (`--viz-griglia`) per chiaro e scuro.
+- Contenuto e barra dei filtri limitati a 1536px e centrati sugli schermi molto larghi: righe di tabella e grafici restano leggibili.
+- Impostazioni: freccia che ruota sulle schede dei clienti, così si capisce che si aprono.
+- Gerarchia tipografica applicata con le classi del sistema (`text-title`, `text-section`, `text-label`, `text-caption`) al posto di dimensioni scritte a mano.

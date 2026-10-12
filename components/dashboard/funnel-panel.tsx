@@ -61,7 +61,7 @@ export function FunnelPanel({
     >
       <div className="overflow-x-auto">
         <table className="w-full min-w-[48rem] text-sm">
-          <thead className="text-left align-bottom text-xs text-muted-foreground">
+          <thead className="text-left align-bottom text-caption font-semibold text-muted-foreground">
             <tr>
               <th className="pb-2 pr-4 font-medium">Fase</th>
               <th className="w-[30%] pb-2 pr-4 font-medium">Oggi in questa fase</th>

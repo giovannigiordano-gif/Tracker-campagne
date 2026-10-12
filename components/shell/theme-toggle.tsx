@@ -58,7 +58,7 @@ export function ThemeToggle() {
           title={label}
           onClick={() => scegli(v)}
           className={cn(
-            "inline-flex size-8 items-center justify-center rounded-control transition-colors motion-fast pointer-coarse:size-10",
+            "inline-flex size-8 items-center justify-center rounded-control transition-[background-color,color,transform] motion-fast active:scale-[0.92] pointer-coarse:size-10",
             tema === v ? "bg-brand text-brand-ink" : "text-inverse-muted hover:text-inverse-foreground"
           )}
         >

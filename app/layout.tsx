@@ -58,12 +58,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <div className="min-w-0">
               {/* Su telefono resta fissa solo la barra del marchio: i filtri scorrono con la pagina */}
               <div className="z-[var(--z-sticky)] border-b border-border bg-background/90 px-4 py-3 backdrop-blur-md lg:sticky lg:top-0 lg:px-8">
-                <Suspense fallback={<div className="h-10" />}>
-                  <FilterBar />
-                </Suspense>
+                <div className="mx-auto w-full max-w-[96rem]">
+                  <Suspense fallback={<div className="h-10" />}>
+                    <FilterBar />
+                  </Suspense>
+                </div>
               </div>
               <main id="contenuto" tabIndex={-1} className="px-4 py-6 outline-none lg:px-8 lg:py-8">
-                {children}
+                <div className="mx-auto w-full max-w-[96rem]">{children}</div>
               </main>
             </div>
           </div>

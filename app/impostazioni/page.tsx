@@ -2,7 +2,7 @@
 // La mappatura con gli account pubblicitari Meta arriva nella Fase 3 del progetto.
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { CircleAlert, CircleCheck, FileKey } from "lucide-react";
+import { ChevronDown, CircleAlert, CircleCheck, FileKey } from "lucide-react";
 import { BoxErrore, ScheletroImpostazioni, TitoloPagina } from "@/components/bits";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,6 +104,7 @@ async function Impostazioni() {
                       <span className="sr-only">ID sub-account </span>
                       {c.locationId}
                     </span>
+                    <ChevronDown className="size-4 text-muted-foreground transition-transform motion-base group-open:rotate-180" aria-hidden />
                   </summary>
                   <div className="flex flex-col gap-section border-t border-border px-5 py-5">
                     <section className="flex flex-col gap-3" aria-label={`Token di ${c.name}`}>

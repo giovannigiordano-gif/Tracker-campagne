@@ -25,7 +25,7 @@ export function Segmented<T extends string>({
           aria-pressed={o.v === valore}
           onClick={() => onChange(o.v)}
           className={cn(
-            "h-8 rounded-control px-3 text-sm font-semibold transition-[background-color,color,box-shadow] motion-fast pointer-coarse:h-10",
+            "h-8 rounded-control px-3 text-sm font-semibold transition-[background-color,color,box-shadow,transform] motion-fast active:scale-[0.96] pointer-coarse:h-10",
             o.v === valore
               ? "bg-raised text-titolo shadow-[0_1px_2px_rgb(0_0_0/0.08)]"
               : "text-muted-foreground hover:text-titolo"

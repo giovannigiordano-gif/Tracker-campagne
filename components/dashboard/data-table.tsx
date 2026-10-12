@@ -1,7 +1,7 @@
 "use client";
 // Tabella riusabile (TanStack Table v9): ricerca, ordinamento, pagine ed export CSV.
 // Il CSV viene creato qui nel browser e scaricato sul tuo computer: non viene salvato sul server.
-import { Download, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Download, Search } from "lucide-react";
 import {
   columnFilteringFeature,
   createFilteredRowModel,
@@ -97,7 +97,7 @@ export function DataTable<T extends RowData>({
       <div className="flex flex-wrap items-center gap-2">
         {cercabili && (
           <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input
               placeholder={segnapostoRicerca}
               aria-label={segnapostoRicerca.replace("…", "")}
@@ -105,7 +105,7 @@ export function DataTable<T extends RowData>({
               aria-keyshortcuts="/"
               value={String(table.state.globalFilter ?? "")}
               onChange={(e) => table.setGlobalFilter(e.target.value)}
-              className="h-9 pl-9"
+              className="h-9 pl-10"
             />
           </div>
         )}
@@ -118,14 +118,14 @@ export function DataTable<T extends RowData>({
             disabled={filtrate === 0}
             onClick={() => scaricaCsv(csv.intestazione, table.getSortedRowModel().rows.map((r) => csv.riga(r.original)), csv.nomeFile)}
           >
-            <Download /> Esporta CSV ({formatNumero(filtrate)})
+            <Download aria-hidden /> Esporta CSV ({formatNumero(filtrate)})
           </Button>
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl ring-1 ring-border">
+      <div className="overflow-x-auto rounded-block ring-1 ring-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/60 text-left">
+          <thead className="bg-muted text-left">
             {table.getHeaderGroups().map((g) => (
               <tr key={g.id}>
                 {g.headers.map((h) => {
@@ -134,17 +134,23 @@ export function DataTable<T extends RowData>({
                   return (
                     <th
                       key={h.id}
-                      className={cn("whitespace-nowrap px-3 py-2.5 font-semibold text-foreground", numerica && "text-right")}
+                      className={cn("h-11 whitespace-nowrap px-3 text-label text-titolo", numerica && "text-right")}
                       aria-sort={verso === "asc" ? "ascending" : verso === "desc" ? "descending" : undefined}
                     >
                       {h.column.getCanSort() ? (
                         <button
                           type="button"
                           onClick={h.column.getToggleSortingHandler()}
-                          className={cn("inline-flex items-center gap-1 hover:text-titolo", numerica && "flex-row-reverse")}
+                          className={cn("group/sort -mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors motion-fast hover:bg-raised", numerica && "flex-row-reverse")}
                         >
                           <table.FlexRender header={h} />
-                          <span className="text-xs text-muted-foreground">{verso === "asc" ? "▲" : verso === "desc" ? "▼" : "↕"}</span>
+                          {verso === "asc" ? (
+                            <ArrowUp className="size-3.5 text-titolo" aria-hidden />
+                          ) : verso === "desc" ? (
+                            <ArrowDown className="size-3.5 text-titolo" aria-hidden />
+                          ) : (
+                            <ChevronsUpDown className="size-3.5 text-muted-foreground opacity-60 transition-opacity motion-fast group-hover/sort:opacity-100" aria-hidden />
+                          )}
                         </button>
                       ) : (
                         <table.FlexRender header={h} />
@@ -158,15 +164,15 @@ export function DataTable<T extends RowData>({
           <tbody>
             {table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td colSpan={colonne.length} className="px-3 py-10 text-center text-muted-foreground">{vuoto}</td>
+                <td colSpan={colonne.length} className="px-3 py-10 text-center text-sm text-muted-foreground">{vuoto}</td>
               </tr>
             ) : (
               table.getRowModel().rows.map((r) => (
-                <tr key={r.id} className="border-t hover:bg-accent/60">
+                <tr key={r.id} className="border-t border-border transition-colors motion-fast hover:bg-accent/70">
                   {r.getAllCells().map((c) => {
                     const numerica = (c.column.columnDef.meta as { numerica?: boolean } | undefined)?.numerica;
                     return (
-                      <td key={c.id} className={cn("max-w-64 truncate px-3 py-2", numerica && "text-right")}>
+                      <td key={c.id} className={cn("h-11 max-w-64 truncate px-3 text-foreground", numerica && "text-right tabular-nums")}>
                         <table.FlexRender cell={c} />
                       </td>
                     );
@@ -179,18 +185,18 @@ export function DataTable<T extends RowData>({
       </div>
 
       {(pagine > 1 || filtrate !== dati.length) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground" aria-live="polite">
           <span>
             {formatNumero(filtrate)} righe{filtrate !== dati.length && ` su ${formatNumero(dati.length)}`}
           </span>
           {pagine > 1 && (
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                Precedente
+              <Button variant="outline" size="icon-sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label="Pagina precedente">
+                <ChevronLeft aria-hidden />
               </Button>
-              <span>Pagina {table.state.pagination.pageIndex + 1} di {pagine}</span>
-              <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                Successiva
+              <span className="min-w-28 text-center tabular-nums">Pagina {table.state.pagination.pageIndex + 1} di {pagine}</span>
+              <Button variant="outline" size="icon-sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label="Pagina successiva">
+                <ChevronRight aria-hidden />
               </Button>
             </div>
           )}

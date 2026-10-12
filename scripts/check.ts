@@ -2,6 +2,8 @@
 // Fa solo letture. Non stampa mai token né dati personali dei contatti: solo esiti e conteggi.
 import { existsSync } from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
+import { readAccounts } from "../lib/accounts";
+import { getLocationToken } from "../lib/ghl/tokens";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 
@@ -67,10 +69,18 @@ async function checkGhl() {
     if (totale >= 0) ok(`Token agency: ${totale} sub-account visibili`);
   }
 
-  // 2) Token dei singoli sub-account (per ora letti da .env come GHL_TOKEN_<LOCATIONID>)
-  const tokenLocation = Object.keys(process.env)
-    .filter((k) => k.startsWith("GHL_TOKEN_") && env(k))
-    .map((k) => ({ locationId: k.slice("GHL_TOKEN_".length), token: env(k) }));
+  // 2) Token dei singoli sub-account: clienti configurati nell'app (token cifrati in data/secrets/)
+  //    più eventuali GHL_TOKEN_<LOCATIONID> nel file .env
+  const ids = new Set([
+    ...(await readAccounts()).map((a) => a.locationId),
+    ...Object.keys(process.env).filter((k) => k.startsWith("GHL_TOKEN_") && env(k)).map((k) => k.slice("GHL_TOKEN_".length)),
+  ]);
+  const tokenLocation: { locationId: string; token: string }[] = [];
+  for (const locationId of ids) {
+    const token = await getLocationToken(locationId);
+    if (token) tokenLocation.push({ locationId, token });
+    else ko(`Sub-account ${locationId}: manca il token (inseriscilo in Impostazioni)`);
+  }
 
   if (tokenLocation.length === 0) {
     attesa("Nessun token di sub-account configurato");

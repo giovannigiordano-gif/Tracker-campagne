@@ -20,3 +20,6 @@ next-env.d.ts
 .DS_Store
 Thumbs.db
 .vercel
+
+# Impostazioni locali di Claude Code
+.claude/settings.local.json

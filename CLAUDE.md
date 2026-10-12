@@ -28,6 +28,12 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
 - **Anthropic**: SDK ufficiale `@anthropic-ai/sdk`, modello predefinito `claude-opus-5-5` (configurabile con `ANTHROPIC_MODEL`).
 - **Next.js 16.4**: il middleware si chiama `proxy.ts`. Cache Components è attivo (default di create-next-app): i dati dinamici vanno dentro `<Suspense>`; non usare `"use cache"` per i dati delle API, la cache è il nostro `lib/cache.ts` come da PROGETTO.md. Per il deploy useremo `output: "standalone"`.
 - Gli script in `scripts/` girano con `tsx`; il package non è `"type": "module"`, quindi niente top-level await negli script.
+- **Ricerca contatti GHL** (doc: doc.clickup.com/8631005/d/h/87cpx-158396/6e629989abe7fad): `POST /contacts/search` con `pageLimit` max 500, filtro `{field:"dateAdded", operator:"range", value:{gte,lte}}` (ISO), paginazione a cursore con il `searchAfter` dell'ultimo contatto (necessaria oltre 10.000). Verificato su 3.742 contatti: nessun doppione né mancante.
+- **Mappatura attribuzione (proposta, da confermare dal titolare)** in `lib/ghl/normalize.ts`: si usa `attributionSource` (primo contatto), altrimenti `lastAttributionSource`. `campaign`→utmCampaign (nome campagna), `campaignId`, `adId`; `utmMedium` = nome gruppo di inserzioni e `utmContent` = nome annuncio nei lead Meta; `adGroupId` assente nei lead Meta (l'adset si ricava dall'annuncio via Meta in Fase 4); `sessionSource`→origine. Canale "Meta Ads" solo con `Paid Social` o ID campagna/annuncio: `Social media` + facebook/instagram sono messaggi organici, non annunci.
+- **Struttura pagine**: ogni `page.tsx` rende un `<Suspense>` con dentro un componente async che fa `await params/searchParams` e carica i dati (Cache Components lo richiede). Chiavi di cache GHL: `ghl:<locationId>:...` (così "Aggiorna dati" svuota un cliente solo), `ghl:agency:locations` per l'elenco sub-account.
+- **Privacy nei test**: non stampare né fotografare la tabella contatti o qualunque dato personale durante le verifiche (né nel terminale né con screenshot): l'AI non deve vedere dati personali. Verificare solo conteggi.
+- Tabelle: `@tanstack/react-table` v9 (API diversa dalla v8: `useTable`, `tableFeatures`, `table.FlexRender`); guida in `node_modules/@tanstack/react-table/skills/`.
+- Colori dei grafici in `app/globals.css` (`--viz-*`), verificati con il validatore della skill dataviz (contrasto e daltonismo).
 
 ## Comandi
 - `npm run dev`: avvia l'app in locale (http://localhost:3000)
@@ -36,7 +42,7 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
 
 ## Stato delle fasi
 - [x] Fase 0: scaffold, .env.example, `npm run check`, test di accesso GHL (2026-10-12)
-- [ ] Fase 1: client GHL, cache, Panoramica agency, Contatti e lead (prima Eko, poi tutti)
+- [x] Fase 1: client GHL, cache, Panoramica agency, Contatti e lead, Impostazioni con token cifrati (2026-10-12)
 - [ ] Fase 2: pipeline e opportunità
 - [ ] Fase 3: client Meta Marketing API, pagina Campagne, mappatura in Impostazioni
 - [ ] Fase 4: attribuzione e pagina Incrocio

@@ -38,3 +38,17 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Su telefono resta fissa solo la barra del marchio; i filtri del periodo scorrono con la pagina per lasciare spazio ai dati.
 - Aggiunto il link "Salta al contenuto" per chi usa la tastiera.
 - Rimossi componenti non usati (tabella shadcn) e trattini lunghi dai testi visibili (sostituiti da "n.d." e da "dal ... al ...").
+
+## Fase 4 — UX
+- Notifiche dopo ogni salvataggio (cliente aggiunto, token salvato, modifiche, cache, dati aggiornati); gli errori dei moduli restano vicino al campo con `role="alert"`, perché vanno letti mentre si corregge.
+- Conferma con finestra del sistema per "Rimuovi token" e "Rimuovi dall'app": titolo con il nome del cliente, conseguenze spiegate, pulsante rosso con il verbo dell'azione. Niente conferma per "Svuota la cache": non si perde nulla.
+- Dopo "Aggiungi cliente" la scheda del nuovo cliente si apre da sola con il cursore nel campo del token: un passaggio in meno.
+- Pagine "errore" e "non trovato" con spiegazione e azioni (Riprova, Vai alla panoramica, Apri Impostazioni) al posto delle pagine tecniche.
+- Errori di token sulla pagina cliente: titolo "Serve un token valido" e pulsante diretto a Impostazioni.
+- Scheletri di caricamento diversi per Panoramica, Cliente e Impostazioni, con la forma reale della pagina (anche il pannello nero).
+- Stati vuoti utili: panoramica senza clienti (tre passi per iniziare), grafico senza dati (suggerisce 90 giorni), filtri senza risultati (pulsante Azzera), tabelle vuote con testo specifico.
+- Scorciatoie: / cerca, 1-2-3 periodo, C confronto, R aggiorna, X azzera filtri, ? elenco. Non scattano mentre si scrive.
+- Pagina cliente: indice delle sezioni fisso in alto (segna quella che stai guardando) e le quattro classifiche riunite in un pannello a schede "Da dove arrivano lead e vendite", con il numero di filtri attivi su ogni scheda: pagina più corta e meno card uguali.
+- Su telefono i valori lunghi del pannello dei numeri usano la forma compatta (68,8K €) invece di essere tagliati.
+- Testi nel tono SalesProcess: seconda persona, frasi brevi, verbi d'azione ("Aggiorna i dati", "Verifica e salva", "Rimuovi dall'app"), "clienti seguiti", "Da controllare". Slogan del marchio solo nello stato vuoto iniziale ("Più clienti, più dati. Inizia dal primo.") e nella firma del menu.
+- I passaggi per creare il token sono una lista numerata (è davvero una sequenza) dentro un "Come si crea il token" apribile.

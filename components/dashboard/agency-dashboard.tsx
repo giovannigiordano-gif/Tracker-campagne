@@ -13,6 +13,7 @@ import { formatGiorno } from "@/lib/period";
 import { cn } from "@/lib/utils";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
 import { Segmented } from "@/components/ui/segmented";
+import { Switch } from "@/components/ui/switch";
 import { Delta, Fonte, PannelloNumeri, Riquadro, type VoceNumero } from "./ui";
 
 function Sparkline({ valori }: { valori: number[] }) {
@@ -63,6 +64,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
     {
       etichetta: "Venduto",
       valore: valutaUnica ? formatValuta(t.venduto, valutaUnica, t.venduto >= 100_000) : "Valute diverse",
+      valoreBreve: valutaUnica ? formatValuta(t.venduto, valutaUnica, t.venduto >= 10_000) : undefined,
       delta: valutaUnica ? variazionePct(t.venduto, t.vendutoPrec) : null,
       precedente: valutaUnica ? formatValuta(t.vendutoPrec, valutaUnica, true) : undefined,
     },
@@ -72,7 +74,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
       delta: tassoAtt !== null && tassoPrec !== null ? variazionePct(tassoAtt, tassoPrec) : null,
       precedente: formatPercentuale(tassoPrec),
     },
-    { etichetta: "Clienti con avvisi", valore: `${conAvvisi} su ${righe.length}`, spiegazione: "Token mancanti o scaduti, limiti GHL, cali di lead oltre soglia" },
+    { etichetta: "Da controllare", valore: `${conAvvisi} su ${righe.length}`, spiegazione: "Clienti con token mancanti o scaduti, limiti GHL o lead in calo oltre la soglia" },
   ];
 
   // ------------------------------------------------ confronto tra clienti (barre cliccabili)
@@ -161,25 +163,27 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
   const aggiornato = Math.min(...righe.map((r) => r.aggiornatoIl ?? Infinity));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-section">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight lg:text-4xl">Panoramica agenzia</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {righe.length} {righe.length === 1 ? "cliente monitorato" : "clienti monitorati"}, periodo {intervallo}.
+        <div className="min-w-0">
+          <h1 className="text-title">Panoramica agenzia</h1>
+          <p className="mt-1.5 text-body text-muted-foreground">
+            {righe.length === 1 ? "1 cliente seguito" : `${righe.length} clienti seguiti`}, periodo {intervallo}.
           </p>
         </div>
         <RefreshButton etichetta="Aggiorna tutti i dati" />
       </header>
 
-      <PannelloNumeri voci={numeri} confronto={confronto} />
-      <Fonte aggiornatoIl={Number.isFinite(aggiornato) ? aggiornato : null}>
-        Fonte GoHighLevel. Somme di tutti i clienti attivi; ogni cliente conta i giorni nel proprio fuso orario.
-      </Fonte>
+      <div className="flex flex-col gap-2">
+        <PannelloNumeri voci={numeri} confronto={confronto} />
+        <Fonte aggiornatoIl={Number.isFinite(aggiornato) ? aggiornato : null}>
+          Fonte GoHighLevel. Somme di tutti i clienti attivi; ogni cliente conta i giorni nel proprio fuso orario.
+        </Fonte>
+      </div>
 
       <Riquadro
-        titolo="Confronto tra clienti"
-        descrizione="Clicca un cliente per aprire la sua dashboard"
+        titolo="Clienti a confronto"
+        descrizione="I primi 12 per la metrica scelta. Clicca un cliente per aprire la sua dashboard."
         azioni={
           <Segmented
             etichetta="Metrica"
@@ -190,23 +194,28 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         }
       >
         {classifica.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nessun dato disponibile.</p>
+          <p className="rounded-block bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+            Nessun dato disponibile: controlla gli avvisi nella tabella qui sotto.
+          </p>
         ) : (
-          <ul className="flex flex-col gap-1">
-            {classifica.map((r) => {
+          <ul className="flex flex-col gap-0.5">
+            {classifica.map((r, i) => {
               const v = valoreDi(r);
               return (
-                <li key={r.locationId}>
+                <li key={r.locationId} className="entra-a-scaletta" style={{ "--i": i } as React.CSSProperties}>
                   <button
                     type="button"
                     onClick={() => router.push(`/clienti/${r.locationId}?${query}`)}
-                    className="grid w-full grid-cols-[minmax(8rem,14rem)_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl px-2 py-1.5 text-left hover:bg-muted"
+                    className="group grid w-full grid-cols-[minmax(7rem,14rem)_minmax(0,1fr)_7.5rem] items-center gap-3 rounded-block px-3 py-2 text-left transition-colors motion-fast hover:bg-muted"
                   >
-                    <span className="truncate text-sm font-semibold">{r.nome}</span>
-                    <span className="h-6 rounded-md bg-muted">
-                      <span className="block h-6 rounded-md bg-[var(--viz-barra)]" style={{ width: `${massimo ? Math.max((v / massimo) * 100, v ? 1.5 : 0) : 0}%` }} />
+                    <span className="truncate text-sm font-semibold text-titolo">{r.nome}</span>
+                    <span className="h-6">
+                      <span
+                        className="block h-6 rounded-md bg-[var(--viz-barra)] transition-[width,opacity] motion-slow group-hover:opacity-85"
+                        style={{ width: `${massimo ? Math.max((v / massimo) * 100, v ? 1.5 : 0) : 0}%` }}
+                      />
                     </span>
-                    <span className="text-right text-sm font-semibold">{fmt(r, v)}</span>
+                    <span className="text-right text-sm font-bold text-titolo">{fmt(r, v)}</span>
                   </button>
                 </li>
               );
@@ -215,7 +224,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         )}
       </Riquadro>
 
-      <Riquadro titolo="Clienti" descrizione="Ordina cliccando sulle intestazioni delle colonne">
+      <Riquadro titolo="Tutti i clienti" descrizione="Clicca un'intestazione per ordinare, il nome per aprire la dashboard.">
         <DataTable
           key={soloAvvisi ? "avvisi" : "tutti"}
           dati={datiTabella}
@@ -223,11 +232,11 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
           ordinamento={[{ id: "venduto", desc: true }]}
           cercabili={["nome"]}
           segnapostoRicerca="Cerca un cliente…"
-          vuoto="Nessun cliente"
+          vuoto={soloAvvisi ? "Nessun cliente da controllare." : "Nessun cliente con questo nome."}
           strumenti={
-            <label className={cn("flex items-center gap-2 text-sm", !conAvvisi && "opacity-50")}>
-              <input type="checkbox" checked={soloAvvisi} disabled={!conAvvisi} onChange={(e) => setSoloAvvisi(e.target.checked)} className="size-4" />
-              Solo con avvisi ({conAvvisi})
+            <label className={cn("flex items-center gap-2.5 text-sm font-medium text-titolo", !conAvvisi && "opacity-50")}>
+              <Switch checked={soloAvvisi} disabled={!conAvvisi} onCheckedChange={setSoloAvvisi} />
+              Solo da controllare ({conAvvisi})
             </label>
           }
         />

@@ -1,6 +1,7 @@
 "use client"
 // Notifiche brevi (salvato, errore...). Basate su Base UI Toast: annunciate ai lettori di schermo
 // senza rubare il focus, chiudibili, spariscono da sole dopo 5 secondi (gli errori dopo 8).
+import { useCallback } from "react"
 import { Toast } from "@base-ui/react/toast"
 import { CircleAlert, CircleCheck, Info, XIcon } from "lucide-react"
 import { cn } from "cn"
@@ -65,6 +66,9 @@ export function NotificheProvider({ children }: { children: React.ReactNode }) {
 // Uso: const notifica = useNotifica(); notifica("successo", "Token salvato", "Lo trovi cifrato nell'app")
 export function useNotifica() {
   const manager = Toast.useToastManager()
-  return (tipo: TipoNotifica, titolo: string, descrizione?: string) =>
-    manager.add({ type: tipo, title: titolo, description: descrizione, timeout: tipo === "errore" ? 8000 : 5000 })
+  return useCallback(
+    (tipo: TipoNotifica, titolo: string, descrizione?: string) =>
+      manager.add({ type: tipo, title: titolo, description: descrizione, timeout: tipo === "errore" ? 8000 : 5000 }),
+    [manager]
+  )
 }

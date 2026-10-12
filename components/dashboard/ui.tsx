@@ -34,6 +34,7 @@ export function Delta({ pct, inversa = false, suNero = false }: { pct: number | 
 export type VoceNumero = {
   etichetta: string;
   valore: string;
+  valoreBreve?: string; // versione compatta per gli schermi stretti (es. "68,8K €")
   delta?: number | null;
   inversa?: boolean;
   precedente?: string; // valore del periodo precedente, già formattato
@@ -52,7 +53,16 @@ export function PannelloNumeri({ voci, confronto }: { voci: VoceNumero[]; confro
       {voci.map((v) => (
         <div key={v.etichetta} className="flex min-w-0 flex-col gap-1.5" title={v.spiegazione}>
           <span className="text-label text-inverse-muted">{v.etichetta}</span>
-          <span className="truncate text-display text-inverse-foreground">{v.valore}</span>
+          <span className="truncate text-display text-inverse-foreground" title={v.valore}>
+            {v.valoreBreve ? (
+              <>
+                <span className="sm:hidden">{v.valoreBreve}</span>
+                <span className="hidden sm:inline">{v.valore}</span>
+              </>
+            ) : (
+              v.valore
+            )}
+          </span>
           {confronto && v.delta !== undefined && (
             <span className="flex flex-wrap items-center gap-x-1.5 text-sm">
               <Delta pct={v.delta} inversa={v.inversa} suNero />

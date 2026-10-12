@@ -1,25 +1,33 @@
 "use client";
-// Pulsante "Aggiorna dati": svuota la cache (di un cliente o globale) e ricarica i numeri da GHL
-import { useFormStatus } from "react-dom";
+// "Aggiorna i dati": svuota la cache (di un cliente o di tutti) e rilegge i numeri da GHL.
+// Mostra l'avanzamento sul pulsante e una notifica a lavoro finito. Scorciatoia: R.
+import { useTransition } from "react";
 import { RefreshCw } from "lucide-react";
 import { aggiornaDati } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { useNotifica } from "@/components/ui/toast";
 
-function Pulsante({ etichetta }: { etichetta: string }) {
-  const { pending } = useFormStatus();
+export function RefreshButton({ locationId, etichetta = "Aggiorna i dati" }: { locationId?: string; etichetta?: string }) {
+  const [inCorso, startTransition] = useTransition();
+  const notifica = useNotifica();
+
+  function aggiorna() {
+    const fd = new FormData();
+    if (locationId) fd.set("locationId", locationId);
+    startTransition(async () => {
+      try {
+        await aggiornaDati(fd);
+        notifica("successo", "Dati aggiornati", "Numeri appena riletti da GoHighLevel.");
+      } catch {
+        notifica("errore", "Aggiornamento non riuscito", "Controlla la connessione e riprova tra un momento.");
+      }
+    });
+  }
+
   return (
-    <Button type="submit" variant="outline" size="sm" disabled={pending}>
-      <RefreshCw className={pending ? "animate-spin" : ""} />
-      {pending ? "Aggiornamento…" : etichetta}
+    <Button variant="outline" size="sm" onClick={aggiorna} loading={inCorso} data-scorciatoia="aggiorna" aria-keyshortcuts="R">
+      {!inCorso && <RefreshCw aria-hidden />}
+      {inCorso ? "Aggiornamento in corso" : etichetta}
     </Button>
-  );
-}
-
-export function RefreshButton({ locationId, etichetta = "Aggiorna dati" }: { locationId?: string; etichetta?: string }) {
-  return (
-    <form action={aggiornaDati}>
-      {locationId && <input type="hidden" name="locationId" value={locationId} />}
-      <Pulsante etichetta={etichetta} />
-    </form>
   );
 }

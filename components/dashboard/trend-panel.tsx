@@ -24,6 +24,7 @@ export function TrendPanel({
   giorniPrec,
   confronto,
   valuta,
+  id,
 }: {
   lead: LeadRow[];
   opp: OppRow[];
@@ -31,6 +32,7 @@ export function TrendPanel({
   giorniPrec: string[];
   confronto: boolean;
   valuta: string;
+  id?: string;
 }) {
   const [metrica, setMetrica] = useState<Metrica>("lead");
   const [granularita, setGranularita] = useState<Granularita>(giorni.length > 45 ? "settimana" : "giorno");
@@ -38,9 +40,18 @@ export function TrendPanel({
   const fmt = (n: number) => (metrica === "venduto" ? formatValuta(n, valuta) : formatNumero(n));
   const fmtAsse = (n: number) => (metrica === "venduto" ? formatValuta(n, valuta, true) : formatNumero(n));
   const info = METRICHE.find((m) => m.v === metrica)!;
+  const totale = punti.reduce((s, p) => s + p.attuale, 0);
+  const totalePrec = punti.reduce((s, p) => s + p.precedente, 0);
+  const picco = punti.reduce((m, p) => (p.attuale > m.attuale ? p : m), punti[0]);
+  const vuoto = totale === 0 && (!confronto || totalePrec === 0);
+  // Descrizione del grafico per i lettori di schermo
+  const sintesi = vuoto
+    ? `Nessun dato di ${info.label.toLowerCase()} nel periodo.`
+    : `${info.label}: ${fmt(totale)} nel periodo${confronto ? `, contro ${fmt(totalePrec)} nel periodo precedente` : ""}. Picco ${fmt(picco.attuale)} ${intervallo(picco.da, picco.a)}.`;
 
   return (
     <Riquadro
+      id={id}
       titolo="Andamento"
       descrizione={`${info.descrizione}, ${granularita === "giorno" ? "giorno per giorno" : "settimana per settimana"}`}
       azioni={
@@ -67,7 +78,13 @@ export function TrendPanel({
           </span>
         )}
       </div>
-      <div className="h-72 w-full">
+      <div className="relative h-72 w-full" role="img" aria-label={sintesi}>
+        {vuoto && (
+          <div className="absolute inset-0 z-[1] flex flex-col items-center justify-center gap-1 rounded-block bg-card/85 text-center">
+            <p className="font-bold text-titolo">Niente da mostrare in questo periodo</p>
+            <p className="max-w-sm text-sm text-muted-foreground">Prova un periodo più lungo (tasto 3 per 90 giorni) o un&apos;altra metrica.</p>
+          </div>
+        )}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={punti} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
             <CartesianGrid vertical={false} stroke="var(--border)" />

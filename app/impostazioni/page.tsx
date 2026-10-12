@@ -1,25 +1,28 @@
-// Impostazioni: clienti monitorati (da accounts.json), token GHL cifrati, cache.
-// La mappatura con gli account pubblicitari Meta arriva nella Fase 3.
+// Impostazioni: clienti seguiti (da accounts.json), token GHL cifrati, cache.
+// La mappatura con gli account pubblicitari Meta arriva nella Fase 3 del progetto.
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { BoxErrore, CaricamentoPagina, TitoloPagina } from "@/components/bits";
+import { CircleAlert, CircleCheck, FileKey } from "lucide-react";
+import { BoxErrore, ScheletroImpostazioni, TitoloPagina } from "@/components/bits";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { caricaImpostazioni } from "@/lib/data/impostazioni";
 import { formatDataOra } from "@/lib/format";
 import type { InfoToken } from "@/lib/ghl/tokens";
 import {
   AggiungiClienteForm,
   ClienteForm,
-  RimuoviClienteForm,
-  RimuoviTokenForm,
-  SvuotaCacheForm,
+  RimuoviClienteButton,
+  RimuoviTokenButton,
+  SvuotaCacheButton,
   TokenForm,
 } from "./forms";
 
+export const metadata = { title: "Impostazioni" };
+
 export default function ImpostazioniPage() {
   return (
-    <Suspense fallback={<CaricamentoPagina righe={4} />}>
+    <Suspense fallback={<ScheletroImpostazioni />}>
       <Impostazioni />
     </Suspense>
   );
@@ -27,98 +30,142 @@ export default function ImpostazioniPage() {
 
 function StatoToken({ token }: { token: InfoToken }) {
   if (token.origine === "app") {
-    return <Badge variant="secondary">Token salvato ••••{token.ultime4}</Badge>;
+    return (
+      <Badge variant="success">
+        <CircleCheck aria-hidden /> Token salvato
+      </Badge>
+    );
   }
   if (token.origine === "env") {
-    return <Badge variant="outline">Token dal file .env ••••{token.ultime4}</Badge>;
+    return (
+      <Badge variant="warning">
+        <FileKey aria-hidden /> Token dal file .env
+      </Badge>
+    );
   }
-  return <Badge variant="destructive">Token mancante</Badge>;
+  return (
+    <Badge variant="destructive">
+      <CircleAlert aria-hidden /> Manca il token
+    </Badge>
+  );
 }
+
+const PASSI_TOKEN = [
+  "In GoHighLevel entra nel sub-account del cliente.",
+  "Vai in Settings, poi Private Integrations, poi Create new Integration.",
+  "Spunta solo i permessi di lettura: contacts, opportunities, locations, locations/customFields, calendars e calendars/events (tutti .readonly).",
+  "Copia il token e incollalo qui: l'app lo verifica prima di salvarlo, cifrato.",
+];
 
 async function Impostazioni() {
   await connection(); // dati letti a ogni richiesta, mai al momento della build
   const { clienti, disponibili, erroreSubAccount } = await caricaImpostazioni();
+  const senzaToken = clienti.filter((c) => c.token.origine === "nessuno").length;
 
   return (
     <>
       <TitoloPagina
         titolo="Impostazioni"
-        sottotitolo="Clienti da monitorare e relativi token GHL. Le modifiche riguardano solo questa app: su GHL non cambia nulla."
+        sottotitolo="Scegli i clienti da seguire e collega i loro token GHL. Qui cambia solo questa app: su GoHighLevel non tocchiamo nulla."
       />
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Clienti monitorati ({clienti.length})</h2>
-        {clienti.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nessun cliente ancora: aggiungine uno qui sotto.</p>
-        )}
-        {clienti.map((c) => (
-          <details key={c.locationId} className="group rounded-xl ring-1 ring-foreground/10" open={c.token.origine === "nessuno"}>
-            <summary className="flex cursor-pointer flex-wrap items-center gap-2 px-4 py-3">
-              <span className="font-medium">{c.name}</span>
-              <StatoToken token={c.token} />
-              {!c.active && <Badge variant="outline">Non attivo</Badge>}
-              <span className="ml-auto text-xs text-muted-foreground">ID {c.locationId}</span>
-            </summary>
-            <div className="flex flex-col gap-6 border-t px-4 py-4">
-              <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold">Token GHL del sub-account</h3>
-                {c.token.origine === "app" && (
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                    Salvato cifrato il {formatDataOra(c.token.salvatoIl)}, termina con ••••{c.token.ultime4}.
-                    <RimuoviTokenForm locationId={c.locationId} />
-                  </div>
-                )}
-                {c.token.origine === "env" && (
-                  <p className="text-sm text-muted-foreground">
-                    Ora il token viene letto dal file .env. Incollalo qui sotto per salvarlo cifrato nell&apos;app,
-                    poi potrai toglierlo dal file .env.
-                  </p>
-                )}
-                <TokenForm locationId={c.locationId} haToken={c.token.origine !== "nessuno"} />
-                <p className="text-xs text-muted-foreground">
-                  Si crea in GHL dentro il sub-account: Settings → Private Integrations → Create new Integration, con i permessi
-                  contacts.readonly, opportunities.readonly, locations.readonly, locations/customFields.readonly,
-                  calendars.readonly, calendars/events.readonly. Prima di salvarlo l&apos;app verifica che funzioni.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold">Dati del cliente</h3>
-                <ClienteForm cliente={c} />
-              </div>
-              <div className="border-t pt-4">
-                <RimuoviClienteForm locationId={c.locationId} nome={c.name} />
-              </div>
-            </div>
-          </details>
-        ))}
-      </section>
-
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Aggiungi un cliente</CardTitle>
-            <CardDescription>Scegli il sub-account GHL da monitorare.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {erroreSubAccount ? (
-              <BoxErrore messaggio={erroreSubAccount} />
-            ) : (
-              <AggiungiClienteForm disponibili={disponibili} />
+      <div className="grid items-start gap-section xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <section className="flex min-w-0 flex-col gap-3" aria-labelledby="titolo-clienti">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="titolo-clienti" className="text-section">I tuoi clienti ({clienti.length})</h2>
+            {senzaToken > 0 && (
+              <p className="text-sm font-semibold text-danger">
+                {senzaToken === 1 ? "1 cliente senza token" : `${senzaToken} clienti senza token`}
+              </p>
             )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Cache</CardTitle>
-            <CardDescription>
-              L&apos;app conserva i dati per qualche minuto per non sovraccaricare GHL: 15 minuti per i dati di oggi,
-              24 ore per i giorni passati, 6 ore per gli elenchi. Svuotala se vedi numeri che non tornano.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SvuotaCacheForm />
-          </CardContent>
-        </Card>
+          </div>
+
+          {clienti.length === 0 && (
+            <Card variant="muted" className="items-start">
+              <p className="font-bold text-titolo">Ancora nessun cliente.</p>
+              <p className="text-sm text-muted-foreground">
+                Cercalo nel riquadro &quot;Aggiungi un cliente&quot; tra i sub-account della tua agenzia: dopo l&apos;aggiunta ti chiediamo il suo token.
+              </p>
+            </Card>
+          )}
+
+          <ul className="flex flex-col gap-2">
+            {clienti.map((c, i) => (
+              <li key={c.locationId} className="entra-a-scaletta" style={{ "--i": i } as React.CSSProperties}>
+                <details
+                  className="group rounded-panel bg-card ring-1 ring-border open:ring-titolo/20"
+                  open={c.token.origine === "nessuno"}
+                >
+                  <summary className="flex min-h-14 list-none flex-wrap items-center gap-x-3 gap-y-1 rounded-panel px-5 py-3 transition-colors motion-fast hover:bg-muted/60 [&::-webkit-details-marker]:hidden">
+                    <span className="font-bold text-titolo">{c.name}</span>
+                    <StatoToken token={c.token} />
+                    {!c.active && <Badge variant="outline">Nascosto</Badge>}
+                    <span className="ml-auto text-caption text-muted-foreground">
+                      <span className="sr-only">ID sub-account </span>
+                      {c.locationId}
+                    </span>
+                  </summary>
+                  <div className="flex flex-col gap-section border-t border-border px-5 py-5">
+                    <section className="flex flex-col gap-3" aria-label={`Token di ${c.name}`}>
+                      <h3 className="text-label">Token GHL del sub-account</h3>
+                      {c.token.origine === "app" && (
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Salvato cifrato il {formatDataOra(c.token.salvatoIl)}, termina con ••••{c.token.ultime4}.
+                          </span>
+                          <RimuoviTokenButton locationId={c.locationId} nome={c.name} />
+                        </div>
+                      )}
+                      {c.token.origine === "env" && (
+                        <p className="text-sm text-muted-foreground">
+                          Ora il token si legge dal file .env (finisce con ••••{c.token.ultime4}). Incollalo qui per salvarlo
+                          cifrato nell&apos;app, poi puoi toglierlo dal file .env.
+                        </p>
+                      )}
+                      <TokenForm locationId={c.locationId} haToken={c.token.origine !== "nessuno"} />
+                      <details className="text-sm">
+                        <summary className="w-fit text-sm font-semibold text-titolo underline-offset-4 hover:underline">
+                          Come si crea il token
+                        </summary>
+                        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground marker:font-bold marker:text-titolo">
+                          {PASSI_TOKEN.map((p) => <li key={p}>{p}</li>)}
+                        </ol>
+                      </details>
+                    </section>
+                    <section className="flex flex-col gap-3" aria-label={`Dati di ${c.name}`}>
+                      <h3 className="text-label">Dati del cliente</h3>
+                      <ClienteForm cliente={c} />
+                    </section>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                      <p className="text-sm text-muted-foreground">Non lo segui più? Toglilo dall&apos;app: su GHL resta tutto com&apos;è.</p>
+                      <RimuoviClienteButton locationId={c.locationId} nome={c.name} />
+                    </div>
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div className="flex flex-col gap-4 xl:sticky xl:top-24">
+          <Card>
+            <CardHeader>
+              <CardTitle>Aggiungi un cliente</CardTitle>
+              <CardDescription>Scegli il sub-account GHL da seguire. Subito dopo ti chiediamo il suo token.</CardDescription>
+            </CardHeader>
+            {erroreSubAccount ? <BoxErrore messaggio={erroreSubAccount} /> : <AggiungiClienteForm disponibili={disponibili} />}
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Cache</CardTitle>
+              <CardDescription>
+                Per non sovraccaricare GHL l&apos;app conserva i dati per un po&apos;: 15 minuti quelli di oggi, 24 ore i giorni
+                passati, 6 ore gli elenchi. Svuotala se un numero non ti torna.
+              </CardDescription>
+            </CardHeader>
+            <SvuotaCacheButton />
+          </Card>
+        </div>
       </div>
     </>
   );

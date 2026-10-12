@@ -16,6 +16,7 @@ export function FunnelPanel({
   giorni,
   aperte,
   valuta,
+  id,
 }: {
   pipelines: Pipeline[];
   pipelineId: string;
@@ -24,11 +25,12 @@ export function FunnelPanel({
   giorni: Set<string>;
   aperte: Record<string, AperteFase>;
   valuta: string;
+  id?: string;
 }) {
   const pipeline = pipelines.find((p) => p.id === pipelineId) ?? pipelines[0];
   if (!pipeline) {
     return (
-      <Riquadro titolo="Pipeline" descrizione="Nessuna pipeline in questo sub-account">
+      <Riquadro id={id} titolo="Pipeline" descrizione="Nessuna pipeline in questo sub-account">
         <span />
       </Riquadro>
     );
@@ -41,6 +43,7 @@ export function FunnelPanel({
 
   return (
     <Riquadro
+      id={id}
       titolo="Pipeline"
       descrizione={`${formatNumero(create)} opportunità create nel periodo in questa pipeline: in che fase si trovano oggi`}
       azioni={

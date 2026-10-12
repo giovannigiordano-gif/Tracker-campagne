@@ -1,103 +1,149 @@
 "use client";
-// Classifica cliccabile (canale, campagna, fonte, tag): un clic su una voce
-// la aggiunge ai filtri e tutta la dashboard si aggiorna; un secondo clic la toglie.
+// "Da dove arrivano lead e vendite": canali, campagne, fonti e tag in un solo pannello a schede.
+// Un clic su una voce la aggiunge ai filtri di tutta la pagina; un secondo clic la toglie.
 import { useState } from "react";
 import { Check } from "lucide-react";
-import { formatNumero, formatValuta } from "@/lib/format";
-import type { VoceClassifica } from "@/lib/metrics/dashboard";
-import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/segmented";
+import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatNumero, formatValuta } from "@/lib/format";
+import type { Dimensione, VoceClassifica } from "@/lib/metrics/dashboard";
+import { cn } from "@/lib/utils";
 import { Riquadro } from "./ui";
 
 const VISIBILI = 8;
 
-export function RankingPanel({
-  titolo,
-  descrizione,
-  voci,
-  selezionate,
-  onToggle,
-  valuta,
-  vuoto = "Nessun dato nel periodo",
-}: {
-  titolo: string;
-  descrizione: string;
+export type SchedaProvenienza = {
+  dimensione: Dimensione;
+  etichetta: string;
+  aiuto: string;
   voci: VoceClassifica[];
   selezionate: string[];
+  vuoto: string;
+};
+
+function Elenco({
+  scheda,
+  ordine,
+  onToggle,
+  valuta,
+}: {
+  scheda: SchedaProvenienza;
+  ordine: "lead" | "venduto";
   onToggle: (chiave: string) => void;
   valuta: string;
-  vuoto?: string;
 }) {
-  const [ordine, setOrdine] = useState<"lead" | "venduto">("lead");
   const [tutte, setTutte] = useState(false);
-  const ordinate = [...voci].sort((a, b) =>
-    ordine === "lead" ? b.lead - a.lead || b.venduto - a.venduto : b.venduto - a.venduto || b.lead - a.lead,
+  const ordinate = [...scheda.voci].sort((a, b) =>
+    ordine === "lead" ? b.lead - a.lead || b.venduto - a.venduto : b.venduto - a.venduto || b.lead - a.lead
   );
   const massimo = Math.max(...ordinate.map((v) => (ordine === "lead" ? v.lead : v.venduto)), 0);
   const mostrate = tutte ? ordinate : ordinate.slice(0, VISIBILI);
 
+  if (ordinate.length === 0) {
+    return <p className="rounded-block bg-muted px-4 py-6 text-center text-sm text-muted-foreground">{scheda.vuoto}</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_4.5rem_7rem] gap-x-3 px-3 pb-1 text-caption text-muted-foreground">
+        <span>{scheda.aiuto}</span>
+        <span className="text-right">Lead</span>
+        <span className="text-right">Venduto</span>
+      </div>
+      <ul className="flex flex-col gap-0.5">
+        {mostrate.map((v, i) => {
+          const attiva = scheda.selezionate.includes(v.chiave);
+          const misura = ordine === "lead" ? v.lead : v.venduto;
+          return (
+            <li key={v.chiave} className="entra-a-scaletta" style={{ "--i": i } as React.CSSProperties}>
+              <button
+                type="button"
+                aria-pressed={attiva}
+                onClick={() => onToggle(v.chiave)}
+                title={attiva ? "Togli dai filtri" : "Filtra la pagina su questa voce"}
+                className={cn(
+                  "grid w-full grid-cols-[minmax(0,1fr)_4.5rem_7rem] items-center gap-x-3 gap-y-1.5 rounded-block px-3 py-2 text-left",
+                  "transition-[background-color,box-shadow] motion-fast",
+                  attiva ? "bg-accent ring-2 ring-ring" : "hover:bg-muted"
+                )}
+              >
+                <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-titolo">
+                  {attiva && <Check className="size-4 shrink-0" aria-hidden />}
+                  <span className="truncate" title={v.etichetta}>{v.etichetta}</span>
+                </span>
+                <span className="text-right text-sm font-bold text-titolo">{formatNumero(v.lead)}</span>
+                <span className="text-right text-sm text-muted-foreground">{formatValuta(v.venduto, valuta)}</span>
+                <span className="col-span-3 h-1.5">
+                  <span
+                    className="block h-1.5 rounded-full bg-[var(--viz-barra)] transition-[width] motion-slow"
+                    style={{ width: `${massimo > 0 ? Math.max((misura / massimo) * 100, misura > 0 ? 1.5 : 0) : 0}%` }}
+                  />
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {ordinate.length > VISIBILI && (
+        <button
+          type="button"
+          onClick={() => setTutte(!tutte)}
+          className="mt-1 self-start rounded-control px-3 py-1.5 text-sm font-semibold text-titolo transition-colors motion-fast hover:bg-muted"
+        >
+          {tutte ? "Mostra solo le prime 8" : `Mostra tutte (${ordinate.length})`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function ProvenienzaPanel({
+  schede,
+  onToggle,
+  valuta,
+  id,
+}: {
+  schede: SchedaProvenienza[];
+  onToggle: (d: Dimensione, chiave: string) => void;
+  valuta: string;
+  id?: string;
+}) {
+  const [ordine, setOrdine] = useState<"lead" | "venduto">("lead");
   return (
     <Riquadro
-      titolo={titolo}
-      descrizione={descrizione}
+      id={id}
+      titolo="Da dove arrivano lead e vendite"
+      descrizione="Clicca una voce per filtrare tutta la pagina. Puoi sceglierne più di una, anche in schede diverse."
       azioni={
         <Segmented
           etichetta="Ordina per"
-          opzioni={[{ v: "lead", label: "Lead" }, { v: "venduto", label: "Venduto" }]}
+          opzioni={[{ v: "lead", label: "Più lead" }, { v: "venduto", label: "Più venduto" }]}
           valore={ordine}
           onChange={setOrdine}
         />
       }
     >
-      {voci.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{vuoto}</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-[minmax(0,1fr)_4rem_6.5rem] gap-x-3 px-2 text-xs text-muted-foreground">
-            <span>Clic su una voce per filtrare la dashboard</span>
-            <span className="text-right">Lead</span>
-            <span className="text-right">Venduto</span>
-          </div>
-          <ul className="-mt-2 flex flex-col">
-            {mostrate.map((v) => {
-              const attiva = selezionate.includes(v.chiave);
-              const misura = ordine === "lead" ? v.lead : v.venduto;
-              return (
-                <li key={v.chiave}>
-                  <button
-                    type="button"
-                    aria-pressed={attiva}
-                    onClick={() => onToggle(v.chiave)}
-                    title={attiva ? "Togli dai filtri" : "Filtra la dashboard su questa voce"}
-                    className={cn(
-                      "grid w-full grid-cols-[minmax(0,1fr)_4rem_6.5rem] items-center gap-x-3 gap-y-1 rounded-xl px-2 py-1.5 text-left transition-colors",
-                      attiva ? "bg-accent ring-2 ring-brand" : "hover:bg-muted",
-                    )}
-                  >
-                    <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
-                      {attiva && <Check className="size-3.5 shrink-0 text-titolo" aria-hidden />}
-                      <span className="truncate">{v.etichetta}</span>
-                    </span>
-                    <span className="text-right text-sm font-semibold">{formatNumero(v.lead)}</span>
-                    <span className="text-right text-sm text-muted-foreground">{v.venduto ? formatValuta(v.venduto, valuta) : "0"}</span>
-                    <span className="col-span-3 h-1.5 rounded-full bg-muted">
-                      <span
-                        className="block h-1.5 rounded-full bg-[var(--viz-barra)]"
-                        style={{ width: `${massimo > 0 ? Math.max((misura / massimo) * 100, misura > 0 ? 1.5 : 0) : 0}%` }}
-                      />
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          {ordinate.length > VISIBILI && (
-            <button type="button" onClick={() => setTutte(!tutte)} className="self-start text-sm font-semibold text-muted-foreground hover:text-foreground">
-              {tutte ? "Mostra meno" : `Mostra tutte (${ordinate.length})`}
-            </button>
-          )}
-        </>
-      )}
+      <Tabs defaultValue={schede[0]?.dimensione}>
+        <TabsList aria-label="Dimensione">
+          {schede.map((s) => (
+            <TabsTrigger key={s.dimensione} value={s.dimensione}>
+              {s.etichetta}
+              {s.selezionate.length > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[0.6875rem] font-bold text-brand-ink">
+                  <span className="sr-only">filtri attivi: </span>
+                  {s.selezionate.length}
+                </span>
+              )}
+            </TabsTrigger>
+          ))}
+          <TabsIndicator />
+        </TabsList>
+        {schede.map((s) => (
+          <TabsContent key={s.dimensione} value={s.dimensione}>
+            <Elenco scheda={s} ordine={ordine} onToggle={(k) => onToggle(s.dimensione, k)} valuta={valuta} />
+          </TabsContent>
+        ))}
+      </Tabs>
     </Riquadro>
   );
 }

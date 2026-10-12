@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { Scorciatoie } from "./scorciatoie";
 
 const PRESET = [
   { v: "7", label: "7 giorni" },
@@ -36,7 +37,12 @@ export function FilterBar() {
 
   // In Impostazioni il periodo non serve
   if (pathname.startsWith("/impostazioni")) {
-    return <p className="flex h-10 items-center text-sm text-muted-foreground">Configura clienti, token e cache dell&apos;app</p>;
+    return (
+      <div className="flex h-10 items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">Configura clienti, token e cache dell&apos;app</p>
+        <Scorciatoie />
+      </div>
+    );
   }
 
   const oggi = new Date().toISOString().slice(0, 10);
@@ -83,6 +89,7 @@ export function FilterBar() {
         Confronta con il periodo precedente
       </label>
 
+      <Scorciatoie />
       {inCorso && <span className="sr-only" role="status">Aggiornamento dei dati in corso</span>}
     </div>
   );

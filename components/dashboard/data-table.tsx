@@ -100,9 +100,12 @@ export function DataTable<T extends RowData>({
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={segnapostoRicerca}
+              aria-label={segnapostoRicerca.replace("…", "")}
+              data-scorciatoia="cerca"
+              aria-keyshortcuts="/"
               value={String(table.state.globalFilter ?? "")}
               onChange={(e) => table.setGlobalFilter(e.target.value)}
-              className="h-9 rounded-full pl-9"
+              className="h-9 pl-9"
             />
           </div>
         )}

@@ -1,0 +1,3 @@
+# Fine riga LF ovunque (il deploy gira su Linux)
+* text=auto eol=lf
+*.ico binary

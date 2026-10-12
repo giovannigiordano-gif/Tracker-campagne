@@ -1,0 +1,22 @@
+# Segreti: mai su GitHub
+.env
+.env.*
+!.env.example
+*.pem
+
+# Dati locali dell'app (clienti, cache, report, token cifrati)
+data/
+
+# Dipendenze e build
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Varie
+*.log
+.DS_Store
+Thumbs.db
+.vercel

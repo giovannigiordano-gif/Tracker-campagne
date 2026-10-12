@@ -31,13 +31,13 @@ function Invia({ children, variant }: { children: React.ReactNode; variant?: "de
 function Esito({ esito }: { esito: EsitoAzione }) {
   if (!esito) return null;
   return (
-    <p role="status" className={cn("text-sm", esito.ok ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+    <p role="status" className={cn("text-sm", esito.ok ? "text-success" : "text-danger")}>
       {esito.messaggio}
     </p>
   );
 }
 
-const selectClass = "h-9 w-full rounded-lg border border-input bg-background px-2 text-sm";
+const selectClass = "w-full rounded-block border border-input bg-card p-1.5 text-base text-titolo md:text-sm";
 
 // ---------------------------------------------------------------- aggiungi cliente
 export function AggiungiClienteForm({ disponibili }: { disponibili: GhlLocation[] }) {
@@ -54,9 +54,9 @@ export function AggiungiClienteForm({ disponibili }: { disponibili: GhlLocation[
         <Label htmlFor="cerca-sub">Cerca tra i {disponibili.length} sub-account GHL non ancora aggiunti</Label>
         <Input id="cerca-sub" placeholder="Scrivi una parte del nome…" value={cerca} onChange={(e) => setCerca(e.target.value)} />
       </div>
-      <select name="locationId" size={8} required className={cn(selectClass, "h-auto py-1")} aria-label="Sub-account da aggiungere">
+      <select name="locationId" size={8} required className={selectClass} aria-label="Sub-account da aggiungere">
         {filtrati.map((l) => (
-          <option key={l.id} value={l.id} className="rounded px-1 py-0.5">
+          <option key={l.id} value={l.id} className="rounded-md px-2.5 py-1.5">
             {l.name}
           </option>
         ))}

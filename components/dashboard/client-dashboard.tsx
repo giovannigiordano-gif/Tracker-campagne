@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { RefreshButton } from "@/components/refresh-button";
 import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { DatiCliente } from "@/lib/data/cliente";
 import { formatDataOra, formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
 import {
@@ -140,7 +141,7 @@ export function ClientDashboard({ dati, confronto }: { dati: DatiCliente; confro
           <h1 className="text-3xl font-black tracking-tight lg:text-4xl">{cliente.nome}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Periodo {periodoTesto}
-            {confronto && `, confrontato con ${formatGiorno(periodo.daGiornoPrec)} – ${formatGiorno(periodo.aGiornoPrec)}`}. Giorni contati nel fuso {cliente.fuso}.
+            {confronto && `, confrontato con il periodo dal ${formatGiorno(periodo.daGiornoPrec)} al ${formatGiorno(periodo.aGiornoPrec)}`}. Giorni contati nel fuso {cliente.fuso}.
           </p>
         </div>
         <RefreshButton locationId={cliente.locationId} />
@@ -149,15 +150,15 @@ export function ClientDashboard({ dati, confronto }: { dati: DatiCliente; confro
       {/* Filtri della dashboard */}
       <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-card px-4 py-3 ring-1 ring-border">
         <span className="text-sm font-semibold">Filtri</span>
-        <select
+        <NativeSelect
           value={filtri.pipeline ?? ""}
           onChange={(e) => setFiltri((f) => ({ ...f, pipeline: e.target.value || null }))}
           aria-label="Pipeline"
-          className="h-8 max-w-64 rounded-full border border-input bg-white px-3 text-sm"
+          className="h-9 max-w-64"
         >
           <option value="">Tutte le pipeline</option>
           {pipelines.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        </NativeSelect>
         {chips.length === 0 ? (
           <span className="text-sm text-muted-foreground">Clicca una voce nelle classifiche qui sotto per filtrare tutta la dashboard.</span>
         ) : (
@@ -166,7 +167,7 @@ export function ClientDashboard({ dati, confronto }: { dati: DatiCliente; confro
               key={c.gruppo + c.etichetta}
               type="button"
               onClick={c.togli}
-              className="inline-flex max-w-72 items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-sm font-semibold text-brand-ink hover:bg-[#ff9a33]"
+              className="inline-flex max-w-72 items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-sm font-semibold text-brand-ink hover:bg-brand-hover"
               title="Togli filtro"
             >
               <span className="truncate">{c.gruppo}: {c.etichetta}</span>
@@ -237,7 +238,7 @@ export function ClientDashboard({ dati, confronto }: { dati: DatiCliente; confro
           vuoto="Nessun contatto con questi filtri"
           strumenti={
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={soloSenza} onChange={(e) => setSoloSenza(e.target.checked)} className="size-4 accent-[var(--brand)]" />
+              <input type="checkbox" checked={soloSenza} onChange={(e) => setSoloSenza(e.target.checked)} className="size-4" />
               Solo senza campagna
             </label>
           }

@@ -17,3 +17,24 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Audit con il metodo Impeccable (5 aree, voto 12/20) più le regole di UX/UI Pro Max; contrasti misurati con la formula WCAG invece che a occhio.
 - Il detector automatico di Impeccable non ha trovato problemi: i rilievi vengono da codice, browser e misure.
 - La skill UX/UI Pro Max non ha potuto usare il suo motore di ricerca (Python non installato sul computer): ho letto direttamente le sue linee guida e i file di dati.
+
+## Fase 3 — Design system
+- Token centralizzati in `app/globals.css` (colori chiaro/scuro, tipografia, spaziature, raggi, ombre, durate, curve, livelli): nei componenti non restano colori scritti a mano.
+- Grigio secondario scurito a `#565E67` (da `#69727D`): il vecchio valore era sotto 4,5:1 sui fondi grigi.
+- Neutri leggermente freddi, derivati dal grigio del sito, per non mescolare grigi caldi e freddi.
+- Testo nero sopra l'arancio (8,5:1): il bianco del sito sui pulsanti grandi dà solo 2,5:1 e non va bene su pulsanti piccoli.
+- Anello di focus arancio profondo `#C45F00` (≥ 3,8:1); su fondo nero arancio pieno.
+- Nero pieno `#000` mantenuto per menu e pannello dei numeri anche se la skill "taste" consiglia il quasi-nero: il marchio usa il nero pieno e il brief vince.
+- Modalità scura: fondo nero del marchio, superfici antracite, arancio pieno come accento; colori dei grafici riconvalidati sulla superficie scura (#FF8200 pieno + #94500F tratteggiato).
+- Tema: automatico (segue il sistema) con scelta manuale chiaro/scuro nel menu; applicato da uno script prima del primo disegno per evitare il lampo bianco.
+- Raggi: pannelli 22px (come il sito), blocchi interni 14px, tutti i controlli a pillola. Ombre solo per ciò che galleggia (modali, notifiche).
+- Tipografia: solo Red Hat Display, scala fissa in rem (display 36px/900, titolo 34-28px/900, sezione 18px/800, testo 15px, etichette 13px, didascalie 12px). Cifre tabellari ovunque.
+- Componenti unificati: pulsante (6 varianti, stato di caricamento, altezza 44px su touch), campo, menu a tendina nativo stilizzato, area di testo, interruttore, schede con indicatore scorrevole, finestra modale e pannello laterale, conferma distruttiva, notifiche, etichette di stato, messaggi, segnaposto di caricamento.
+- Notifiche costruite su Base UI Toast (già installato) invece di aggiungere una libreria: annunciate ai lettori di schermo senza rubare il focus.
+- Icone: solo Lucide (già nel progetto; la skill "taste" preferisce Phosphor ma ammette la libreria già in uso). Frecce Unicode sostituite con icone.
+- Animazioni solo CSS (nessuna nuova dipendenza, regola "poche dipendenze" del progetto).
+- Logo: simbolo a gradini + "salesprocess" nel menu, icona del browser col marchio al posto di quella di Next.js. Niente pagina di login: arriverà nella Fase 6 del progetto.
+- Menu: colonna nera fissa da 1024px in su; sotto, barra nera con pulsante "Menu" che apre un pannello laterale con le stesse voci e i clienti (con filtro oltre 8 clienti).
+- Su telefono resta fissa solo la barra del marchio; i filtri del periodo scorrono con la pagina per lasciare spazio ai dati.
+- Aggiunto il link "Salta al contenuto" per chi usa la tastiera.
+- Rimossi componenti non usati (tabella shadcn) e trattini lunghi dai testi visibili (sostituiti da "n.d." e da "dal ... al ...").

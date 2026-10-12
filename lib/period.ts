@@ -153,7 +153,7 @@ export function formatGiorno(giorno: string) {
 }
 
 export function formatIntervallo(i: Pick<Intervallo, "daGiorno" | "aGiorno">) {
-  return i.daGiorno === i.aGiorno ? formatGiorno(i.daGiorno) : `${formatGiorno(i.daGiorno)} – ${formatGiorno(i.aGiorno)}`;
+  return i.daGiorno === i.aGiorno ? formatGiorno(i.daGiorno) : `${formatGiorno(i.daGiorno)} - ${formatGiorno(i.aGiorno)}`;
 }
 
 export function etichettaSelezione(sel: Selezione) {

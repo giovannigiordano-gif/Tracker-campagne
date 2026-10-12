@@ -6,7 +6,8 @@ import { Check } from "lucide-react";
 import { formatNumero, formatValuta } from "@/lib/format";
 import type { VoceClassifica } from "@/lib/metrics/dashboard";
 import { cn } from "@/lib/utils";
-import { Pillole, Riquadro } from "./ui";
+import { Segmented } from "@/components/ui/segmented";
+import { Riquadro } from "./ui";
 
 const VISIBILI = 8;
 
@@ -40,7 +41,7 @@ export function RankingPanel({
       titolo={titolo}
       descrizione={descrizione}
       azioni={
-        <Pillole
+        <Segmented
           etichetta="Ordina per"
           opzioni={[{ v: "lead", label: "Lead" }, { v: "venduto", label: "Venduto" }]}
           valore={ordine}
@@ -74,11 +75,11 @@ export function RankingPanel({
                     )}
                   >
                     <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
-                      {attiva && <Check className="size-3.5 shrink-0 text-black" aria-hidden />}
+                      {attiva && <Check className="size-3.5 shrink-0 text-titolo" aria-hidden />}
                       <span className="truncate">{v.etichetta}</span>
                     </span>
                     <span className="text-right text-sm font-semibold">{formatNumero(v.lead)}</span>
-                    <span className="text-right text-sm text-muted-foreground">{v.venduto ? formatValuta(v.venduto, valuta) : "—"}</span>
+                    <span className="text-right text-sm text-muted-foreground">{v.venduto ? formatValuta(v.venduto, valuta) : "0"}</span>
                     <span className="col-span-3 h-1.5 rounded-full bg-muted">
                       <span
                         className="block h-1.5 rounded-full bg-[var(--viz-barra)]"

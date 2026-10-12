@@ -37,7 +37,7 @@ export function CaricamentoPagina({ righe = 4 }: { righe?: number }) {
   return (
     <div className="flex flex-col gap-6" aria-busy="true" aria-label="Caricamento dati">
       <Skeleton className="h-10 w-72 rounded-full" />
-      <Skeleton className="h-36 rounded-3xl bg-nero/90" />
+      <Skeleton className="h-36 rounded-panel" />
       {Array.from({ length: righe }, (_, i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
     </div>
   );

@@ -39,7 +39,7 @@ export const formatGiornoBreve = (g: string) => meseBreve.format(new Date(`${g}T
 export const formatDecimale = (n: number) => decimale.format(n);
 
 export function formatPercentuale(n: number | null, conSegno = false) {
-  if (n === null || !Number.isFinite(n)) return "—";
+  if (n === null || !Number.isFinite(n)) return "n.d.";
   const testo = `${decimale.format(Math.abs(n))}%`;
   if (!conSegno) return testo;
   return n > 0 ? `+${testo}` : n < 0 ? `−${testo}` : testo;

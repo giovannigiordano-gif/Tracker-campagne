@@ -5,7 +5,8 @@ import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatGiornoBreve, formatNumero, formatValuta } from "@/lib/format";
 import { calcolaSerie, type Granularita, type LeadRow, type Metrica, type OppRow, type PuntoSerie } from "@/lib/metrics/dashboard";
-import { Pillole, Riquadro } from "./ui";
+import { Segmented } from "@/components/ui/segmented";
+import { Riquadro } from "./ui";
 
 const METRICHE: { v: Metrica; label: string; descrizione: string }[] = [
   { v: "lead", label: "Lead", descrizione: "Contatti creati in GHL" },
@@ -14,7 +15,7 @@ const METRICHE: { v: Metrica; label: string; descrizione: string }[] = [
   { v: "venduto", label: "Venduto", descrizione: "Valore delle opportunità vinte" },
 ];
 
-const intervallo = (da: string, a: string) => (da === a ? formatGiornoBreve(da) : `${formatGiornoBreve(da)} – ${formatGiornoBreve(a)}`);
+const intervallo = (da: string, a: string) => (da === a ? formatGiornoBreve(da) : `${formatGiornoBreve(da)} - ${formatGiornoBreve(a)}`);
 
 export function TrendPanel({
   lead,
@@ -44,8 +45,8 @@ export function TrendPanel({
       descrizione={`${info.descrizione}, ${granularita === "giorno" ? "giorno per giorno" : "settimana per settimana"}`}
       azioni={
         <>
-          <Pillole etichetta="Cosa mostrare" opzioni={METRICHE} valore={metrica} onChange={setMetrica} />
-          <Pillole
+          <Segmented etichetta="Cosa mostrare" opzioni={METRICHE} valore={metrica} onChange={setMetrica} />
+          <Segmented
             etichetta="Raggruppa"
             opzioni={[{ v: "giorno", label: "Giorni" }, { v: "settimana", label: "Settimane" }]}
             valore={granularita}
@@ -92,13 +93,13 @@ export function TrendPanel({
                 const p = (payload?.[0] as { payload?: PuntoSerie } | undefined)?.payload;
                 if (!active || !p) return null;
                 return (
-                  <div className="rounded-xl bg-nero px-3 py-2 text-xs text-white shadow-lg">
+                  <div className="superficie-inversa rounded-block bg-inverse px-3 py-2 text-xs text-inverse-foreground shadow-overlay">
                     <div className="flex justify-between gap-6">
                       <span>{intervallo(p.da, p.a)}</span>
                       <span className="font-bold">{fmt(p.attuale)}</span>
                     </div>
                     {confronto && p.daPrec && (
-                      <div className="mt-1 flex justify-between gap-6 text-white/65">
+                      <div className="mt-1 flex justify-between gap-6 text-inverse-muted">
                         <span>{intervallo(p.daPrec, p.aPrec)}</span>
                         <span>{fmt(p.precedente)}</span>
                       </div>

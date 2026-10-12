@@ -12,7 +12,8 @@ import { variazionePct } from "@/lib/metrics/dashboard";
 import { formatGiorno } from "@/lib/period";
 import { cn } from "@/lib/utils";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
-import { Delta, Fonte, PannelloNumeri, Pillole, Riquadro, type VoceNumero } from "./ui";
+import { Segmented } from "@/components/ui/segmented";
+import { Delta, Fonte, PannelloNumeri, Riquadro, type VoceNumero } from "./ui";
 
 function Sparkline({ valori }: { valori: number[] }) {
   if (valori.length < 2) return null;
@@ -89,7 +90,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         header: "Cliente",
         sortFn: "alphanumeric",
         cell: (i) => (
-          <Link href={`/clienti/${i.row.original.locationId}?${query}`} className="font-semibold text-black hover:underline">
+          <Link href={`/clienti/${i.row.original.locationId}?${query}`} className="font-semibold text-titolo hover:underline">
             {i.getValue()}
           </Link>
         ),
@@ -101,7 +102,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         meta: { numerica: true },
         cell: (i) => {
           const r = i.row.original;
-          if (!r.kpi) return "—";
+          if (!r.kpi) return "n.d.";
           return (
             <span className="flex flex-col items-end">
               <span className="font-semibold">{formatNumero(r.kpi.lead)}</span>
@@ -111,8 +112,8 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         },
       }),
       h.display({ id: "andamento", header: "Andamento lead", cell: (i) => <Sparkline valori={i.row.original.leadGiornalieri} /> }),
-      h.accessor(num((r) => r.kpi?.oppCreate ?? null), { id: "opp", header: "Opportunità", sortFn: "basic", meta: { numerica: true }, cell: (i) => (i.row.original.kpi ? formatNumero(i.row.original.kpi.oppCreate) : "—") }),
-      h.accessor(num((r) => r.kpi?.vinte ?? null), { id: "vinte", header: "Vinte", sortFn: "basic", meta: { numerica: true }, cell: (i) => (i.row.original.kpi ? formatNumero(i.row.original.kpi.vinte) : "—") }),
+      h.accessor(num((r) => r.kpi?.oppCreate ?? null), { id: "opp", header: "Opportunità", sortFn: "basic", meta: { numerica: true }, cell: (i) => (i.row.original.kpi ? formatNumero(i.row.original.kpi.oppCreate) : "n.d.") }),
+      h.accessor(num((r) => r.kpi?.vinte ?? null), { id: "vinte", header: "Vinte", sortFn: "basic", meta: { numerica: true }, cell: (i) => (i.row.original.kpi ? formatNumero(i.row.original.kpi.vinte) : "n.d.") }),
       h.accessor(num((r) => r.kpi?.venduto ?? null), {
         id: "venduto",
         header: "Venduto",
@@ -120,7 +121,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         meta: { numerica: true },
         cell: (i) => {
           const r = i.row.original;
-          if (!r.kpi) return "—";
+          if (!r.kpi) return "n.d.";
           return (
             <span className="flex flex-col items-end">
               <span className="font-semibold">{formatValuta(r.kpi.venduto, r.valuta)}</span>
@@ -141,9 +142,9 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
               {avvisi.map((a) => (
                 <li key={a.testo} className="flex items-start gap-1.5 text-xs">
                   {a.livello === "errore" ? (
-                    <CircleAlert className="mt-px size-3.5 shrink-0 text-red-700" aria-label="Errore" />
+                    <CircleAlert className="mt-px size-3.5 shrink-0 text-danger" aria-label="Errore" />
                   ) : (
-                    <AlertTriangle className="mt-px size-3.5 shrink-0 text-amber-600" aria-label="Attenzione" />
+                    <AlertTriangle className="mt-px size-3.5 shrink-0 text-warning" aria-label="Attenzione" />
                   )}
                   {a.testo}
                 </li>
@@ -180,7 +181,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         titolo="Confronto tra clienti"
         descrizione="Clicca un cliente per aprire la sua dashboard"
         azioni={
-          <Pillole
+          <Segmented
             etichetta="Metrica"
             opzioni={[{ v: "venduto", label: "Venduto" }, { v: "vinte", label: "Vinte" }, { v: "lead", label: "Lead" }]}
             valore={metrica}
@@ -225,7 +226,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
           vuoto="Nessun cliente"
           strumenti={
             <label className={cn("flex items-center gap-2 text-sm", !conAvvisi && "opacity-50")}>
-              <input type="checkbox" checked={soloAvvisi} disabled={!conAvvisi} onChange={(e) => setSoloAvvisi(e.target.checked)} className="size-4 accent-[var(--brand)]" />
+              <input type="checkbox" checked={soloAvvisi} disabled={!conAvvisi} onChange={(e) => setSoloAvvisi(e.target.checked)} className="size-4" />
               Solo con avvisi ({conAvvisi})
             </label>
           }

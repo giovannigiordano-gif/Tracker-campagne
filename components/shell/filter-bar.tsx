@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 const PRESET = [
@@ -34,37 +35,33 @@ export function FilterBar() {
   }
 
   // In Impostazioni il periodo non serve
-  if (pathname.startsWith("/impostazioni")) return <p className="py-1.5 text-sm text-muted-foreground">Configurazione dell&apos;app</p>;
+  if (pathname.startsWith("/impostazioni")) {
+    return <p className="flex h-10 items-center text-sm text-muted-foreground">Configura clienti, token e cache dell&apos;app</p>;
+  }
 
   const oggi = new Date().toISOString().slice(0, 10);
   const dateValide = !!da && !!a && da <= a;
+  const pillola = (attiva: boolean) =>
+    cn(
+      "h-8 rounded-control px-3.5 text-sm font-semibold transition-[background-color,color] motion-fast pointer-coarse:h-10",
+      attiva ? "bg-titolo text-background" : "text-muted-foreground hover:text-titolo"
+    );
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2", inCorso && "opacity-70")} aria-busy={inCorso}>
-      <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-border" role="group" aria-label="Periodo">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-busy={inCorso}>
+      <div className="inline-flex rounded-control bg-card p-1 ring-1 ring-border" role="group" aria-label="Periodo">
         {PRESET.map((p) => (
           <button
             key={p.v}
             type="button"
             aria-pressed={!personalizzato && periodo === p.v}
             onClick={() => { setPersonalizzato(false); aggiorna({ periodo: p.v, da: null, a: null }); }}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
-              !personalizzato && periodo === p.v ? "bg-nero text-white" : "text-muted-foreground hover:text-foreground",
-            )}
+            className={pillola(!personalizzato && periodo === p.v)}
           >
             {p.label}
           </button>
         ))}
-        <button
-          type="button"
-          aria-pressed={personalizzato}
-          onClick={() => setPersonalizzato(true)}
-          className={cn(
-            "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
-            personalizzato ? "bg-nero text-white" : "text-muted-foreground hover:text-foreground",
-          )}
-        >
+        <button type="button" aria-pressed={personalizzato} onClick={() => setPersonalizzato(true)} className={pillola(personalizzato)}>
           Date
         </button>
       </div>
@@ -74,26 +71,19 @@ export function FilterBar() {
           className="flex flex-wrap items-center gap-2"
           onSubmit={(e) => { e.preventDefault(); if (dateValide) aggiorna({ periodo: "custom", da, a }); }}
         >
-          <Input type="date" aria-label="Dal" value={da} max={oggi} onChange={(e) => setDa(e.target.value)} className="h-9 w-40 rounded-full bg-white" />
+          <Input type="date" aria-label="Dal" value={da} max={oggi} onChange={(e) => setDa(e.target.value)} className="w-40" />
           <span className="text-sm text-muted-foreground">al</span>
-          <Input type="date" aria-label="Al" value={a} max={oggi} onChange={(e) => setA(e.target.value)} className="h-9 w-40 rounded-full bg-white" />
+          <Input type="date" aria-label="Al" value={a} max={oggi} onChange={(e) => setA(e.target.value)} className="w-40" />
           <Button type="submit" size="sm" disabled={!dateValide}>Applica</Button>
         </form>
       )}
 
-      <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm font-medium">
-        <span className="relative inline-flex">
-          <input
-            type="checkbox"
-            className="peer sr-only"
-            checked={confronto}
-            onChange={(e) => aggiorna({ confronto: e.target.checked ? null : "0" })}
-          />
-          <span className="h-5 w-9 rounded-full bg-input transition-colors peer-checked:bg-brand peer-focus-visible:ring-2 peer-focus-visible:ring-ring" />
-          <span className="absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4" />
-        </span>
+      <label className="ml-auto flex items-center gap-2.5 text-sm font-medium text-titolo">
+        <Switch checked={confronto} onCheckedChange={(v) => aggiorna({ confronto: v ? null : "0" })} />
         Confronta con il periodo precedente
       </label>
+
+      {inCorso && <span className="sr-only" role="status">Aggiornamento dei dati in corso</span>}
     </div>
   );
 }

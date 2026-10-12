@@ -138,7 +138,7 @@ export function DataTable<T extends RowData>({
                         <button
                           type="button"
                           onClick={h.column.getToggleSortingHandler()}
-                          className={cn("inline-flex items-center gap-1 hover:text-black", numerica && "flex-row-reverse")}
+                          className={cn("inline-flex items-center gap-1 hover:text-titolo", numerica && "flex-row-reverse")}
                         >
                           <table.FlexRender header={h} />
                           <span className="text-xs text-muted-foreground">{verso === "asc" ? "▲" : verso === "desc" ? "▼" : "↕"}</span>

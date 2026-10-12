@@ -24,9 +24,9 @@ async function Panoramica({ searchParams }: Pick<PageProps<"/">, "searchParams">
 
   if (righe.length === 0) {
     return (
-      <div className="flex max-w-xl flex-col items-start gap-4 rounded-3xl bg-nero p-8 text-white">
-        <h1 className="text-3xl font-black tracking-tight text-white">Nessun cliente da monitorare</h1>
-        <p className="text-white/75">
+      <div className="superficie-inversa flex max-w-xl flex-col items-start gap-4 rounded-panel bg-inverse p-8 text-inverse-foreground">
+        <h1 className="text-title text-inverse-foreground">Nessun cliente da monitorare</h1>
+        <p className="text-inverse-muted">
           Aggiungi i clienti dalla pagina Impostazioni scegliendoli tra i sub-account GHL, poi inserisci per ognuno il suo token.
         </p>
         <Link href={`/impostazioni?${query}`} className={buttonVariants({ size: "lg" })}>Aggiungi il primo cliente</Link>

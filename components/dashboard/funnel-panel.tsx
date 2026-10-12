@@ -5,6 +5,7 @@ import type { AperteFase } from "@/lib/data/cliente";
 import { formatDecimale, formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
 import { calcolaImbuto, type OppRow } from "@/lib/metrics/dashboard";
 import type { Pipeline } from "@/lib/ghl/types";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Riquadro } from "./ui";
 
 export function FunnelPanel({
@@ -43,16 +44,16 @@ export function FunnelPanel({
       titolo="Pipeline"
       descrizione={`${formatNumero(create)} opportunità create nel periodo in questa pipeline: in che fase si trovano oggi`}
       azioni={
-        <select
+        <NativeSelect
           value={pipeline.id}
           onChange={(e) => onPipeline(e.target.value)}
           aria-label="Pipeline"
-          className="h-9 max-w-72 rounded-full border border-input bg-white px-3 text-sm font-semibold"
+          className="max-w-72"
         >
           {pipelines.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
-        </select>
+        </NativeSelect>
       }
     >
       <div className="overflow-x-auto">
@@ -84,10 +85,10 @@ export function FunnelPanel({
                     </div>
                   </td>
                   <td className="py-2 pr-4 text-right text-muted-foreground">{formatNumero(f.raggiunte)}</td>
-                  <td className="py-2 pr-6 text-right text-muted-foreground">{f.conversione === null ? "—" : formatPercentuale(f.conversione)}</td>
+                  <td className="py-2 pr-6 text-right text-muted-foreground">{f.conversione === null ? "n.d." : formatPercentuale(f.conversione)}</td>
                   <td className="border-l py-2 pl-6 pr-4 text-right">{oggi ? formatNumero(oggi.n) : "0"}</td>
-                  <td className="whitespace-nowrap py-2 pr-4 text-right text-muted-foreground">{oggi?.valore ? formatValuta(oggi.valore, valuta) : "—"}</td>
-                  <td className="py-2 text-right text-muted-foreground">{oggi?.giorniMedi != null ? formatDecimale(oggi.giorniMedi) : "—"}</td>
+                  <td className="whitespace-nowrap py-2 pr-4 text-right text-muted-foreground">{formatValuta(oggi?.valore ?? 0, valuta)}</td>
+                  <td className="py-2 text-right text-muted-foreground">{oggi?.giorniMedi != null ? formatDecimale(oggi.giorniMedi) : "n.d."}</td>
                 </tr>
               );
             })}

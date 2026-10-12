@@ -113,10 +113,19 @@ export function leggiSelezione(params: ParametriUrl): Selezione {
   return { tipo: "preset", giorni: 30 };
 }
 
-// Parametri da aggiungere ai link per mantenere il periodo scelto
-export function queryPeriodo(sel: Selezione): string {
-  return sel.tipo === "preset" ? `periodo=${sel.giorni}` : `periodo=custom&da=${sel.da}&a=${sel.a}`;
+// ?confronto=0 nasconde il confronto con il periodo precedente (predefinito: attivo)
+export function leggiConfronto(params: ParametriUrl): boolean {
+  return primo(params.confronto) !== "0";
 }
+
+// Parametri da aggiungere ai link per mantenere periodo e confronto scelti
+export function queryPeriodo(sel: Selezione, confronto = true): string {
+  const base = sel.tipo === "preset" ? `periodo=${sel.giorni}` : `periodo=custom&da=${sel.da}&a=${sel.a}`;
+  return confronto ? base : `${base}&confronto=0`;
+}
+
+// Parametri dell'indirizzo che fanno parte dei filtri globali
+export const PARAMETRI_GLOBALI = ["periodo", "da", "a", "confronto"] as const;
 
 // ---------------------------------------------------------------- periodo corrente e precedente
 export function risolviPeriodo(sel: Selezione, tz: string, adesso = new Date()) {

@@ -1,6 +1,7 @@
 // Impostazioni: clienti monitorati (da accounts.json), token GHL cifrati, cache.
 // La mappatura con gli account pubblicitari Meta arriva nella Fase 3.
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { BoxErrore, CaricamentoPagina, TitoloPagina } from "@/components/bits";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ function StatoToken({ token }: { token: InfoToken }) {
 }
 
 async function Impostazioni() {
+  await connection(); // dati letti a ogni richiesta, mai al momento della build
   const { clienti, disponibili, erroreSubAccount } = await caricaImpostazioni();
 
   return (

@@ -5,7 +5,7 @@
 *.pem
 
 # Dati locali dell'app (clienti, cache, report, token cifrati)
-data/
+/data/
 
 # Dipendenze e build
 node_modules/

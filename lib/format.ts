@@ -11,6 +11,31 @@ const dataOra = new Intl.DateTimeFormat("it-IT", {
 });
 
 export const formatNumero = (n: number) => numero.format(n);
+
+const valute = new Map<string, Intl.NumberFormat>();
+// Importi senza decimali (es. "€ 12.500"); con compatto=true "12,5 mila €" per gli spazi stretti
+export function formatValuta(n: number, valuta = "EUR", compatto = false) {
+  const chiave = `${valuta}-${compatto}`;
+  let f = valute.get(chiave);
+  if (!f) {
+    try {
+      f = new Intl.NumberFormat("it-IT", {
+        style: "currency",
+        currency: valuta,
+        maximumFractionDigits: compatto ? 1 : 0,
+        ...(compatto ? { notation: "compact" as const } : {}),
+      });
+    } catch {
+      f = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0 });
+    }
+    valute.set(chiave, f);
+  }
+  return f.format(n);
+}
+
+// Giorno YYYY-MM-DD in formato breve: "12 ott"
+const meseBreve = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short", timeZone: "UTC" });
+export const formatGiornoBreve = (g: string) => meseBreve.format(new Date(`${g}T12:00:00Z`)).replace(".", "");
 export const formatDecimale = (n: number) => decimale.format(n);
 
 export function formatPercentuale(n: number | null, conSegno = false) {

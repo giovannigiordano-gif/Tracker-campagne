@@ -32,8 +32,15 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
 - **Mappatura attribuzione (proposta, da confermare dal titolare)** in `lib/ghl/normalize.ts`: si usa `attributionSource` (primo contatto), altrimenti `lastAttributionSource`. `campaign`→utmCampaign (nome campagna), `campaignId`, `adId`; `utmMedium` = nome gruppo di inserzioni e `utmContent` = nome annuncio nei lead Meta; `adGroupId` assente nei lead Meta (l'adset si ricava dall'annuncio via Meta in Fase 4); `sessionSource`→origine. Canale "Meta Ads" solo con `Paid Social` o ID campagna/annuncio: `Social media` + facebook/instagram sono messaggi organici, non annunci.
 - **Struttura pagine**: ogni `page.tsx` rende un `<Suspense>` con dentro un componente async che fa `await params/searchParams` e carica i dati (Cache Components lo richiede). Chiavi di cache GHL: `ghl:<locationId>:...` (così "Aggiorna dati" svuota un cliente solo), `ghl:agency:locations` per l'elenco sub-account.
 - **Privacy nei test**: non stampare né fotografare la tabella contatti o qualunque dato personale durante le verifiche (né nel terminale né con screenshot): l'AI non deve vedere dati personali. Verificare solo conteggi.
-- Tabelle: `@tanstack/react-table` v9 (API diversa dalla v8: `useTable`, `tableFeatures`, `table.FlexRender`); guida in `node_modules/@tanstack/react-table/skills/`.
-- Colori dei grafici in `app/globals.css` (`--viz-*`), verificati con il validatore della skill dataviz (contrasto e daltonismo).
+- Tabelle: `@tanstack/react-table` v9 (API diversa dalla v8: `useTable`, `tableFeatures`, `table.FlexRender`); guida in `node_modules/@tanstack/react-table/skills/`. Tabella unica riusabile: `components/dashboard/data-table.tsx`.
+- **Opportunità GHL**: `GET /opportunities/search` (limit max 100). Le pagine numerate (`page=N`) funzionano e si leggono in parallelo (3.248 opportunità in ~1 s invece di 18 s col cursore); oltre 10.000 si usa il cursore `startAfter`+`startAfterId`. Filtri `date`/`endDate` (mm-dd-yyyy) agiscono su createdAt. Le opportunità hanno un loro array `attributions` (isFirst/isLast) con nomi diversi dai contatti: `utmSessionSource`, `utmCampaignId`, `utmAdId`, `utmCampaign` → mappati in `normalizeOpportunity`. Vinte/perse si datano con `lastStatusChangeAt`.
+- **Definizioni KPI**: lead = contatti creati nel periodo; opportunità = create nel periodo; vinte/perse/venduto = chiuse nel periodo (lastStatusChangeAt); tasso di chiusura = vinte/(vinte+perse).
+- **Pipeline**: GHL non ha lo storico dei cambi fase. Il dato reale mostrato è "oggi in questa fase" per le opportunità create nel periodo; "arrivate qui" e "passaggio" sono stime (fasi percorse in ordine) e sono inaffidabili con fasi di uscita in mezzo (es. "Fake"). Possibile miglioria: segnare le fasi di uscita per pipeline in Impostazioni.
+- **Brand salesprocess.it** (deciso dal titolare il 2026-10-12): arancio `#FF8200` (pulsanti, evidenze; testo NERO sopra l'arancio, il bianco non è leggibile), nero pieno per menu laterale e pannello dei numeri, Red Hat Display (900 per titoli e numeri), pulsanti a pillola, angoli ampi. Grafici in arancio più profondo `#D96C00` (contrasto ≥ 3:1) e `#F2A15A` tratteggiato per il periodo precedente, verificati col validatore della skill dataviz. Logo ricreato in SVG in `components/brand.tsx`.
+- **Dashboard interattiva**: i filtri (canale, campagna, fonte, tag, pipeline) sono stato del browser e ricalcolano tutto con le funzioni pure di `lib/metrics/dashboard.ts`. Al browser arrivano righe ridotte; i dati personali solo per le righe delle tabelle del periodo corrente.
+- `.gitignore` usa `/data/` (solo la cartella dati in radice): `data/` escludeva per errore anche `lib/data/`.
+- Il server di sviluppo a volte non vede i file salvati dagli strumenti di modifica: se una modifica non compare, `touch` del file o riavvio del server.
+- Next mantiene nascosta in memoria la pagina precedente: nei test via JS cercare solo elementi visibili.
 
 ## Comandi
 - `npm run dev`: avvia l'app in locale (http://localhost:3000)
@@ -43,7 +50,7 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
 ## Stato delle fasi
 - [x] Fase 0: scaffold, .env.example, `npm run check`, test di accesso GHL (2026-10-12)
 - [x] Fase 1: client GHL, cache, Panoramica agency, Contatti e lead, Impostazioni con token cifrati (2026-10-12)
-- [ ] Fase 2: pipeline e opportunità
+- [x] Fase 2: pipeline, opportunità e venduto, insieme al restyling Sales Process e alla dashboard interattiva (2026-10-12)
 - [ ] Fase 3: client Meta Marketing API, pagina Campagne, mappatura in Impostazioni
 - [ ] Fase 4: attribuzione e pagina Incrocio
 - [ ] Fase 5: MCP Meta e analisi AI, con fallback

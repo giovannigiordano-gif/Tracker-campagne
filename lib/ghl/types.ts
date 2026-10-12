@@ -40,6 +40,28 @@ export type Contact = {
   attributed: boolean; // true se il contatto è riconducibile a una campagna
 };
 
+export type Stage = { id: string; name: string; position: number };
+export type Pipeline = { id: string; name: string; stages: Stage[] };
+
+export type OppStatus = "open" | "won" | "lost" | "abandoned";
+
+export type Opportunity = {
+  id: string;
+  locationId: string;
+  name: string; // spesso è il nome del contatto: resta solo in memoria e nel browser
+  pipelineId: string;
+  stageId: string;
+  status: OppStatus;
+  value: number; // valore economico (monetaryValue)
+  source: string | null;
+  createdAt: string;
+  lastStatusChangeAt: string | null; // per le vinte/perse è la data di chiusura
+  lastStageChangeAt: string | null;
+  contactId: string | null;
+  tags: string[]; // tag del contatto collegato
+  attribution: Attribution;
+};
+
 export type GhlLocation = {
   id: string;
   name: string;

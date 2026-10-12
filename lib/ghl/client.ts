@@ -3,9 +3,9 @@
 // - getLocationClient(locationId): dati di un cliente (token del sub-account).
 // Solo letture: nessun metodo crea, modifica o cancella dati su GHL.
 import { GhlError, ghlRequest, ultimoRateLimit } from "./http";
-import { normalizeContact, type RawContact } from "./normalize";
+import { normalizeContact, normalizeOpportunity, normalizePipeline, type RawContact, type RawOpportunity } from "./normalize";
 import { getLocationToken } from "./tokens";
-import type { Contact, GhlLocation } from "./types";
+import type { Contact, GhlLocation, Opportunity, Pipeline } from "./types";
 
 type RawLocation = { id: string; name?: string; timezone?: string | null };
 
@@ -70,6 +70,7 @@ export type LocationClient = Awaited<ReturnType<typeof getLocationClient>>;
 
 const PAGINA_CONTATTI = 500; // massimo consentito da GHL per richiesta
 const MAX_PAGINE = 200; // protezione: 100.000 contatti per singola ricerca
+const MAX_PAGINE_OPPORTUNITA = 500; // protezione: 50.000 opportunità
 
 function filtroData(da: Date, a: Date) {
   return [{ field: "dateAdded", operator: "range", value: { gte: da.toISOString(), lte: a.toISOString() } }];
@@ -124,6 +125,50 @@ export async function getLocationClient(locationId: string) {
         if (lista.length < PAGINA_CONTATTI || !searchAfter) return contatti;
       }
       throw new GhlError("richiesta", "Troppi contatti nel periodo scelto: riduci l'intervallo di date");
+    },
+
+    // GET /opportunities/pipelines: pipeline e fasi, in ordine
+    async getPipelines(): Promise<Pipeline[]> {
+      const r = await ghlRequest<{ pipelines?: Parameters<typeof normalizePipeline>[0][] }>(token, "/opportunities/pipelines", {
+        query: { locationId },
+      });
+      return (r.pipelines ?? []).map(normalizePipeline);
+    },
+
+    // GET /opportunities/search: tutte le opportunità, 100 alla volta (massimo consentito).
+    // Fino a 10.000 si leggono le pagine numerate in parallelo (1 secondo invece di 18 su 3.000 opportunità);
+    // oltre si usa il cursore startAfter + startAfterId, più lento ma senza limiti.
+    async searchOpportunities(): Promise<Opportunity[]> {
+      type Risposta = {
+        opportunities?: RawOpportunity[];
+        meta?: { total?: number; startAfter?: number | string; startAfterId?: string };
+      };
+      const pagina = (query: Record<string, string | number>) =>
+        ghlRequest<Risposta>(token, "/opportunities/search", { query: { locationId, limit: 100, ...query } });
+
+      const prima = await pagina({ page: 1 });
+      const totale = prima.meta?.total ?? 0;
+      const numeroPagine = Math.ceil(totale / 100);
+      let grezze: RawOpportunity[];
+
+      if (numeroPagine <= 100) {
+        const altre = await Promise.all(Array.from({ length: Math.max(numeroPagine - 1, 0) }, (_, i) => pagina({ page: i + 2 })));
+        grezze = [prima, ...altre].flatMap((r) => r.opportunities ?? []);
+      } else {
+        grezze = [...(prima.opportunities ?? [])];
+        let meta = prima.meta;
+        for (let n = 1; n < MAX_PAGINE_OPPORTUNITA && meta?.startAfterId && meta.startAfter !== undefined; n++) {
+          const r = await pagina({ startAfter: meta.startAfter, startAfterId: meta.startAfterId });
+          const lista = r.opportunities ?? [];
+          grezze.push(...lista);
+          if (lista.length < 100) break;
+          meta = r.meta;
+        }
+      }
+
+      // Se nel frattempo è arrivata un'opportunità nuova le pagine possono slittare: si tolgono i doppioni
+      const viste = new Set<string>();
+      return grezze.filter((o) => !viste.has(o.id) && viste.add(o.id)).map(normalizeOpportunity);
     },
   };
 }

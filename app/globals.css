@@ -307,6 +307,12 @@
 @layer base {
   * {
     @apply border-border;
+    /* Colore dell'anello già pronto a riposo: con transition-colors l'anello compare subito,
+       senza sfumare dal colore del testo */
+    outline-color: var(--ring);
+  }
+  .superficie-inversa * {
+    outline-color: var(--brand);
   }
   html {
     @apply font-sans;

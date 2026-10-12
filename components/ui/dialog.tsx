@@ -1,7 +1,6 @@
 "use client"
 // Finestra modale: si apre con dissolvenza e leggero ingrandimento, si chiude con Esc o con la X.
 // Usata anche come pannello laterale (menu su telefono) con la variante "lato".
-import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { XIcon } from "lucide-react"
 import { cn } from "cn"

@@ -92,7 +92,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         header: "Cliente",
         sortFn: "alphanumeric",
         cell: (i) => (
-          <Link href={`/clienti/${i.row.original.locationId}?${query}`} className="font-semibold text-titolo hover:underline">
+          <Link href={`/clienti/${i.row.original.locationId}?${query}`} className="inline-flex min-h-6 items-center rounded-sm py-1 font-semibold text-titolo hover:underline">
             {i.getValue()}
           </Link>
         ),

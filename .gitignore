@@ -23,3 +23,6 @@ Thumbs.db
 
 # Impostazioni locali di Claude Code
 .claude/settings.local.json
+
+# Catture di revisione del design (mostrano nomi dei clienti: restano in locale)
+/.impeccable/review/

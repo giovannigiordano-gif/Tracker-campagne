@@ -55,10 +55,10 @@ function ScheletroNumeri({ quanti = 6 }: { quanti?: number }) {
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-7 rounded-panel bg-inverse p-panel sm:grid-cols-3 2xl:grid-cols-6 lg:px-8 lg:py-7">
       {Array.from({ length: quanti }, (_, i) => (
-        <div key={i} className="flex flex-col gap-2">
-          <Skeleton className="h-3.5 w-20 bg-inverse-raised" />
-          <Skeleton className="h-9 w-28 bg-inverse-raised" />
-          <Skeleton className="h-3.5 w-24 bg-inverse-raised" />
+        <div key={i} className="flex min-w-0 flex-col gap-2">
+          <Skeleton className="h-3.5 w-20 max-w-full bg-inverse-raised" />
+          <Skeleton className="h-9 w-28 max-w-full bg-inverse-raised" />
+          <Skeleton className="h-3.5 w-24 max-w-full bg-inverse-raised" />
         </div>
       ))}
     </div>
@@ -67,7 +67,7 @@ function ScheletroNumeri({ quanti = 6 }: { quanti?: number }) {
 
 function ScheletroPannello({ className, righe = 4 }: { className?: string; righe?: number }) {
   return (
-    <div className={cn("flex flex-col gap-4 rounded-panel bg-card p-panel ring-1 ring-border", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-4 rounded-panel bg-card p-panel ring-1 ring-border", className)}>
       <Skeleton className="h-5 w-44" />
       <Skeleton className="h-3.5 w-72 max-w-full" />
       <div className="mt-2 flex flex-col gap-3">

@@ -49,7 +49,7 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Stati vuoti utili: panoramica senza clienti (tre passi per iniziare), grafico senza dati (suggerisce 90 giorni), filtri senza risultati (pulsante Azzera), tabelle vuote con testo specifico.
 - Scorciatoie: / cerca, 1-2-3 periodo, C confronto, R aggiorna, X azzera filtri, ? elenco. Non scattano mentre si scrive.
 - Pagina cliente: indice delle sezioni fisso in alto (segna quella che stai guardando) e le quattro classifiche riunite in un pannello a schede "Da dove arrivano lead e vendite", con il numero di filtri attivi su ogni scheda: pagina più corta e meno card uguali.
-- Su telefono i valori lunghi del pannello dei numeri usano la forma compatta (68,8K €) invece di essere tagliati.
+- Su telefono i valori lunghi del pannello dei numeri usano la forma compatta (es. 124,5K €) invece di essere tagliati.
 - Testi nel tono SalesProcess: seconda persona, frasi brevi, verbi d'azione ("Aggiorna i dati", "Verifica e salva", "Rimuovi dall'app"), "clienti seguiti", "Da controllare". Slogan del marchio solo nello stato vuoto iniziale ("Più clienti, più dati. Inizia dal primo.") e nella firma del menu.
 - I passaggi per creare il token sono una lista numerata (è davvero una sequenza) dentro un "Come si crea il token" apribile.
 
@@ -71,3 +71,25 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Livello "ambientale" della skill motion-design volutamente escluso: in uno strumento di lavoro il movimento decorativo distrae (indicazione di Impeccable per la modalità Operate).
 - "Riduci movimento": niente spostamenti né scosse, durate dimezzate, dissolvenze mantenute (il riscontro resta leggibile), grafico senza animazione. Il vecchio blocco che azzerava tutte le animazioni è stato sostituito perché toglieva anche il riscontro utile.
 - Prestazioni: solo opacità e trasformazioni, più la larghezza delle barre delle classifiche (pochi elementi in un contenitore a dimensione fissa, nessun ricalcolo della pagina). Animazioni d'entrata con riempimento "backwards" per non lasciare trasformazioni attive dopo la fine.
+
+## Fase 7 — Verifica e chiusura
+- Contrasto: 34 coppie di colori misurate con la formula WCAG, chiaro e scuro. Tutte a norma AA: testi ≥ 4,5:1, bordi dei campi e anello di focus ≥ 3:1.
+- Tastiera: ordine di tabulazione verificato (Salta al contenuto, marchio, menu, tema, filtri, contenuto), nessun salto forzato, tutti i controlli con un nome leggibile dai lettori di schermo.
+- Anello di focus: ora compare subito nel colore giusto. Prima sfumava per 150 ms partendo dal colore del testo, e sulla voce di menu attiva era nero su nero.
+- Dimensioni: nessuno scorrimento orizzontale a 320 (equivale allo zoom al 400%), 375, 768, 1024, 1366 e 1920px.
+  - Corrette le pillole del grafico a 320px: ora scorrono nel loro binario invece di uscire dalla pagina.
+  - Corretto lo scheletro di caricamento delle Impostazioni a 320px.
+- Nome del cliente nella tabella della panoramica: area cliccabile portata ad almeno 24px di altezza.
+- Prestazioni:
+  - nessuno spostamento del layout durante il caricamento (CLS 0);
+  - contenuto principale visibile in meno di 0,8 s in sviluppo;
+  - nessuna animazione continua a pagina ferma;
+  - CSS di 9 KB compressi.
+  - Il pezzo più grande del JavaScript (~113 KB compressi) è la libreria dei grafici: lasciato così, accettabile per uno strumento interno.
+- Rifinitura Impeccable: il detector automatico ha trovato 0 problemi. La revisione finale e DESIGN.md li ho fatti io con la checklist "polish" e la guida "document" di Impeccable, al posto dei sotto-agenti dedicati: le regole di questa sessione permettono i sotto-agenti solo su richiesta esplicita.
+- Le domande che la guida "document" farebbe al titolare (metafora guida, tono) le ho decise io: "Il cruscotto in nero e arancio", coerente con il marchio e con l'uso da strumento di lavoro.
+- Catture di revisione (.impeccable/review/) escluse da git: mostrano il nome di un cliente e il repository è pubblico.
+- Pulizia: rimosso un import inutilizzato. Nessun console.log rimasto e nessun errore in console sulle 4 pagine.
+- Logica di business, dati e API non toccati. In lib/ sono cambiati solo due testi mostrati a schermo:
+  - "n.d." al posto di "—" quando un valore non è disponibile;
+  - trattino normale tra le date.

@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-12T11:30:00+02:00",
+  "title": "Design System: SalesProcess Insights",
+  "extensions": {
+    "colorMeta": {
+      "brand-orange": { "role": "primary", "displayName": "Arancio SalesProcess", "canonical": "#ff8200" },
+      "focus-orange": { "role": "primary", "displayName": "Arancio profondo di focus", "canonical": "#c45f00" },
+      "panel-black": { "role": "neutral", "displayName": "Nero del pannello", "canonical": "#000000" },
+      "page-grey": { "role": "neutral", "displayName": "Grigio pagina", "canonical": "#f4f5f6" },
+      "card-white": { "role": "neutral", "displayName": "Bianco card", "canonical": "#ffffff" },
+      "track-grey": { "role": "neutral", "displayName": "Grigio traccia", "canonical": "#e9ebed" },
+      "orange-tint": { "role": "neutral", "displayName": "Tinta arancio", "canonical": "#fff1e3" },
+      "body-graphite": { "role": "neutral", "displayName": "Grafite", "canonical": "#2b2f33" },
+      "secondary-slate": { "role": "neutral", "displayName": "Ardesia", "canonical": "#565e67" },
+      "success-green": { "role": "status", "displayName": "Verde", "canonical": "#17733f" },
+      "warning-amber": { "role": "status", "displayName": "Ambra", "canonical": "#8f5300" },
+      "danger-red": { "role": "status", "displayName": "Rosso", "canonical": "#b42318" },
+      "chart-current": { "role": "data", "displayName": "Periodo attuale", "canonical": "#d96c00" },
+      "chart-previous": { "role": "data", "displayName": "Periodo precedente", "canonical": "#f2a15a" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Numeri", "purpose": "Solo i numeri del pannello nero." },
+      "headline": { "displayName": "Titolo pagina", "purpose": "Uno per schermata; 28px su telefono, 34px da 1024px." },
+      "title": { "displayName": "Titolo sezione", "purpose": "Titoli di card e sezioni." },
+      "body": { "displayName": "Testo", "purpose": "Testi e descrizioni, massimo 65 caratteri per riga." },
+      "label": { "displayName": "Etichetta", "purpose": "Etichette dei numeri, intestazioni di tabella, titoletti dei moduli." },
+      "caption": { "displayName": "Didascalia", "purpose": "Fonte dei dati, date di aggiornamento, note." }
+    },
+    "shadows": [
+      { "name": "overlay", "value": "0 24px 48px -16px rgb(0 0 0 / 0.28), 0 4px 12px -4px rgb(0 0 0 / 0.12)", "purpose": "Solo modali, pannello laterale e notifiche." },
+      { "name": "segmento-attivo", "value": "0 1px 2px rgb(0 0 0 / 0.08)", "purpose": "Il segmento scelto sopra il binario grigio." }
+    ],
+    "motion": [
+      { "name": "dur-fast", "value": "150ms", "purpose": "Passaggio del mouse, pressione, interruttori." },
+      { "name": "dur-base", "value": "200ms", "purpose": "Elementi di lista, numeri che si ricalcolano, notifiche." },
+      { "name": "dur-slow", "value": "300ms", "purpose": "Entrata dei contenuti, ridisegno del grafico, cambio tema." },
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Entrate e cambi di stato." },
+      { "name": "ease-in", "value": "cubic-bezier(0.7, 0, 0.84, 0)", "purpose": "Uscite, più rapide delle entrate." },
+      { "name": "distanza-entrata", "value": "6px", "purpose": "Salita delle entrate; 0 con Riduci movimento." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Pulsante principale",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Una sola azione principale per schermata: arancio con testo nero.",
+      "html": "<button class=\"ds-btn-primary\">Verifica e salva</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border: 1px solid transparent; border-radius: 9999px; background: #ff8200; color: #000; font: 700 14px/1 'Red Hat Display', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16,1,0.3,1), transform 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: #ff952e; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Pulsante secondario",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Azioni secondarie come Aggiorna i dati.",
+      "html": "<button class=\"ds-btn-outline\">Aggiorna i dati</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border: 1px solid #878f98; border-radius: 9999px; background: #fff; color: #000; font: 700 14px/1 'Red Hat Display', system-ui, sans-serif; cursor: pointer; transition: border-color 150ms, background-color 150ms, transform 150ms; } .ds-btn-outline:hover { border-color: #000; background: #e9ebed; } .ds-btn-outline:active { transform: scale(0.97); } .ds-btn-outline:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo di testo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo a pillola con bordo a 3:1 e anello di focus arancio profondo.",
+      "html": "<input class=\"ds-input\" placeholder=\"Cerca un cliente\" />",
+      "css": ".ds-input { height: 40px; width: 280px; padding: 0 16px; border: 1px solid #878f98; border-radius: 9999px; background: #fff; color: #000; font: 400 14px 'Red Hat Display', system-ui, sans-serif; transition: border-color 150ms; } .ds-input::placeholder { color: #565e67; } .ds-input:hover { border-color: #000; } .ds-input:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Scelta a pillole",
+      "kind": "chip",
+      "refersTo": "segmented-active",
+      "description": "Scelta singola (metrica, giorni o settimane) su binario grigio.",
+      "html": "<div class=\"ds-seg\" role=\"group\"><button aria-pressed=\"true\">Lead</button><button aria-pressed=\"false\">Opportunità</button><button aria-pressed=\"false\">Venduto</button></div>",
+      "css": ".ds-seg { display: inline-flex; padding: 4px; border-radius: 9999px; background: #e9ebed; } .ds-seg button { height: 32px; padding: 0 12px; border: 0; border-radius: 9999px; background: transparent; color: #565e67; font: 600 14px 'Red Hat Display', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-seg button:hover { color: #000; } .ds-seg button[aria-pressed=true] { background: #fff; color: #000; box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); } .ds-seg button:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Voce di menu",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Menu nero; voce attiva arancio con testo nero.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\">Panoramica</a><a class=\"ds-nav-item\" href=\"#\">Impostazioni</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; width: 232px; padding: 16px; background: #000; border-radius: 14px; } .ds-nav-item { display: flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 9999px; color: rgb(255 255 255 / 0.66); font: 600 14px 'Red Hat Display', system-ui, sans-serif; text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav-item:hover { background: #17181a; color: #fff; } .ds-nav-item.is-active { background: #ff8200; color: #000; } .ds-nav-item:focus-visible { outline: 2px solid #ff8200; outline-offset: 2px; }"
+    },
+    {
+      "name": "Pannello dei numeri",
+      "kind": "card",
+      "refersTo": "kpi-panel",
+      "description": "Componente firma: numeri chiave in nero pieno con variazione sul periodo precedente.",
+      "html": "<section class=\"ds-kpi\"><div><p class=\"ds-kpi-l\">Lead</p><p class=\"ds-kpi-v\">128</p><p class=\"ds-kpi-d\"><span class=\"up\">+12,3%</span> da 114</p></div><div><p class=\"ds-kpi-l\">Vinte</p><p class=\"ds-kpi-v\">9</p><p class=\"ds-kpi-d\"><span class=\"down\">-25%</span> da 12</p></div></section>",
+      "css": ".ds-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 24px 32px; border-radius: 22px; background: #000; color: #fff; font-family: 'Red Hat Display', system-ui, sans-serif; font-variant-numeric: tabular-nums; } .ds-kpi p { margin: 0; } .ds-kpi-l { font: 600 13px/1.35 inherit; color: rgb(255 255 255 / 0.66); } .ds-kpi-v { font-size: 36px; font-weight: 900; line-height: 1; letter-spacing: -0.025em; margin: 6px 0 !important; } .ds-kpi-d { font-size: 14px; color: rgb(255 255 255 / 0.66); } .ds-kpi-d .up { color: #4ade80; font-weight: 600; } .ds-kpi-d .down { color: #f87171; font-weight: 600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Il cruscotto in nero e arancio",
+    "overview": "È uno strumento di lavoro, non una vetrina: il titolare apre l'app per sapere in pochi secondi quanti lead, opportunità e vendite ha portato ogni cliente, e cosa controllare. Il marchio SalesProcess entra nei dettagli precisi: il nero pieno del menu e del pannello dei numeri, l'arancio solo dove c'è un'azione o una selezione, un solo carattere (Red Hat Display) usato pesante per titoli e numeri. Tutto il resto è grigio freddo e silenzioso, così i numeri parlano.",
+    "keyCharacteristics": [
+      "Nero pieno del marchio per menu e pannello dei numeri; grigio freddo chiaro per il fondo; card bianche.",
+      "Arancio solo per l'azione principale, la voce di menu attiva, gli interruttori accesi e i dati del periodo attuale nei grafici.",
+      "Un solo carattere, Red Hat Display: 900 per titoli e numeri, 800 per i titoli di sezione, 600 per le etichette. Cifre tabellari ovunque.",
+      "Tutti i controlli a pillola; pannelli con raggio grande; nessuna ombra sulle superfici.",
+      "Tema chiaro e scuro progettati insieme, ogni coppia di colori misurata con la formula WCAG."
+    ],
+    "rules": [
+      { "name": "La regola dell'unico arancio", "body": "L'arancio pieno compare su una sola azione per schermata più gli stati di selezione. Se due pulsanti sono arancio, uno dei due è sbagliato.", "section": "colors" },
+      { "name": "La regola del testo nero sull'arancio", "body": "Sopra l'arancio il testo è sempre nero, in entrambi i temi.", "section": "colors" },
+      { "name": "La regola delle cifre allineate", "body": "Tutta l'app usa cifre tabellari (tnum): i numeri nelle colonne e nei pannelli non ballano quando cambiano.", "section": "typography" },
+      { "name": "La regola niente maiuscolo", "body": "Etichette e titoli in minuscolo normale; nessun testo tutto maiuscolo con spaziatura larga.", "section": "typography" },
+      { "name": "La regola del piatto", "body": "Una card non ha mai ombra. Se serve più gerarchia si usa il pannello nero o la tinta, non un'ombra.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usare solo i token di app/globals.css (classi come bg-brand, rounded-panel, p-panel, text-section), mai colori scritti a mano.",
+      "Do mettere testo nero sopra l'arancio, in entrambi i temi.",
+      "Do accompagnare ogni colore di stato con un'icona Lucide e una parola.",
+      "Do dare a ogni nuova schermata il suo scheletro di caricamento con la forma reale, uno stato vuoto che dice cosa fare e un errore con la strada per risolverlo.",
+      "Do misurare il contrasto di ogni nuova coppia di colori, sia nel tema chiaro sia in quello scuro."
+    ],
+    "donts": [
+      "Don't usare ombre sulle card o gradienti decorativi.",
+      "Don't usare un secondo carattere o un monospazio per le etichette dei dati.",
+      "Don't usare emoji o frecce testuali come icone: solo Lucide.",
+      "Don't usare il bianco sopra l'arancio, né l'arancio come colore del testo su fondo chiaro.",
+      "Don't aggiungere animazioni continue o decorative: il movimento risponde a un'azione o mostra un ricalcolo."
+    ]
+  }
+}

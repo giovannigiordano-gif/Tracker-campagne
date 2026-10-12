@@ -34,7 +34,7 @@ export function Delta({ pct, inversa = false, suNero = false }: { pct: number | 
 export type VoceNumero = {
   etichetta: string;
   valore: string;
-  valoreBreve?: string; // versione compatta per gli schermi stretti (es. "68,8K €")
+  valoreBreve?: string; // versione compatta per gli schermi stretti (es. "124,5K €")
   delta?: number | null;
   inversa?: boolean;
   precedente?: string; // valore del periodo precedente, già formattato
@@ -98,7 +98,7 @@ export function Riquadro({
           <h2 className="text-section">{titolo}</h2>
           {descrizione && <p className="mt-1 max-w-[65ch] text-sm text-muted-foreground">{descrizione}</p>}
         </div>
-        {azioni && <div className="flex flex-wrap items-center gap-2">{azioni}</div>}
+        {azioni && <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{azioni}</div>}
       </header>
       {children}
     </section>

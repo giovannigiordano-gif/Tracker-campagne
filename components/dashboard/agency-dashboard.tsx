@@ -163,7 +163,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
   const aggiornato = Math.min(...righe.map((r) => r.aggiornatoIl ?? Infinity));
 
   return (
-    <div className="flex flex-col gap-section">
+    <div className="flex animate-entra flex-col gap-section">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-title">Panoramica agenzia</h1>

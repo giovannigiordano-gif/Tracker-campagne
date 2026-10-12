@@ -86,8 +86,8 @@
 
 /* ---- Animazioni (classi animate-*) ---- */
 @theme {
-  --animate-entra: entra var(--dur-slow) var(--ease-out) both;
-  --animate-entra-lista: entra var(--dur-base) var(--ease-out) both;
+  --animate-entra: entra var(--dur-slow) var(--ease-out) backwards;
+  --animate-entra-lista: entra var(--dur-base) var(--ease-out) backwards;
   --animate-shimmer: shimmer 1.4s var(--ease-in-out) infinite;
   --animate-toast-in: toast-in var(--dur-base) var(--ease-out) both;
   --animate-toast-out: toast-out var(--dur-fast) var(--ease-in) both;
@@ -112,6 +112,14 @@
   @keyframes numero {
     from { opacity: 0.35; transform: translateY(calc(var(--distanza-entrata) * -0.5)); }
     to { opacity: 1; transform: none; }
+  }
+  /* Errore in un campo: due oscillazioni brevi e ferme, niente rimbalzo */
+  --animate-scuoti: scuoti 320ms var(--ease-in-out);
+  @keyframes scuoti {
+    0%, 100% { transform: none; }
+    25% { transform: translateX(calc(var(--distanza-entrata) * -0.7)); }
+    50% { transform: translateX(calc(var(--distanza-entrata) * 0.7)); }
+    75% { transform: translateX(calc(var(--distanza-entrata) * -0.35)); }
   }
 }
 
@@ -335,6 +343,18 @@
   input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 0.7;
+  }
+  /* Cambio di tema: dissolvenza breve dei colori, solo nel momento del cambio */
+  html.cambio-tema,
+  html.cambio-tema *,
+  html.cambio-tema *::before,
+  html.cambio-tema *::after {
+    transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out),
+      border-color var(--dur-slow) var(--ease-out), fill var(--dur-slow) var(--ease-out) !important;
+  }
+  /* Schede apribili (Impostazioni): il contenuto entra invece di comparire di colpo */
+  details[open] > :not(summary) {
+    animation: var(--animate-entra);
   }
   .dark input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(1);

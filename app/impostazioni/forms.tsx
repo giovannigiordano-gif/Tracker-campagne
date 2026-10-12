@@ -48,7 +48,7 @@ function useEsito(esito: EsitoAzione, titoloSuccesso: string) {
 function ErroreCampo({ id, testo }: { id: string; testo: string | null }) {
   if (!testo) return null;
   return (
-    <p id={id} role="alert" className="text-sm font-medium text-danger">
+    <p key={testo} id={id} role="alert" className="text-sm font-medium text-danger motion-safe:animate-scuoti">
       {testo}
     </p>
   );

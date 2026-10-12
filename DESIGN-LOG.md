@@ -61,3 +61,13 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Contenuto e barra dei filtri limitati a 1536px e centrati sugli schermi molto larghi: righe di tabella e grafici restano leggibili.
 - Impostazioni: freccia che ruota sulle schede dei clienti, così si capisce che si aprono.
 - Gerarchia tipografica applicata con le classi del sistema (`text-title`, `text-section`, `text-label`, `text-caption`) al posto di dimensioni scritte a mano.
+
+## Fase 6 — Movimento
+- Personalità "Corporate" della skill motion-design (strumento di lavoro): durate 150/200/300 ms come token (`--dur-fast/base/slow`), curva d'entrata `cubic-bezier(0.16, 1, 0.3, 1)`, d'uscita più rapida `cubic-bezier(0.7, 0, 0.84, 0)`; nessun rimbalzo.
+- Momento firma: quando cambi filtro o periodo i numeri del pannello nero fanno un breve "scatto" (200 ms), le barre delle classifiche si allungano o accorciano e la linea del grafico si ridisegna in 300 ms: si vede che tutta la pagina si è ricalcolata.
+- Continuità: il contenuto entra con dissolvenza e 6px di salita quando sostituisce lo scheletro; schede delle Impostazioni che si aprono con la stessa entrata; indicatore delle schede che scorre; cambio di tema con dissolvenza di 300 ms solo durante il cambio.
+- Riscontro: pressione su pulsanti e pillole, interruttori che scorrono, notifiche che salgono ed escono di lato, finestre e pannello laterale che entrano dal punto giusto (centro con leggero ingrandimento, menu da sinistra), breve scossa del messaggio d'errore nei campi.
+- Scaletta leggera (30 ms per elemento, massimo 12 elementi = 360 ms) per liste che compaiono come liste: classifiche, clienti a confronto, schede clienti, filtri attivi.
+- Livello "ambientale" della skill motion-design volutamente escluso: in uno strumento di lavoro il movimento decorativo distrae (indicazione di Impeccable per la modalità Operate).
+- "Riduci movimento": niente spostamenti né scosse, durate dimezzate, dissolvenze mantenute (il riscontro resta leggibile), grafico senza animazione. Il vecchio blocco che azzerava tutte le animazioni è stato sostituito perché toglieva anche il riscontro utile.
+- Prestazioni: solo opacità e trasformazioni, più la larghezza delle barre delle classifiche (pochi elementi in un contenitore a dimensione fissa, nessun ricalcolo della pagina). Animazioni d'entrata con riempimento "backwards" per non lasciare trasformazioni attive dopo la fine.

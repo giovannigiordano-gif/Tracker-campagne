@@ -53,7 +53,7 @@ export function PannelloNumeri({ voci, confronto }: { voci: VoceNumero[]; confro
       {voci.map((v) => (
         <div key={v.etichetta} className="flex min-w-0 flex-col gap-1.5" title={v.spiegazione}>
           <span className="text-label text-inverse-muted">{v.etichetta}</span>
-          <span className="truncate text-display text-inverse-foreground" title={v.valore}>
+          <span key={v.valore} className="truncate text-display text-inverse-foreground motion-safe:animate-numero" title={v.valore}>
             {v.valoreBreve ? (
               <>
                 <span className="sm:hidden">{v.valoreBreve}</span>

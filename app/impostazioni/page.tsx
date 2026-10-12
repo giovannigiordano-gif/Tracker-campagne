@@ -63,7 +63,7 @@ async function Impostazioni() {
   const senzaToken = clienti.filter((c) => c.token.origine === "nessuno").length;
 
   return (
-    <>
+    <div className="animate-entra">
       <TitoloPagina
         titolo="Impostazioni"
         sottotitolo="Scegli i clienti da seguire e collega i loro token GHL. Qui cambia solo questa app: su GoHighLevel non tocchiamo nulla."
@@ -168,6 +168,6 @@ async function Impostazioni() {
           </Card>
         </div>
       </div>
-    </>
+    </div>
   );
 }

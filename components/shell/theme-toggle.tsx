@@ -12,7 +12,11 @@ export const SCRIPT_TEMA = `(function(){try{var t=localStorage.getItem('${CHIAVE
 
 function applica(tema: Tema) {
   const scuro = tema === "scuro" || (tema === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.classList.toggle("dark", scuro);
+  const html = document.documentElement;
+  // Dissolvenza dei colori solo durante il cambio, poi le transizioni tornano quelle dei componenti
+  html.classList.add("cambio-tema");
+  html.classList.toggle("dark", scuro);
+  window.setTimeout(() => html.classList.remove("cambio-tema"), 350);
 }
 
 const OPZIONI: { v: Tema; label: string; Icona: typeof Sun }[] = [

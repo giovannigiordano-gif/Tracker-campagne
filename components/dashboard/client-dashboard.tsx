@@ -156,7 +156,7 @@ export function ClientDashboard({ dati, confronto }: { dati: DatiCliente; confro
   ];
 
   return (
-    <div className="flex flex-col gap-section">
+    <div className="flex animate-entra flex-col gap-section">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-title">{cliente.nome}</h1>

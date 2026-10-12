@@ -6,6 +6,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { formatGiornoBreve, formatNumero, formatValuta } from "@/lib/format";
 import { calcolaSerie, type Granularita, type LeadRow, type Metrica, type OppRow, type PuntoSerie } from "@/lib/metrics/dashboard";
 import { Segmented } from "@/components/ui/segmented";
+import { useRiduciMovimento } from "@/lib/use-riduci-movimento";
 import { Riquadro } from "./ui";
 
 const METRICHE: { v: Metrica; label: string; descrizione: string }[] = [
@@ -34,6 +35,7 @@ export function TrendPanel({
   valuta: string;
   id?: string;
 }) {
+  const riduci = useRiduciMovimento();
   const [metrica, setMetrica] = useState<Metrica>("lead");
   const [granularita, setGranularita] = useState<Granularita>(giorni.length > 45 ? "settimana" : "giorno");
   const punti = calcolaSerie(metrica, granularita, lead, opp, giorni, giorniPrec);
@@ -134,7 +136,9 @@ export function TrendPanel({
                 strokeDasharray="4 3"
                 dot={false}
                 activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }}
-                isAnimationActive={false}
+                isAnimationActive={!riduci}
+              animationDuration={300}
+              animationEasing="ease-out"
               />
             )}
             <Line
@@ -144,7 +148,9 @@ export function TrendPanel({
               strokeWidth={2.5}
               dot={punti.length <= 14 ? { r: 3, fill: "var(--viz-attuale)", strokeWidth: 0 } : false}
               activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
-              isAnimationActive={false}
+              isAnimationActive={!riduci}
+              animationDuration={300}
+              animationEasing="ease-out"
             />
           </LineChart>
         </ResponsiveContainer>

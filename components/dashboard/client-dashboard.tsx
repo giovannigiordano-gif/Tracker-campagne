@@ -1,9 +1,12 @@
 "use client";
 // Dashboard interattiva di un cliente. I filtri (canale, campagna, fonte, tag, pipeline)
 // valgono per tutta la pagina: numeri, grafici, classifiche e tabelle si ricalcolano subito.
+// modo "agenzia": la vede il titolare (con Aggiorna e Condividi).
+// modo "condivisa": la vede il cliente dal link condiviso, identica ma senza Aggiorna e Condividi.
 import { useMemo, useState } from "react";
 import { SearchX, X } from "lucide-react";
 import { RefreshButton } from "@/components/refresh-button";
+import { Condividi } from "./condividi";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -71,7 +74,15 @@ const SEZIONI = [
 ];
 
 // ---------------------------------------------------------------- componente
-export function ClientDashboard({ dati, confronto }: { dati: DatiCliente; confronto: boolean }) {
+export function ClientDashboard({
+  dati,
+  confronto,
+  modo = "agenzia",
+}: {
+  dati: DatiCliente;
+  confronto: boolean;
+  modo?: "agenzia" | "condivisa";
+}) {
   const { cliente, periodo, pipelines } = dati;
   const valuta = cliente.valuta;
   const [filtri, setFiltri] = useState<Filtri>(FILTRI_VUOTI);
@@ -165,10 +176,15 @@ export function ClientDashboard({ dati, confronto }: { dati: DatiCliente; confro
             {confronto && `, confrontato con il periodo dal ${formatGiorno(periodo.daGiornoPrec)} al ${formatGiorno(periodo.aGiornoPrec)}`}. Giorni contati nel fuso {cliente.fuso}.
           </p>
         </div>
-        <RefreshButton locationId={cliente.locationId} />
+        {modo === "agenzia" && (
+          <div className="flex flex-wrap gap-2">
+            <Condividi locationId={cliente.locationId} nome={cliente.nome} />
+            <RefreshButton locationId={cliente.locationId} />
+          </div>
+        )}
       </header>
 
-      <SectionNav sezioni={SEZIONI} />
+      <SectionNav sezioni={SEZIONI} sottoBarra={modo === "agenzia"} />
 
       {/* Filtri della pagina */}
       <div className="-mt-4 flex flex-wrap items-center gap-2 rounded-panel bg-card px-4 py-3 ring-1 ring-border">

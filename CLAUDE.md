@@ -28,7 +28,7 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
 - **Anthropic**: SDK ufficiale `@anthropic-ai/sdk`, modello predefinito `claude-opus-5-5` (configurabile con `ANTHROPIC_MODEL`).
 - **Next.js 16.4**: il middleware si chiama `proxy.ts`. Cache Components è attivo (default di create-next-app): i dati dinamici vanno dentro `<Suspense>`; non usare `"use cache"` per i dati delle API, la cache è il nostro `lib/cache.ts` come da PROGETTO.md. Per il deploy useremo `output: "standalone"`.
 - Gli script in `scripts/` girano con `tsx`; il package non è `"type": "module"`, quindi niente top-level await negli script.
-- **Design SalesProcess** (redesign del 2026-10-12, branch `redesign-salesprocess`): token in `app/globals.css`, regole in DESIGN.md, decisioni in DESIGN-LOG.md, riepilogo per il titolare in REPORT-FINALE.md. Nei componenti solo token (mai colori scritti a mano), testo nero sull'arancio, nessuna ombra sulle card, icone solo Lucide. Le pagine nuove seguono DESIGN.md.
+- **Design SalesProcess** (redesign del 2026-10-12, unito a `main`): token in `app/globals.css`, regole in DESIGN.md, decisioni in DESIGN-LOG.md, riepilogo per il titolare in REPORT-FINALE.md. Nei componenti solo token (mai colori scritti a mano), testo nero sull'arancio, nessuna ombra sulle card, icone solo Lucide. Le pagine nuove seguono DESIGN.md.
 - **Ricerca contatti GHL** (doc: doc.clickup.com/8631005/d/h/87cpx-158396/6e629989abe7fad): `POST /contacts/search` con `pageLimit` max 500, filtro `{field:"dateAdded", operator:"range", value:{gte,lte}}` (ISO), paginazione a cursore con il `searchAfter` dell'ultimo contatto (necessaria oltre 10.000). Verificato su 3.742 contatti: nessun doppione né mancante.
 - **Mappatura attribuzione (proposta, da confermare dal titolare)** in `lib/ghl/normalize.ts`: si usa `attributionSource` (primo contatto), altrimenti `lastAttributionSource`. `campaign`→utmCampaign (nome campagna), `campaignId`, `adId`; `utmMedium` = nome gruppo di inserzioni e `utmContent` = nome annuncio nei lead Meta; `adGroupId` assente nei lead Meta (l'adset si ricava dall'annuncio via Meta in Fase 4); `sessionSource`→origine. Canale "Meta Ads" solo con `Paid Social` o ID campagna/annuncio: `Social media` + facebook/instagram sono messaggi organici, non annunci.
 - **Struttura pagine**: ogni `page.tsx` rende un `<Suspense>` con dentro un componente async che fa `await params/searchParams` e carica i dati (Cache Components lo richiede). Chiavi di cache GHL: `ghl:<locationId>:...` (così "Aggiorna dati" svuota un cliente solo), `ghl:agency:locations` per l'elenco sub-account.
@@ -42,10 +42,25 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
 - `.gitignore` usa `/data/` (solo la cartella dati in radice): `data/` escludeva per errore anche `lib/data/`.
 - Il server di sviluppo a volte non vede i file salvati dagli strumenti di modifica: se una modifica non compare, `touch` del file o riavvio del server.
 - Next mantiene nascosta in memoria la pagina precedente: nei test via JS cercare solo elementi visibili.
+- Dopo `git checkout`, merge o spostamenti di cartelle: riavviare il server di sviluppo e cancellare `.next/dev` (altrimenti serve CSS e tipi vecchi).
+- **Struttura delle pagine** (2026-10-14): `app/(agenzia)/` = pagine del titolare con menu laterale (Panoramica, clienti, Impostazioni); `app/(condivisa)/condivisa/[codice]` = dashboard vista dal cliente, senza menu. `app/layout.tsx` contiene solo carattere, tema e notifiche. Gli indirizzi non sono cambiati.
+- **Panoramica** (2026-10-14): una scheda per cliente (`components/dashboard/scheda-cliente.tsx`) con numeri chiave, andamento lead, lead per canale (`RigaPanoramica.canali`, solo conteggi) e avvisi. Chiave di cache `ghl:<id>:panoramica:v2:…`.
+- **Link condivisi con i clienti** (deciso dal titolare il 2026-10-14): pulsante "Condividi" nella dashboard cliente.
+  - Un link per cliente, valido finché il titolare non lo disattiva o lo sostituisce.
+  - Il cliente vede tutta la dashboard, elenchi dei contatti compresi (scelta del titolare), ma niente "Aggiorna i dati", "Condividi", menu o Impostazioni. Può cambiare periodo.
+  - Codice: 32 byte casuali; in `data/secrets/condivisioni.json` ci sono solo l'impronta SHA-256 e una copia cifrata (`lib/condivisioni.ts`). Mai stampare il codice nei test.
+  - Pagine condivise con `noindex` e `referrer: no-referrer`.
+  - I link funzionano per i clienti solo quando l'app sarà online (Fase 6).
+- **Requisito per la Fase 6**: la password del titolare protegge tutto TRANNE `/condivisa/*` e i file statici. Ogni azione del server e ogni route dell'agenzia deve verificare la sessione anche al proprio interno, perché le azioni del server si possono chiamare da qualsiasi indirizzo, compreso `/condivisa/…`.
+- **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
+- **Idee in sospeso**:
+  - collegamento Meta MCP iniziato in `lib/meta-mcp/`, NON committato e in pausa;
+  - richiesta del titolare (2026-10-14): usare l'app da Claude o Cowork con il proprio abbonamento, trasformando l'app in un connettore MCP. Serve l'app online e solo dati aggregati verso l'AI. Da progettare dopo, verificando la documentazione Anthropic.
 
 ## Comandi
 - `npm run dev`: avvia l'app in locale (http://localhost:3000)
 - `npm run check`: verifica i collegamenti a GHL, Meta e Anthropic
+- `npm test`: test automatici (link condivisi, conteggi per canale)
 - `npm run build`: build di produzione
 
 ## Stato delle fasi

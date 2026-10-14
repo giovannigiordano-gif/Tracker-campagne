@@ -95,6 +95,25 @@ export function calcolaKpi(lead: LeadRow[], opp: OppRow[], giorni: Set<string>):
   };
 }
 
+// ---------------------------------------------------------------- lead per canale (schede Panoramica)
+export type LeadCanale = { canale: Canale; lead: number };
+
+// Lead del periodo per canale, dal canale con più lead (a parità, in ordine alfabetico)
+export function leadPerCanale(lead: LeadRow[], giorni: Set<string>): LeadCanale[] {
+  const conteggi = new Map<Canale, number>();
+  for (const r of lead) if (giorni.has(r.giorno)) conteggi.set(r.canale, (conteggi.get(r.canale) ?? 0) + 1);
+  return [...conteggi]
+    .map(([canale, n]) => ({ canale, lead: n }))
+    .sort((a, b) => b.lead - a.lead || a.canale.localeCompare(b.canale, "it"));
+}
+
+// Tiene i primi `massimo` canali e somma tutti gli altri (compreso il canale "Altro") in un'unica voce "Altro" in fondo
+export function raggruppaCanali(canali: LeadCanale[], massimo: number): LeadCanale[] {
+  const principali = canali.filter((c) => c.canale !== "Altro").slice(0, massimo);
+  const resto = canali.filter((c) => !principali.includes(c)).reduce((s, c) => s + c.lead, 0);
+  return resto > 0 ? [...principali, { canale: "Altro", lead: resto }] : principali;
+}
+
 // ---------------------------------------------------------------- andamento nel tempo
 export type Metrica = "lead" | "opportunita" | "vinte" | "venduto";
 export type Granularita = "giorno" | "settimana";

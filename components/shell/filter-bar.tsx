@@ -1,6 +1,7 @@
 "use client";
 // Barra dei filtri globali, sempre in alto: periodo (7/30/90 giorni o date scelte)
 // e confronto con il periodo precedente. Tutto sta nell'indirizzo della pagina.
+// Nella pagina condivisa con un cliente (condivisa=true) mancano le scorciatoie da tastiera.
 import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ const PRESET = [
   { v: "90", label: "90 giorni" },
 ];
 
-export function FilterBar() {
+export function FilterBar({ condivisa = false }: { condivisa?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -89,7 +90,7 @@ export function FilterBar() {
         Confronta con il periodo precedente
       </label>
 
-      <Scorciatoie />
+      {!condivisa && <Scorciatoie />}
       {inCorso && <span className="sr-only" role="status">Aggiornamento dei dati in corso</span>}
     </div>
   );

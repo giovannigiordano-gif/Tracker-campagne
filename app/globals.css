@@ -169,6 +169,7 @@
   --viz-attuale: #d96c00;
   --viz-precedente: #f2a15a;
   --viz-barra: #d96c00;
+  --viz-resto: #878f98; /* "tutto il resto" accanto all'arancio (es. canali diversi da Meta Ads): >= 3:1 */
   --viz-griglia: #e3e6e9;
 
   /* Movimento: durate brevi da strumento di lavoro */
@@ -227,6 +228,7 @@
   --viz-attuale: #ff8200;
   --viz-precedente: #94500f;
   --viz-barra: #ff8200;
+  --viz-resto: #6b737c;
   --viz-griglia: #26292d;
 }
 

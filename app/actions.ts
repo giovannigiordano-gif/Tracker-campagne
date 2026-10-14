@@ -4,6 +4,7 @@
 import { refresh } from "next/cache";
 import { getAccount, removeAccount, upsertAccount, type Account } from "@/lib/accounts";
 import * as cache from "@/lib/cache";
+import { condivisioni } from "@/lib/condivisioni";
 import { elencoSubAccount } from "@/lib/data/impostazioni";
 import { verificaTokenLocation } from "@/lib/ghl/client";
 import { deleteLocationToken, saveLocationToken } from "@/lib/ghl/tokens";
@@ -14,10 +15,13 @@ export type EsitoAzione = { ok: boolean; messaggio: string } | null;
 // Gli ID dei sub-account GHL sono alfanumerici: si rifiuta tutto il resto
 const ID_RE = /^[A-Za-z0-9]{8,40}$/;
 
-function leggiId(formData: FormData) {
-  const id = String(formData.get("locationId") ?? "");
-  if (!ID_RE.test(id)) throw new Error("ID del sub-account non valido");
+function verificaId(id: unknown) {
+  if (typeof id !== "string" || !ID_RE.test(id)) throw new Error("ID del sub-account non valido");
   return id;
+}
+
+function leggiId(formData: FormData) {
+  return verificaId(formData.get("locationId"));
 }
 
 // ---------------------------------------------------------------- aggiornamento dati
@@ -92,6 +96,7 @@ export async function rimuoviCliente(formData: FormData) {
   const id = leggiId(formData);
   await removeAccount(id);
   await deleteLocationToken(id);
+  await condivisioni.disattiva(id); // il link condiviso del cliente smette di funzionare
   await cache.invalidate(`ghl:${id}:`);
   refresh();
 }
@@ -119,4 +124,24 @@ export async function rimuoviToken(formData: FormData) {
   await deleteLocationToken(id);
   await cache.invalidate(`ghl:${id}:`);
   refresh();
+}
+
+// ---------------------------------------------------------------- link condiviso con il cliente
+// Restituiscono solo il codice: l'indirizzo completo lo compone il browser con la sua origine.
+export type LinkCondiviso = { codice: string; creatoIl: string } | null;
+
+export async function leggiLinkCondiviso(locationId: string): Promise<LinkCondiviso> {
+  return condivisioni.leggi(verificaId(locationId));
+}
+
+// Crea il link, o lo sostituisce: il vecchio smette di funzionare
+export async function creaLinkCondiviso(locationId: string): Promise<LinkCondiviso> {
+  const id = verificaId(locationId);
+  if (!(await getAccount(id))) throw new Error("Cliente non trovato");
+  await condivisioni.crea(id);
+  return condivisioni.leggi(id);
+}
+
+export async function disattivaLinkCondiviso(locationId: string) {
+  await condivisioni.disattiva(verificaId(locationId));
 }

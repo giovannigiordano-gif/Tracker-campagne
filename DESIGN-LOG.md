@@ -93,3 +93,20 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Logica di business, dati e API non toccati. In lib/ sono cambiati solo due testi mostrati a schermo:
   - "n.d." al posto di "—" quando un valore non è disponibile;
   - trattino normale tra le date.
+
+## 2026-10-14 — Schede clienti in Panoramica e pulsante Condividi
+- La tabella "Tutti i clienti" e "Clienti a confronto" sono sostituite da una scheda per cliente (richiesta del titolare: "uno spaccato rapido per ogni cliente").
+  - Ogni scheda ha numeri chiave con variazione, andamento lead, lead per canale, avvisi e "Apri dashboard".
+  - Griglia: 1 colonna su telefono, 2 da 768px, 3 da 1536px.
+- Canali: barra unica con Meta Ads in arancio e tutti gli altri canali in un solo grigio (`--viz-resto`, #878F98 chiaro / #6B737C scuro), più la legenda con numeri e percentuali.
+  - È una codifica "evidenza contro resto", non una palette a più colori.
+  - Il validatore dataviz segnala il grigio come "poco saturo", ed è voluto; separazione per daltonici (ΔE ≥ 15) e contrasto (≥ 3:1) passano in entrambi i temi.
+- Cliente in errore: la scheda mostra il motivo e "Apri Impostazioni" (pulsante principale) al posto dei numeri.
+- Condividi:
+  - finestra con stato di caricamento, avviso ambra "l'app gira solo sul tuo computer" in locale, "Copia link" come azione principale;
+  - "Crea un nuovo link" e "Disattiva link" come azioni secondarie, con conferma dentro la stessa finestra (niente finestra sopra un'altra finestra);
+  - il pulsante è il "trigger" della finestra, così chiudendola il focus della tastiera torna su "Condividi".
+- Pagina condivisa:
+  - solo la barra nera col marchio (senza link), barra del periodo senza scorciatoie e la stessa dashboard;
+  - l'indice delle sezioni si aggancia in cima, perché non c'è la barra dei filtri fissa;
+  - "Link non valido o disattivato" è una pagina neutra, senza indizi sul motivo.

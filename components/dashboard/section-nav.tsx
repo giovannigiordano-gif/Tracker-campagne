@@ -1,9 +1,10 @@
 "use client";
 // Indice delle sezioni della pagina cliente: resta in alto e segna la sezione che stai guardando.
+// sottoBarra: true quando sopra c'è la barra dei filtri fissa (pagine dell'agenzia), false nella pagina condivisa.
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-export function SectionNav({ sezioni }: { sezioni: { id: string; label: string }[] }) {
+export function SectionNav({ sezioni, sottoBarra = true }: { sezioni: { id: string; label: string }[]; sottoBarra?: boolean }) {
   const [attiva, setAttiva] = useState(sezioni[0]?.id);
 
   useEffect(() => {
@@ -24,7 +25,10 @@ export function SectionNav({ sezioni }: { sezioni: { id: string; label: string }
   return (
     <nav
       aria-label="Sezioni della pagina"
-      className="sticky top-[4.25rem] z-[calc(var(--z-sticky)-1)] -mx-4 hidden overflow-x-auto bg-background/90 px-4 py-2 backdrop-blur-md lg:top-[4.5rem] lg:-mx-8 lg:block lg:px-8"
+      className={cn(
+        "sticky z-[calc(var(--z-sticky)-1)] -mx-4 hidden overflow-x-auto bg-background/90 px-4 py-2 backdrop-blur-md lg:-mx-8 lg:block lg:px-8",
+        sottoBarra ? "top-[4.25rem] lg:top-[4.5rem]" : "top-0"
+      )}
     >
       <ul className="flex w-max gap-1">
         {sezioni.map((s) => (

@@ -5,7 +5,7 @@ import * as cache from "../cache";
 import { formatAggiornato, formatPercentuale } from "../format";
 import { getLocationClient } from "../ghl/client";
 import { GhlError } from "../ghl/http";
-import { calcolaKpi, variazionePct, type Kpi } from "../metrics/dashboard";
+import { calcolaKpi, leadPerCanale, variazionePct, type Kpi, type LeadCanale } from "../metrics/dashboard";
 import { risolviPeriodo, type Selezione } from "../period";
 import { costruisciRighe, datiGrezziCliente } from "./cliente";
 
@@ -21,7 +21,9 @@ export type RigaPanoramica = {
   kpi: Kpi | null;
   kpiPrec: Kpi | null;
   leadGiornalieri: number[]; // per il mini-grafico
+  canali: LeadCanale[]; // lead del periodo per canale (solo conteggi)
   avvisi: Avviso[];
+  problemaToken: boolean; // i dati mancano perché il token GHL manca o è scaduto
   aggiornatoIl: number | null;
 };
 
@@ -38,12 +40,12 @@ export function messaggioErrore(e: unknown, nomeCliente: string): string {
   return `${nomeCliente}: errore imprevisto (${(e as Error).message})`;
 }
 
-type Totali = { kpi: Kpi; kpiPrec: Kpi; leadGiornalieri: number[]; aggiornatoIl: number };
+type Totali = { kpi: Kpi; kpiPrec: Kpi; leadGiornalieri: number[]; canali: LeadCanale[]; aggiornatoIl: number };
 
 async function totaliCliente(account: Account, sel: Selezione): Promise<Totali> {
   const { corrente, precedente } = risolviPeriodo(sel, account.timezone);
   const { value } = await cache.get<Totali>(
-    `ghl:${account.locationId}:panoramica:${precedente.daGiorno}:${corrente.aGiorno}`,
+    `ghl:${account.locationId}:panoramica:v2:${precedente.daGiorno}:${corrente.aGiorno}`,
     cache.ttlPerIntervallo(corrente.fine),
     async () => {
       const grezzi = await datiGrezziCliente(account, sel);
@@ -54,6 +56,7 @@ async function totaliCliente(account: Account, sel: Selezione): Promise<Totali> 
         kpi: calcolaKpi(lead, opp, new Set(corrente.giorni)),
         kpiPrec: calcolaKpi(lead, opp, new Set(precedente.giorni)),
         leadGiornalieri: corrente.giorni.map((g) => perGiorno.get(g) ?? 0),
+        canali: leadPerCanale(lead, new Set(corrente.giorni)),
         aggiornatoIl: grezzi.aggiornatoIl,
       };
     },
@@ -74,7 +77,9 @@ async function caricaRiga(account: Account, sel: Selezione): Promise<RigaPanoram
     kpi: null,
     kpiPrec: null,
     leadGiornalieri: [],
+    canali: [],
     avvisi: [],
+    problemaToken: false,
     aggiornatoIl: null,
   };
 
@@ -91,6 +96,7 @@ async function caricaRiga(account: Account, sel: Selezione): Promise<RigaPanoram
     }
   } catch (e) {
     riga.avvisi.push({ livello: "errore", testo: messaggioErrore(e, account.name) });
+    riga.problemaToken = e instanceof GhlError && (e.tipo === "auth" || e.tipo === "token_mancante");
   }
 
   try {

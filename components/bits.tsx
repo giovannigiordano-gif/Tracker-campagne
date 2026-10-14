@@ -85,8 +85,36 @@ export function ScheletroPanoramica() {
         <Skeleton className="h-4 w-96 max-w-full" />
       </div>
       <ScheletroNumeri />
-      <ScheletroPannello righe={3} />
-      <ScheletroPannello righe={5} />
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-6 w-40" />
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+          {Array.from({ length: 3 }, (_, i) => <ScheletroScheda key={i} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Segnaposto di una scheda cliente della Panoramica, con la sua forma reale
+function ScheletroScheda() {
+  return (
+    <div className="flex min-w-0 flex-col gap-5 rounded-panel bg-card p-panel ring-1 ring-border">
+      <Skeleton className="h-5 w-48 max-w-full" />
+      <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="flex min-w-0 flex-col gap-1.5">
+            <Skeleton className="h-3 w-14 max-w-full" />
+            <Skeleton className="h-6 w-16 max-w-full" />
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-10" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-2.5 rounded-full" />
+        <Skeleton className="h-3.5 w-3/4" />
+        <Skeleton className="h-3.5 w-2/3" />
+      </div>
+      <Skeleton className="h-9 w-32 rounded-control" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 // Panoramica agenzia: totali di tutti i clienti attivi, confronto tra clienti e tabella clienti.
 import Link from "next/link";
 import { Suspense } from "react";
+import { richiediAccessoPagina } from "@/lib/accesso";
 import { ScheletroPanoramica } from "@/components/bits";
 import { AgencyDashboard } from "@/components/dashboard/agency-dashboard";
 import { buttonVariants } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const PRIMI_PASSI = [
 ];
 
 async function Panoramica({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
+  await richiediAccessoPagina(); // secondo controllo, oltre al proxy
   const params = await searchParams;
   const sel = leggiSelezione(params);
   const confronto = leggiConfronto(params);

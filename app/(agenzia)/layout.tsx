@@ -6,13 +6,15 @@ import { connection } from "next/server";
 import { Marchio } from "@/components/brand";
 import { FilterBar } from "@/components/shell/filter-bar";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
+import { configAccesso, haAccesso } from "@/lib/accesso";
 import { readAccounts } from "@/lib/accounts";
 
 // Elenco clienti nel menu: si legge a ogni richiesta (connection), non al momento della build
 async function MenuLaterale() {
   await connection();
+  if (!(await haAccesso())) return <div className="flex-1" />; // senza accesso nessun nome di cliente
   const clienti = (await readAccounts()).filter((a) => a.active).map((a) => ({ id: a.locationId, nome: a.name }));
-  return <SidebarNav clienti={clienti} />;
+  return <SidebarNav clienti={clienti} conAccesso={configAccesso().stato === "pronto"} />;
 }
 
 export default function LayoutAgenzia({ children }: LayoutProps<"/">) {

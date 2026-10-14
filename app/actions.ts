@@ -1,7 +1,13 @@
 "use server";
 // Azioni eseguite sul server quando si preme un pulsante nell'app.
-// Modificano SOLO i file locali in data/ (clienti, token cifrati, cache): mai GHL o Meta.
+// Modificano SOLO i dati dell'app (clienti, token cifrati, link, cache): mai GHL o Meta.
+// Ogni azione del titolare ricontrolla l'accesso (richiediAccesso): le azioni si possono chiamare da qualsiasi
+// indirizzo, quindi il blocco delle pagine nel proxy non basta.
 import { refresh } from "next/cache";
+import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { configAccesso, richiediAccesso } from "@/lib/accesso";
+import { creaSessione, DURATA_SESSIONE_MS, NOME_COOKIE, passwordCorretta, percorsoSicuro } from "@/lib/sessione";
 import { getAccount, removeAccount, upsertAccount, type Account } from "@/lib/accounts";
 import * as cache from "@/lib/cache";
 import { condivisioni } from "@/lib/condivisioni";
@@ -26,6 +32,7 @@ function leggiId(formData: FormData) {
 
 // ---------------------------------------------------------------- aggiornamento dati
 export async function aggiornaDati(formData: FormData) {
+  await richiediAccesso();
   const id = formData.get("locationId");
   // Con un cliente: svuota solo la sua cache. Senza: tutta la cache GHL.
   await cache.invalidate(typeof id === "string" && ID_RE.test(id) ? `ghl:${id}:` : "ghl:");
@@ -33,12 +40,14 @@ export async function aggiornaDati(formData: FormData) {
 }
 
 export async function svuotaCache() {
+  await richiediAccesso();
   await cache.invalidate("");
   refresh();
 }
 
 // ---------------------------------------------------------------- clienti
 export async function aggiungiCliente(_prev: EsitoAzione, formData: FormData): Promise<EsitoAzione> {
+  await richiediAccesso();
   const id = leggiId(formData);
   const sub = (await elencoSubAccount()).value.find((l) => l.id === id);
   if (!sub) return { ok: false, messaggio: "Sub-account non trovato nell'elenco di GHL" };
@@ -59,6 +68,7 @@ export async function aggiungiCliente(_prev: EsitoAzione, formData: FormData): P
 }
 
 export async function modificaCliente(_prev: EsitoAzione, formData: FormData): Promise<EsitoAzione> {
+  await richiediAccesso();
   const id = leggiId(formData);
   const attuale = await getAccount(id);
   if (!attuale) return { ok: false, messaggio: "Cliente non trovato" };
@@ -93,6 +103,7 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
 }
 
 export async function rimuoviCliente(formData: FormData) {
+  await richiediAccesso();
   const id = leggiId(formData);
   await removeAccount(id);
   await deleteLocationToken(id);
@@ -103,6 +114,7 @@ export async function rimuoviCliente(formData: FormData) {
 
 // ---------------------------------------------------------------- token GHL del sub-account
 export async function salvaToken(_prev: EsitoAzione, formData: FormData): Promise<EsitoAzione> {
+  await richiediAccesso();
   const id = leggiId(formData);
   const token = String(formData.get("token") ?? "").trim();
   if (token.length < 10 || token.length > 500 || /\s/.test(token)) {
@@ -120,6 +132,7 @@ export async function salvaToken(_prev: EsitoAzione, formData: FormData): Promis
 }
 
 export async function rimuoviToken(formData: FormData) {
+  await richiediAccesso();
   const id = leggiId(formData);
   await deleteLocationToken(id);
   await cache.invalidate(`ghl:${id}:`);
@@ -131,11 +144,13 @@ export async function rimuoviToken(formData: FormData) {
 export type LinkCondiviso = { codice: string; creatoIl: string } | null;
 
 export async function leggiLinkCondiviso(locationId: string): Promise<LinkCondiviso> {
+  await richiediAccesso();
   return condivisioni.leggi(verificaId(locationId));
 }
 
 // Crea il link, o lo sostituisce: il vecchio smette di funzionare
 export async function creaLinkCondiviso(locationId: string): Promise<LinkCondiviso> {
+  await richiediAccesso();
   const id = verificaId(locationId);
   if (!(await getAccount(id))) throw new Error("Cliente non trovato");
   await condivisioni.crea(id);
@@ -143,5 +158,43 @@ export async function creaLinkCondiviso(locationId: string): Promise<LinkCondivi
 }
 
 export async function disattivaLinkCondiviso(locationId: string) {
+  await richiediAccesso();
   await condivisioni.disattiva(verificaId(locationId));
+}
+
+// ---------------------------------------------------------------- accesso del titolare
+// Tentativi sbagliati per indirizzo: ogni errore rallenta la risposta successiva (fino a 5 secondi),
+// così indovinare la password provando a ripetizione diventa lentissimo
+const g = globalThis as unknown as { __tentativiAccesso?: Map<string, number> };
+const tentativi = (g.__tentativiAccesso ??= new Map<string, number>());
+
+export async function accedi(_prev: EsitoAzione, formData: FormData): Promise<EsitoAzione> {
+  const config = configAccesso();
+  if (config.stato === "libero") redirect("/");
+  if (config.stato === "da-configurare") return { ok: false, messaggio: `App non configurata: ${config.errore}` };
+
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "locale";
+  const sbagliati = tentativi.get(ip) ?? 0;
+  if (sbagliati > 0) await new Promise((r) => setTimeout(r, Math.min(sbagliati, 10) * 500));
+
+  const inserita = String(formData.get("password") ?? "");
+  if (!passwordCorretta(inserita, config.password)) {
+    tentativi.set(ip, sbagliati + 1);
+    return { ok: false, messaggio: "Password sbagliata. Riprova." };
+  }
+
+  tentativi.delete(ip);
+  (await cookies()).set(NOME_COOKIE, creaSessione(config.segreto, config.password), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: DURATA_SESSIONE_MS / 1000,
+  });
+  redirect(percorsoSicuro(String(formData.get("da") ?? "")));
+}
+
+export async function esci() {
+  (await cookies()).delete(NOME_COOKIE);
+  redirect("/accesso");
 }

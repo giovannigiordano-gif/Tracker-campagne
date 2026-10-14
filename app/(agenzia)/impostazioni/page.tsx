@@ -1,6 +1,7 @@
 // Impostazioni: clienti seguiti (da accounts.json), token GHL cifrati, cache.
 // La mappatura con gli account pubblicitari Meta arriva nella Fase 3 del progetto.
 import { Suspense } from "react";
+import { richiediAccessoPagina } from "@/lib/accesso";
 import { connection } from "next/server";
 import { ChevronDown, CircleAlert, CircleCheck, FileKey } from "lucide-react";
 import { BoxErrore, ScheletroImpostazioni, TitoloPagina } from "@/components/bits";
@@ -59,6 +60,7 @@ const PASSI_TOKEN = [
 
 async function Impostazioni() {
   await connection(); // dati letti a ogni richiesta, mai al momento della build
+  await richiediAccessoPagina(); // secondo controllo, oltre al proxy
   const { clienti, disponibili, erroreSubAccount } = await caricaImpostazioni();
   const senzaToken = clienti.filter((c) => c.token.origine === "nessuno").length;
 

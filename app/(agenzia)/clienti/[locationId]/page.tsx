@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { richiediAccessoPagina } from "@/lib/accesso";
 import { BoxErrore, ScheletroCliente } from "@/components/bits";
 import { ClientDashboard } from "@/components/dashboard/client-dashboard";
 import { getAccount } from "@/lib/accounts";
@@ -27,6 +28,7 @@ export default function ClientePage(props: Props) {
 }
 
 async function Cliente({ params, searchParams }: Props) {
+  await richiediAccessoPagina(); // secondo controllo, oltre al proxy
   const { locationId } = await params;
   const query = await searchParams;
   const account = await getAccount(locationId);

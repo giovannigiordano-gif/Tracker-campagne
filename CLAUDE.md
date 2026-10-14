@@ -51,7 +51,13 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - Codice: 32 byte casuali; in `data/secrets/condivisioni.json` ci sono solo l'impronta SHA-256 e una copia cifrata (`lib/condivisioni.ts`). Mai stampare il codice nei test.
   - Pagine condivise con `noindex` e `referrer: no-referrer`.
   - I link funzionano per i clienti solo quando l'app sarà online (Fase 6).
-- **Requisito per la Fase 6**: la password del titolare protegge tutto TRANNE `/condivisa/*` e i file statici. Ogni azione del server e ogni route dell'agenzia deve verificare la sessione anche al proprio interno, perché le azioni del server si possono chiamare da qualsiasi indirizzo, compreso `/condivisa/…`.
+- **Accesso del titolare** (fatto il 2026-10-14): password `APP_PASSWORD`.
+  - Cookie firmato `sp_accesso` (HMAC con `SESSION_SECRET`, almeno 32 caratteri), valido 30 giorni; cambiare la password chiude le sessioni. Codice in `lib/sessione.ts` (funzioni pure, testate) e `lib/accesso.ts`.
+  - `proxy.ts` blocca tutto tranne `/accesso`, `/condivisa/*` e i file statici: reindirizza le pagine, risponde 401 alle azioni.
+  - Ogni azione in `app/actions.ts` chiama `richiediAccesso()`, ogni pagina dell'agenzia `richiediAccessoPagina()`: le azioni del server si possono chiamare da qualsiasi indirizzo.
+  - In locale senza `APP_PASSWORD` l'app resta aperta. In produzione senza `APP_PASSWORD` o `SESSION_SECRET` ogni pagina risponde 503 "App non ancora configurata".
+  - Le prove in locale si fanno con `.env.development.local` (escluso da git), da cancellare dopo.
+- **Hosting su Vercel** (deciso dal titolare il 2026-10-14, piano Hobby per la fase di test; cambia "Non Vercel" di PROGETTO.md). Su Vercel i file non si conservano, quindi i dati dell'app vanno in **Vercel Blob privato** (spazio file, non database), cifrati. La cache dei dati GHL resta in memoria, per stare nei limiti Hobby (2.000 scritture al mese; se si superano, Blob si blocca per 30 giorni). Le variabili d'ambiente si inseriscono SOLO nel pannello di Vercel, mai su GitHub.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
   - collegamento Meta MCP iniziato in `lib/meta-mcp/`, NON committato e in pausa;

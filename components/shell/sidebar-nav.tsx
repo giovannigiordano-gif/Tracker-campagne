@@ -5,7 +5,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LayoutDashboard, Menu, Search, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, Search, Settings } from "lucide-react";
+import { esci } from "@/app/actions";
 import { Marchio } from "@/components/brand";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,7 @@ const voce = (attiva: boolean) =>
 
 const SOGLIA_RICERCA = 8; // con molti clienti compare il campo per filtrarli
 
-function ContenutoMenu({ clienti, onNaviga }: { clienti: Cliente[]; onNaviga?: () => void }) {
+function ContenutoMenu({ clienti, conAccesso, onNaviga }: { clienti: Cliente[]; conAccesso: boolean; onNaviga?: () => void }) {
   const pathname = usePathname();
   const conQuery = useConQuery();
   const [filtro, setFiltro] = useState("");
@@ -103,21 +104,31 @@ function ContenutoMenu({ clienti, onNaviga }: { clienti: Cliente[]; onNaviga?: (
         >
           <Settings className="size-4" aria-hidden /> Impostazioni
         </Link>
-        <div className="flex flex-col gap-3 px-1">
+        <div className="flex items-center justify-between gap-3 px-1">
           <ThemeToggle />
+          {conAccesso && (
+            <form action={esci}>
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center gap-2 rounded-control px-3 text-sm font-semibold text-inverse-muted transition-colors motion-fast hover:bg-inverse-raised hover:text-inverse-foreground"
+              >
+                <LogOut className="size-4" aria-hidden /> Esci
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </nav>
   );
 }
 
-export function SidebarNav({ clienti }: { clienti: Cliente[] }) {
+export function SidebarNav({ clienti, conAccesso = false }: { clienti: Cliente[]; conAccesso?: boolean }) {
   const [aperto, setAperto] = useState(false);
   return (
     <>
       {/* Colonna fissa (schermi larghi) */}
       <div className="hidden min-h-0 flex-1 flex-col lg:flex">
-        <ContenutoMenu clienti={clienti} />
+        <ContenutoMenu clienti={clienti} conAccesso={conAccesso} />
       </div>
 
       {/* Pulsante e pannello laterale (schermi stretti) */}
@@ -133,7 +144,7 @@ export function SidebarNav({ clienti }: { clienti: Cliente[] }) {
         <DialogContent lato className="superficie-inversa flex flex-col gap-6 bg-inverse text-inverse-foreground [&>button:last-child]:text-inverse-muted [&>button:last-child]:hover:bg-inverse-raised">
           <DialogTitle className="sr-only">Menu</DialogTitle>
           <Marchio />
-          <ContenutoMenu clienti={clienti} onNaviga={() => setAperto(false)} />
+          <ContenutoMenu clienti={clienti} conAccesso={conAccesso} onNaviga={() => setAperto(false)} />
         </DialogContent>
       </Dialog>
     </>

@@ -1,6 +1,6 @@
-// Elenco dei clienti monitorati: data/accounts.json.
-// Contiene solo configurazione e contesto per l'AI, MAI token (quelli stanno cifrati in data/secrets/).
-import { dataPath, readJson, withFileLock, writeJsonAtomic } from "./files";
+// Elenco dei clienti monitorati: "accounts.json" nell'archivio (data/ in locale, Vercel Blob online).
+// Contiene solo configurazione e contesto per l'AI, MAI token (quelli stanno cifrati in secrets/).
+import { archivio } from "./archivio";
 
 export type Account = {
   locationId: string; // ID del sub-account GHL
@@ -16,13 +16,16 @@ export type Account = {
   };
 };
 
-const FILE = dataPath("accounts.json");
+const NOME = "accounts.json";
 
 export const SOGLIA_CALO_LEAD_PREDEFINITA = 30;
 
 export async function readAccounts(): Promise<Account[]> {
-  const lista = await readJson<Partial<Account>[]>(FILE, []);
   // Completa i campi mancanti così il resto del codice può contarci
+  return completa(await archivio.leggi<Partial<Account>[]>(NOME, []));
+}
+
+function completa(lista: Partial<Account>[]): Account[] {
   return lista
     .filter((a): a is Partial<Account> & { locationId: string } => !!a.locationId)
     .map((a) => ({
@@ -41,13 +44,9 @@ export async function getAccount(locationId: string) {
   return (await readAccounts()).find((a) => a.locationId === locationId) ?? null;
 }
 
-// Modifica l'elenco in modo sicuro (una scrittura alla volta, scrittura atomica)
+// Modifica l'elenco in modo sicuro (una scrittura alla volta; online, senza sovrascrivere salvataggi altrui)
 export function updateAccounts(modifica: (lista: Account[]) => Account[]) {
-  return withFileLock(FILE, async () => {
-    const nuova = modifica(await readAccounts());
-    await writeJsonAtomic(FILE, nuova);
-    return nuova;
-  });
+  return archivio.modifica<Partial<Account>[]>(NOME, [], (lista) => modifica(completa(lista)));
 }
 
 export function upsertAccount(account: Account) {

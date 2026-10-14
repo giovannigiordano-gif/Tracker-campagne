@@ -6,13 +6,15 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import { creaArchivioFile } from "./archivio";
 import { creaArchivioCondivisioni } from "./condivisioni";
 
 process.env.ENCRYPTION_KEY = randomBytes(32).toString("base64");
 
 function archivioDiProva() {
-  const file = path.join(mkdtempSync(path.join(tmpdir(), "condivisioni-")), "condivisioni.json");
-  return { file, archivio: creaArchivioCondivisioni(file) };
+  const cartella = mkdtempSync(path.join(tmpdir(), "condivisioni-"));
+  const file = path.join(cartella, "secrets", "condivisioni.json");
+  return { file, archivio: creaArchivioCondivisioni(creaArchivioFile(cartella)) };
 }
 
 test("un link creato riconosce il suo cliente e si può rileggere", async () => {

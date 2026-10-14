@@ -58,6 +58,11 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - In locale senza `APP_PASSWORD` l'app resta aperta. In produzione senza `APP_PASSWORD` o `SESSION_SECRET` ogni pagina risponde 503 "App non ancora configurata".
   - Le prove in locale si fanno con `.env.development.local` (escluso da git), da cancellare dopo.
 - **Hosting su Vercel** (deciso dal titolare il 2026-10-14, piano Hobby per la fase di test; cambia "Non Vercel" di PROGETTO.md). Su Vercel i file non si conservano, quindi i dati dell'app vanno in **Vercel Blob privato** (spazio file, non database), cifrati. La cache dei dati GHL resta in memoria, per stare nei limiti Hobby (2.000 scritture al mese; se si superano, Blob si blocca per 30 giorni). Le variabili d'ambiente si inseriscono SOLO nel pannello di Vercel, mai su GitHub.
+  - Codice: `lib/archivio.ts` (`archivio.leggi/modifica/cancella`). In locale scrive i file in `data/`. Su Vercel scrive in Blob privato sotto `dati/`, con contenuto cifrato con `ENCRYPTION_KEY` e scritture con ETag (`ifMatch`), che in caso di conflitto rileggono e riprovano.
+  - Le letture restano in memoria per 30 s, per consumare poche operazioni: un cambiamento può impiegare fino a 30 s ad arrivare alle altre istanze.
+  - Scelta automatica: Blob se esiste `BLOB_STORE_ID` o `BLOB_READ_WRITE_TOKEN`, oppure con `ARCHIVIO=file|blob` per forzarla.
+  - Su Vercel senza Blob collegato le letture sono vuote e i salvataggi danno un errore chiaro; le Impostazioni lo segnalano.
+  - SDK: `@vercel/blob` 2.8.1. Usano l'archivio `accounts.ts`, `ghl/tokens.ts` e `condivisioni.ts`; `cache.ts` scrive su disco solo in modalità file.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
   - collegamento Meta MCP iniziato in `lib/meta-mcp/`, NON committato e in pausa;

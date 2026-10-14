@@ -1,5 +1,6 @@
 // Dati per la pagina Impostazioni: clienti configurati e sub-account GHL disponibili.
 import { readAccounts } from "../accounts";
+import { archivio } from "../archivio";
 import * as cache from "../cache";
 import { getAgencyClient } from "../ghl/client";
 import { getTokenInfo } from "../ghl/tokens";
@@ -26,6 +27,7 @@ export async function caricaImpostazioni() {
 
   const giaAggiunti = new Set(clienti.map((c) => c.locationId));
   return {
+    archivioNonConfigurato: archivio.tipo === "non-configurato", // su Vercel senza spazio Blob: non si salva nulla
     clienti: conToken,
     disponibili: subAccount.filter((l) => !giaAggiunti.has(l.id)),
     erroreSubAccount,

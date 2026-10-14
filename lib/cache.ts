@@ -1,7 +1,12 @@
 // Cache in due livelli: memoria (tutto) + file JSON in data/cache/ (solo dati aggregati).
 // I contatti grezzi stanno SOLO in memoria: per loro si usa persist: false (il default).
+// Online (archivio su Vercel Blob) la cache resta solo in memoria: niente scritture su Blob, così si resta nei
+// limiti del piano Hobby (2.000 scritture al mese). I dati si rileggono da GHL quando la memoria si svuota.
 import { promises as fs } from "node:fs";
+import { archivio } from "./archivio";
 import { dataPath, deleteFile, readJson, writeJsonAtomic } from "./files";
+
+const suDisco = () => archivio.tipo === "file";
 
 // Scadenze previste dal progetto
 export const TTL = {
@@ -35,9 +40,10 @@ export async function get<T>(
   key: string,
   ttl: number,
   fetcher: () => Promise<T>,
-  { persist = false }: { persist?: boolean } = {},
+  { persist: chiesto = false }: { persist?: boolean } = {},
 ): Promise<Cached<T>> {
   const adesso = Date.now();
+  const persist = chiesto && suDisco();
 
   const inMemoria = memoria.get(key) as Voce<T> | undefined;
   if (inMemoria && inMemoria.expiresAt > adesso) return inMemoria;
@@ -73,6 +79,7 @@ export async function get<T>(
 // Svuota la cache (tutta, o solo le chiavi che iniziano con un prefisso)
 export async function invalidate(prefisso = "") {
   for (const key of memoria.keys()) if (key.startsWith(prefisso)) memoria.delete(key);
+  if (!suDisco()) return;
   const cartella = dataPath("cache");
   const nomePrefisso = prefisso.replace(/[^a-zA-Z0-9_.-]/g, "_");
   let files: string[] = [];

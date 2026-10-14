@@ -3,7 +3,8 @@
 import { Suspense } from "react";
 import { richiediAccessoPagina } from "@/lib/accesso";
 import { connection } from "next/server";
-import { ChevronDown, CircleAlert, CircleCheck, FileKey } from "lucide-react";
+import { ChevronDown, CircleAlert, CircleCheck, FileKey, TriangleAlert } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BoxErrore, ScheletroImpostazioni, TitoloPagina } from "@/components/bits";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,7 +62,7 @@ const PASSI_TOKEN = [
 async function Impostazioni() {
   await connection(); // dati letti a ogni richiesta, mai al momento della build
   await richiediAccessoPagina(); // secondo controllo, oltre al proxy
-  const { clienti, disponibili, erroreSubAccount } = await caricaImpostazioni();
+  const { clienti, disponibili, erroreSubAccount, archivioNonConfigurato } = await caricaImpostazioni();
   const senzaToken = clienti.filter((c) => c.token.origine === "nessuno").length;
 
   return (
@@ -70,6 +71,16 @@ async function Impostazioni() {
         titolo="Impostazioni"
         sottotitolo="Scegli i clienti da seguire e collega i loro token GHL. Qui cambia solo questa app: su GoHighLevel non tocchiamo nulla."
       />
+
+      {archivioNonConfigurato && (
+        <Alert variant="warning" className="mb-section">
+          <TriangleAlert aria-hidden />
+          <AlertTitle>Manca lo spazio dati su Vercel</AlertTitle>
+          <AlertDescription>
+            Finché non colleghi uno spazio Vercel Blob privato al progetto, l&apos;app non può salvare clienti, token o link condivisi.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid items-start gap-section xl:grid-cols-[minmax(0,1fr)_24rem]">
         <section className="flex min-w-0 flex-col gap-3" aria-labelledby="titolo-clienti">

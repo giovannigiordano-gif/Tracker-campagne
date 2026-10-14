@@ -105,7 +105,6 @@ function ContenutoMenu({ clienti, onNaviga }: { clienti: Cliente[]; onNaviga?: (
         </Link>
         <div className="flex flex-col gap-3 px-1">
           <ThemeToggle />
-          <span className="text-caption font-extrabold whitespace-nowrap text-brand">Fatturare. Fatturare. Fatturare.</span>
         </div>
       </div>
     </nav>

@@ -230,7 +230,7 @@ Il sistema è piatto. Le superfici si separano col colore: fondo grigio, card bi
 
 ## Shapes
 
-Tre raggi con un ruolo preciso: pillola completa per ogni controllo (pulsanti, campi, menu a tendina, pillole, etichette, voci di menu), 22px per i pannelli (come le card del sito) e 14px per i blocchi interni ai pannelli. Il simbolo del marchio è fatto di quadrati a gradini.
+Tre raggi con un ruolo preciso: pillola completa per ogni controllo (pulsanti, campi, menu a tendina, pillole, etichette, voci di menu), 22px per i pannelli (come le card del sito) e 14px per i blocchi interni ai pannelli. Il simbolo del marchio è fatto di cinque quadrati a zig-zag, sempre più piccoli verso il basso (misure in `components/brand.tsx`, ricavate dal logo ufficiale).
 
 ## Components
 
@@ -258,7 +258,7 @@ Tre raggi con un ruolo preciso: pillola completa per ogni controllo (pulsanti, c
 - **Error / Disabled:** bordo rosso e fondo rosato, messaggio in rosso sotto il campo (annunciato ai lettori di schermo) con una breve scossa; disattivato con fondo grigio.
 
 ### Navigation
-- **Style:** colonna nera; voci a pillola alte 40px in bianco al 66%; voce attiva in arancio con testo nero; elenco clienti con filtro sopra gli 8 clienti; tema (automatico, chiaro, scuro) e firma "Fatturare. Fatturare. Fatturare." in fondo.
+- **Style:** colonna nera; voci a pillola alte 40px in bianco al 66%; voce attiva in arancio con testo nero; elenco clienti con filtro sopra gli 8 clienti; in alto il logo ufficiale (`public/brand/salesprocess-logo.png`, scritta bianca e motto arancio, solo su fondo nero); tema (automatico, chiaro, scuro) in fondo.
 - **Mobile:** barra nera con pulsante "Menu" e pannello laterale da sinistra.
 
 ### Pannello dei numeri (componente firma)

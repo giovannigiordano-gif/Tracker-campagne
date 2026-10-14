@@ -110,3 +110,11 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
   - solo la barra nera col marchio (senza link), barra del periodo senza scorciatoie e la stessa dashboard;
   - l'indice delle sezioni si aggancia in cima, perché non c'è la barra dei filtri fissa;
   - "Link non valido o disattivato" è una pagina neutra, senza indizi sul motivo.
+
+## 2026-10-14 — Logo ufficiale
+- Logo ufficiale fornito dal titolare (PNG 293×68, scritta bianca, simbolo e motto arancio) salvato in `public/brand/salesprocess-logo.png`.
+  - Si mostra a 147×34 px, cioè metà della larghezza reale, così resta nitido sugli schermi ad alta densità.
+  - Sta solo sulle barre nere (menu e pagina condivisa), perché la scritta è bianca.
+- Il simbolo vettoriale (icona del browser, pagine di errore) è ridisegnato con le misure lette dai pixel del logo: cinque quadrati a zig-zag (20,5 / 17,5 / 13 / 10,5 / 7,8). Quello di prima era inventato e diverso.
+- Tolto il motto "Fatturare. Fatturare. Fatturare." in fondo al menu: è già nel logo.
+- Il logo usa un arancio leggermente più rosso (#FF7200) del colore del sito (#FF8200). L'interfaccia resta su #FF8200, misurato sul sito e già verificato per i contrasti.

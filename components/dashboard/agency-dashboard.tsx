@@ -133,8 +133,8 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
         </div>
 
         {schede.length === 0 ? (
-          <div className="flex flex-col items-start gap-3 rounded-panel bg-muted p-panel">
-            <p className="font-bold text-titolo">{soloAvvisi ? "Nessun cliente da controllare." : "Nessun cliente con questo nome."}</p>
+          <div className="flex flex-col items-start gap-3 rounded-panel bg-card p-panel shadow-card">
+            <p className="font-semibold text-titolo">{soloAvvisi ? "Nessun cliente da controllare." : "Nessun cliente con questo nome."}</p>
             <Button variant="outline" size="sm" onClick={() => { setSoloAvvisi(false); setCerca(""); }}>
               Mostra tutti i clienti
             </Button>

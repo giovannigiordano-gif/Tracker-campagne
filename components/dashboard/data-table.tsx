@@ -125,7 +125,8 @@ export function DataTable<T extends RowData>({
 
       <div className="overflow-x-auto rounded-block ring-1 ring-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted text-left">
+          {/* Come le liste del Mac: intestazioni leggere, righe alternate, filo sotto l'intestazione */}
+          <thead className="bg-card text-left shadow-[inset_0_-1px_0_var(--border)]">
             {table.getHeaderGroups().map((g) => (
               <tr key={g.id}>
                 {g.headers.map((h) => {
@@ -134,14 +135,14 @@ export function DataTable<T extends RowData>({
                   return (
                     <th
                       key={h.id}
-                      className={cn("h-11 whitespace-nowrap px-3 text-label text-titolo", numerica && "text-right")}
+                      className={cn("h-10 whitespace-nowrap px-3 text-label text-muted-foreground", numerica && "text-right")}
                       aria-sort={verso === "asc" ? "ascending" : verso === "desc" ? "descending" : undefined}
                     >
                       {h.column.getCanSort() ? (
                         <button
                           type="button"
                           onClick={h.column.getToggleSortingHandler()}
-                          className={cn("group/sort -mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors motion-fast hover:bg-raised", numerica && "flex-row-reverse")}
+                          className={cn("group/sort -mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors motion-fast hover:bg-muted hover:text-titolo", numerica && "flex-row-reverse")}
                         >
                           <table.FlexRender header={h} />
                           {verso === "asc" ? (
@@ -168,7 +169,7 @@ export function DataTable<T extends RowData>({
               </tr>
             ) : (
               table.getRowModel().rows.map((r) => (
-                <tr key={r.id} className="border-t border-border transition-colors motion-fast hover:bg-accent/70">
+                <tr key={r.id} className="transition-colors motion-fast even:bg-background/70 hover:bg-accent/70">
                   {r.getAllCells().map((c) => {
                     const numerica = (c.column.columnDef.meta as { numerica?: boolean } | undefined)?.numerica;
                     return (

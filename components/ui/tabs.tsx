@@ -38,7 +38,7 @@ function TabsIndicator({ className, ...props }: TabsPrimitive.Indicator.Props) {
     <TabsPrimitive.Indicator
       data-slot="tabs-indicator"
       className={cn(
-        "absolute top-0 left-0 z-0 h-[var(--active-tab-height)] w-[var(--active-tab-width)] [translate:var(--active-tab-left)_var(--active-tab-top)] rounded-control bg-raised shadow-[0_1px_2px_rgb(0_0_0/0.08)]",
+        "absolute top-0 left-0 z-0 h-[var(--active-tab-height)] w-[var(--active-tab-width)] [translate:var(--active-tab-left)_var(--active-tab-top)] rounded-control bg-raised shadow-raised",
         "transition-[translate,width,height] motion-base",
         className
       )}

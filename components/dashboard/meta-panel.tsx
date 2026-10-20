@@ -44,12 +44,12 @@ function Numero({
   fonte: "Meta" | "GHL" | "Meta + GHL";
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5 rounded-block bg-muted px-4 py-3">
+    <div className="flex min-w-0 flex-col gap-1 bg-card px-4 py-3.5">
       <dt className="flex items-baseline justify-between gap-2 text-caption text-muted-foreground">
         <span>{etichetta}</span>
         <span className="text-[0.6875rem]">{fonte}</span>
       </dt>
-      <dd className="truncate text-xl leading-tight font-black tracking-tight text-titolo">{valore}</dd>
+      <dd className="truncate text-numero text-titolo">{valore}</dd>
       {delta !== undefined && (
         <dd className="text-xs">
           <Delta pct={delta} inversa={inversa} neutra={neutra} />
@@ -124,7 +124,7 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
     if (modo === "condivisa") return null;
     return (
       <Riquadro id="meta" titolo="Campagne Meta" descrizione={descrizione}>
-        <div className="flex flex-col items-start gap-3 rounded-block bg-muted p-4 text-sm">
+        <div className="flex flex-col items-start gap-3 text-sm">
           <p>Nessun account pubblicitario Meta associato a questo cliente.</p>
           <Link href="/impostazioni" className={buttonVariants({ variant: "outline", size: "sm" })}>Associa un account in Impostazioni</Link>
         </div>
@@ -175,7 +175,8 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
         </section>
       )}
 
-      <dl className="grid grid-cols-2 gap-2 md:grid-cols-3">
+      {/* Numeri in una griglia divisa da fili sottili, come i riepiloghi delle app Apple (niente schede dentro la scheda) */}
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-block bg-border ring-1 ring-border md:grid-cols-3">
         <Numero etichetta="Spesa" fonte="Meta" valore={fmt(km.spesa)} delta={d(km.spesa, kmPrec.spesa)} neutra />
         <Numero etichetta="Lead da Meta" fonte="GHL" valore={formatNumero(inc.leadGhl)} delta={d(inc.leadGhl, incPrec.leadGhl)} />
         <Numero etichetta="Costo per lead" fonte="Meta + GHL" valore={fmt(inc.cplReale)} delta={d(inc.cplReale, incPrec.cplReale)} inversa />
@@ -205,8 +206,8 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
                     const p = payload?.[0]?.payload as (typeof serie)[number] | undefined;
                     if (!active || !p) return null;
                     return (
-                      <div className="superficie-inversa rounded-block bg-inverse px-3 py-2 text-xs text-inverse-foreground shadow-overlay">
-                        {formatGiornoBreve(p.giorno)}: <span className="font-bold">{fmt(p.spesa)}</span>
+                      <div className="hud px-3 py-2 text-xs">
+                        {formatGiornoBreve(p.giorno)}: <span className="font-semibold">{fmt(p.spesa)}</span>
                       </div>
                     );
                   }}
@@ -230,8 +231,8 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
                     const p = payload?.[0]?.payload as (typeof serie)[number] | undefined;
                     if (!active || !p) return null;
                     return (
-                      <div className="superficie-inversa rounded-block bg-inverse px-3 py-2 text-xs text-inverse-foreground shadow-overlay">
-                        {formatGiornoBreve(p.giorno)}: <span className="font-bold">{p.leadGhl} lead</span>
+                      <div className="hud px-3 py-2 text-xs">
+                        {formatGiornoBreve(p.giorno)}: <span className="font-semibold">{p.leadGhl} lead</span>
                       </div>
                     );
                   }}

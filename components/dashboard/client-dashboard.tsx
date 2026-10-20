@@ -202,7 +202,7 @@ export function ClientDashboard({
       />
 
       {/* Filtri della pagina */}
-      <div className="-mt-4 flex flex-wrap items-center gap-2 rounded-panel bg-card px-4 py-3 ring-1 ring-border">
+      <div className="-mt-4 flex flex-wrap items-center gap-2 rounded-panel bg-card px-4 py-3 shadow-card">
         <span className="text-label text-titolo">Filtra per</span>
         <NativeSelect
           value={filtri.pipeline ?? ""}

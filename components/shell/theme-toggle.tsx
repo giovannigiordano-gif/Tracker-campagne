@@ -3,6 +3,7 @@
 // Lo script in app/layout.tsx applica il tema prima del primo disegno, così non c'è lampeggio.
 import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
+import { Pillola, usePillola } from "@/components/ui/pillola";
 import { cn } from "@/lib/utils";
 
 type Tema = "auto" | "chiaro" | "scuro";
@@ -27,6 +28,7 @@ const OPZIONI: { v: Tema; label: string; Icona: typeof Sun }[] = [
 
 export function ThemeToggle() {
   const [tema, setTema] = useState<Tema>("auto");
+  const { binario, stile, pronta, animata } = usePillola(tema);
 
   useEffect(() => {
     try {
@@ -52,18 +54,21 @@ export function ThemeToggle() {
   }
 
   return (
-    <div className="inline-flex rounded-control bg-inverse-raised p-1" role="group" aria-label="Tema">
+    <div ref={binario} className="relative inline-flex rounded-control bg-sidebar-hover p-0.5" role="group" aria-label="Tema">
+      <Pillola stile={stile} animata={animata} />
       {OPZIONI.map(({ v, label, Icona }) => (
         <button
           key={v}
           type="button"
           aria-pressed={tema === v}
+          data-attiva={tema === v}
           aria-label={label}
           title={label}
           onClick={() => scegli(v)}
           className={cn(
-            "inline-flex size-8 items-center justify-center rounded-control transition-[background-color,color,transform] motion-fast active:scale-[0.92] pointer-coarse:size-10",
-            tema === v ? "bg-brand text-brand-ink" : "text-inverse-muted hover:text-inverse-foreground"
+            "relative inline-flex size-8 items-center justify-center rounded-control transition-[color,transform] motion-fast active:scale-[0.92] pointer-coarse:size-10",
+            tema === v ? "text-titolo" : "text-muted-foreground hover:text-titolo",
+            tema === v && !pronta && "bg-raised shadow-raised"
           )}
         >
           <Icona className="size-4" aria-hidden />

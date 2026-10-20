@@ -92,7 +92,7 @@ export function Scorciatoie() {
               <div key={tasti} className="contents">
                 <dt className="flex gap-1">
                   {tasti.split("  ").map((t) => (
-                    <kbd key={t} className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-muted px-2 font-sans text-xs font-bold text-titolo ring-1 ring-border">
+                    <kbd key={t} className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-muted px-2 font-sans text-xs font-semibold text-titolo shadow-raised">
                       {t}
                     </kbd>
                   ))}

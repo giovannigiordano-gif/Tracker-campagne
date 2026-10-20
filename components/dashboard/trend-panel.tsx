@@ -1,6 +1,7 @@
 "use client";
 // Andamento nel tempo: lead, opportunità, vinte o venduto, per giorno o per settimana.
 // Linea piena = periodo attuale, linea tratteggiata più chiara = periodo precedente.
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatGiornoBreve, formatNumero, formatValuta } from "@/lib/format";
@@ -83,7 +84,7 @@ export function TrendPanel({
       <div className="relative h-72 w-full" role="img" aria-label={sintesi}>
         {vuoto && (
           <div className="absolute inset-0 z-[1] flex flex-col items-center justify-center gap-1 rounded-block bg-card/85 text-center">
-            <p className="font-bold text-titolo">Niente da mostrare in questo periodo</p>
+            <p className="font-semibold text-titolo">Niente da mostrare in questo periodo</p>
             <p className="max-w-sm text-sm text-muted-foreground">Prova un periodo più lungo (tasto 3 per 90 giorni) o un&apos;altra metrica.</p>
           </div>
         )}
@@ -112,10 +113,10 @@ export function TrendPanel({
                 const p = (payload?.[0] as { payload?: PuntoSerie } | undefined)?.payload;
                 if (!active || !p) return null;
                 return (
-                  <div className="superficie-inversa rounded-block bg-inverse px-3 py-2 text-xs text-inverse-foreground shadow-overlay">
+                  <div className="hud px-3 py-2 text-xs">
                     <div className="flex justify-between gap-6">
                       <span>{intervallo(p.da, p.a)}</span>
-                      <span className="font-bold">{fmt(p.attuale)}</span>
+                      <span className="font-semibold">{fmt(p.attuale)}</span>
                     </div>
                     {confronto && p.daPrec && (
                       <div className="mt-1 flex justify-between gap-6 text-inverse-muted">
@@ -135,7 +136,7 @@ export function TrendPanel({
                 strokeWidth={2}
                 strokeDasharray="4 3"
                 dot={false}
-                activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--card)" }}
                 isAnimationActive={!riduci}
               animationDuration={300}
               animationEasing="ease-out"
@@ -147,7 +148,7 @@ export function TrendPanel({
               stroke="var(--viz-attuale)"
               strokeWidth={2.5}
               dot={punti.length <= 14 ? { r: 3, fill: "var(--viz-attuale)", strokeWidth: 0 } : false}
-              activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{ r: 5, strokeWidth: 2, stroke: "var(--card)" }}
               isAnimationActive={!riduci}
               animationDuration={300}
               animationEasing="ease-out"
@@ -155,8 +156,11 @@ export function TrendPanel({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <details className="text-sm">
-        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Vedi i numeri in tabella</summary>
+      <details className="group/apri text-sm">
+        <summary className="inline-flex list-none items-center gap-1 text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform motion-base group-open/apri:rotate-90" aria-hidden />
+          Vedi i numeri in tabella
+        </summary>
         <div className="mt-2 max-h-64 overflow-auto rounded-xl ring-1 ring-border">
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-muted text-left">

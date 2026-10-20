@@ -1,6 +1,6 @@
 // Marchio SalesProcess.
 // - Marchio: il logo ufficiale (public/brand/salesprocess-logo.png: scritta bianca, simbolo e motto arancio).
-//   È pensato per fondi scuri: si usa solo sulle barre nere (menu e pagina condivisa).
+//   È pensato per fondi scuri: si usa solo dentro la tessera nera (TesseraLogo).
 // - Simbolo: i cinque quadrati a zig-zag del logo, ridisegnati in vettoriale con le misure del file ufficiale,
 //   per l'icona del browser e le pagine di errore (funziona su fondo chiaro e scuro).
 import Image from "next/image";
@@ -45,5 +45,21 @@ export function Marchio({ className }: { className?: string }) {
       unoptimized
       className={cn("h-[34px] w-auto", className)}
     />
+  );
+}
+
+// Tessera nera con il logo, come l'icona di un'app: il logo ha la scritta bianca e vive solo sul nero.
+// "compatta" per la barra in alto su telefono e tablet.
+export function TesseraLogo({ compatta = false, className }: { compatta?: boolean; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "superficie-inversa inline-flex items-center bg-inverse shadow-raised",
+        compatta ? "h-9 rounded-control px-3" : "h-14 w-full rounded-block px-3.5",
+        className
+      )}
+    >
+      <Marchio className={compatta ? "h-[22px]" : "h-[30px]"} />
+    </span>
   );
 }

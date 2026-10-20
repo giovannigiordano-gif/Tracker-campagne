@@ -103,7 +103,7 @@ export function Riquadro({
   id?: string;
 }) {
   return (
-    <section id={id} className={cn(cardVariants(), "scroll-mt-24", className)}>
+    <section id={id} className={cn(cardVariants(), "scroll-mt-36", className)}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-section">{titolo}</h2>

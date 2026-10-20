@@ -1,45 +1,67 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-12T11:30:00+02:00",
+  "generatedAt": "2026-10-20T18:00:00+02:00",
   "title": "Design System: SalesProcess Insights",
   "extensions": {
     "colorMeta": {
-      "brand-orange": { "role": "primary", "displayName": "Arancio SalesProcess", "canonical": "#ff8200" },
+      "brand-orange": { "role": "primary", "displayName": "Arancio SalesProcess", "canonical": "#ff8200", "tonalRamp": ["#3d1c00", "#6b3300", "#994a00", "#c45f00", "#ff8200", "#ffa552", "#ffc995", "#fff1e3"] },
+      "brand-icon": { "role": "primary", "displayName": "Arancio per icone", "canonical": "#d96c00" },
       "focus-orange": { "role": "primary", "displayName": "Arancio profondo di focus", "canonical": "#c45f00" },
-      "panel-black": { "role": "neutral", "displayName": "Nero del pannello", "canonical": "#000000" },
-      "page-grey": { "role": "neutral", "displayName": "Grigio pagina", "canonical": "#f4f5f6" },
-      "card-white": { "role": "neutral", "displayName": "Bianco card", "canonical": "#ffffff" },
-      "track-grey": { "role": "neutral", "displayName": "Grigio traccia", "canonical": "#e9ebed" },
-      "orange-tint": { "role": "neutral", "displayName": "Tinta arancio", "canonical": "#fff1e3" },
-      "body-graphite": { "role": "neutral", "displayName": "Grafite", "canonical": "#2b2f33" },
-      "secondary-slate": { "role": "neutral", "displayName": "Ardesia", "canonical": "#565e67" },
+      "orange-tint": { "role": "primary", "displayName": "Tinta arancio", "canonical": "#fff1e3" },
+      "page-grey": { "role": "neutral", "displayName": "Grigio pagina", "canonical": "#f5f5f7", "tonalRamp": ["#1d1d1f", "#38383a", "#636366", "#86868b", "#c7c7cc", "#dcdce1", "#e8e8ed", "#f5f5f7"] },
+      "card-white": { "role": "neutral", "displayName": "Bianco scheda", "canonical": "#ffffff" },
+      "track-grey": { "role": "neutral", "displayName": "Grigio binario", "canonical": "#e8e8ed" },
+      "sidebar-grey": { "role": "neutral", "displayName": "Grigio barra laterale", "canonical": "#ececf0" },
+      "hairline": { "role": "neutral", "displayName": "Filo", "canonical": "#e5e5ea" },
+      "field-stroke": { "role": "neutral", "displayName": "Bordo campo", "canonical": "#86868b" },
+      "body-ink": { "role": "neutral", "displayName": "Quasi nero", "canonical": "#1d1d1f" },
+      "title-black": { "role": "neutral", "displayName": "Nero titolo", "canonical": "#000000" },
+      "secondary-grey": { "role": "neutral", "displayName": "Grigio secondario", "canonical": "#636366" },
+      "widget-black": { "role": "neutral", "displayName": "Nero widget", "canonical": "#000000", "tonalRamp": ["#000000", "#1c1c1e", "#2c2c2e", "#3a3a3c", "#48484a", "#5a5a5e", "#6e6e73", "#8e8e93"] },
       "success-green": { "role": "status", "displayName": "Verde", "canonical": "#17733f" },
       "warning-amber": { "role": "status", "displayName": "Ambra", "canonical": "#8f5300" },
       "danger-red": { "role": "status", "displayName": "Rosso", "canonical": "#b42318" },
       "chart-current": { "role": "data", "displayName": "Periodo attuale", "canonical": "#d96c00" },
-      "chart-previous": { "role": "data", "displayName": "Periodo precedente", "canonical": "#f2a15a" }
+      "chart-previous": { "role": "data", "displayName": "Periodo precedente", "canonical": "#f2a15a" },
+      "chart-rest": { "role": "data", "displayName": "Resto", "canonical": "#8e8e93" },
+      "dark-card": { "role": "neutral", "displayName": "Scheda grafite (scuro)", "canonical": "#1c1c1e" },
+      "dark-secondary": { "role": "neutral", "displayName": "Grigio secondario (scuro)", "canonical": "#98989d" }
     },
     "typographyMeta": {
-      "display": { "displayName": "Numeri", "purpose": "Solo i numeri del pannello nero." },
-      "headline": { "displayName": "Titolo pagina", "purpose": "Uno per schermata; 28px su telefono, 34px da 1024px." },
-      "title": { "displayName": "Titolo sezione", "purpose": "Titoli di card e sezioni." },
-      "body": { "displayName": "Testo", "purpose": "Testi e descrizioni, massimo 65 caratteri per riga." },
-      "label": { "displayName": "Etichetta", "purpose": "Etichette dei numeri, intestazioni di tabella, titoletti dei moduli." },
-      "caption": { "displayName": "Didascalia", "purpose": "Fonte dei dati, date di aggiornamento, note." }
+      "display": { "displayName": "Numeri del widget", "purpose": "Solo i numeri del widget nero." },
+      "headline": { "displayName": "Titolo grande", "purpose": "Titolo della pagina, uno per schermata; 30px fino a 1023px." },
+      "headline-wide": { "displayName": "Titolo grande (da 1024px)", "purpose": "Lo stesso titolo a 34px da 1024px." },
+      "title": { "displayName": "Titolo sezione", "purpose": "Titoli di schede, sezioni e finestre." },
+      "number": { "displayName": "Numero di scheda", "purpose": "Numeri dentro le schede, più piccoli del widget." },
+      "body": { "displayName": "Testo", "purpose": "Testi e descrizioni, massimo 65 caratteri per riga nelle descrizioni." },
+      "control": { "displayName": "Controllo", "purpose": "Pulsanti, segmenti, schede, voci attive." },
+      "label": { "displayName": "Etichetta", "purpose": "Etichette dei numeri, intestazioni di tabella, titoletti di gruppo." },
+      "caption": { "displayName": "Didascalia", "purpose": "Fonte dei dati, data di aggiornamento, titoletto Clienti della barra laterale." }
     },
     "shadows": [
-      { "name": "overlay", "value": "0 24px 48px -16px rgb(0 0 0 / 0.28), 0 4px 12px -4px rgb(0 0 0 / 0.12)", "purpose": "Solo modali, pannello laterale e notifiche." },
-      { "name": "segmento-attivo", "value": "0 1px 2px rgb(0 0 0 / 0.08)", "purpose": "Il segmento scelto sopra il binario grigio." }
+      { "name": "card", "value": "0 0 0 0.5px rgb(0 0 0 / 0.05), 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -10px rgb(0 0 0 / 0.1)", "purpose": "Tutte le schede bianche. Tema scuro: 0 0 0 1px rgb(255 255 255 / 0.06)." },
+      { "name": "raised", "value": "0 0 0 0.5px rgb(0 0 0 / 0.04), 0 1px 3px rgb(0 0 0 / 0.12)", "purpose": "Pillola dei segmenti, indicatore delle schede, tessera del logo. Tema scuro: 0 1px 3px rgb(0 0 0 / 0.5)." },
+      { "name": "overlay", "value": "0 0 0 0.5px rgb(0 0 0 / 0.06), 0 24px 56px -16px rgb(0 0 0 / 0.28), 0 6px 16px -6px rgb(0 0 0 / 0.12)", "purpose": "Finestre modali, pannello laterale, notifiche, HUD dei grafici. Tema scuro: 0 0 0 1px rgb(255 255 255 / 0.08), 0 24px 56px -12px rgb(0 0 0 / 0.7)." },
+      { "name": "field-halo", "value": "0 0 0 4px color-mix(in oklab, #ff8200 28%, transparent)", "purpose": "Alone del campo di testo col focus, insieme al bordo arancio profondo." },
+      { "name": "toolbar-hairline", "value": "inset 0 -1px 0 #e5e5ea", "purpose": "Filo sotto la barra degli strumenti quando diventa vetro; filo sotto le intestazioni di tabella." }
+    ],
+    "materials": [
+      { "name": "vetro", "value": "background-color: color-mix(in oklab, var(--background) 72%, transparent); backdrop-filter: saturate(180%) blur(20px)", "purpose": "Solo barre fisse sotto cui scorre del contenuto: barra degli strumenti (dopo lo scorrimento) e barra in alto su telefono e tablet." },
+      { "name": "hud", "value": "background-color: color-mix(in oklab, #1c1c1e 92%, transparent); color: #ffffff; backdrop-filter: blur(12px); border-radius: 12px", "purpose": "Etichette sospese dei grafici, come gli HUD di macOS." },
+      { "name": "squircle", "value": "corner-shape: squircle (con raggi 30px pannello e 18px blocco)", "purpose": "Angoli continui per pannelli e blocchi dove il browser li supporta." }
     ],
     "motion": [
-      { "name": "dur-fast", "value": "150ms", "purpose": "Passaggio del mouse, pressione, interruttori." },
-      { "name": "dur-base", "value": "200ms", "purpose": "Elementi di lista, numeri che si ricalcolano, notifiche." },
-      { "name": "dur-slow", "value": "300ms", "purpose": "Entrata dei contenuti, ridisegno del grafico, cambio tema." },
-      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Entrate e cambi di stato." },
-      { "name": "ease-in", "value": "cubic-bezier(0.7, 0, 0.84, 0)", "purpose": "Uscite, più rapide delle entrate." },
-      { "name": "distanza-entrata", "value": "6px", "purpose": "Salita delle entrate; 0 con Riduci movimento." }
+      { "name": "dur-fast", "value": "150ms", "purpose": "Colori e pressione dei controlli." },
+      { "name": "dur-base", "value": "220ms", "purpose": "Titolo compatto, finestre, notifiche, scatto dei numeri." },
+      { "name": "dur-slow", "value": "320ms", "purpose": "Pillola che scorre, entrate, pannello laterale, cambio di tema." },
+      { "name": "ease-out", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "Uscita smorzata come i fogli di iOS, senza rimbalzo; curva standard." },
+      { "name": "ease-in", "value": "cubic-bezier(0.55, 0, 1, 0.45)", "purpose": "Uscite di notifiche." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.65, 0, 0.35, 1)", "purpose": "Scheletri e scossa dei campi in errore." },
+      { "name": "distanza-entrata", "value": "8px", "purpose": "Salita delle entrate; 0 con Riduci movimento (durate 80/100/120ms)." },
+      { "name": "scaletta", "value": "30ms per elemento, massimo 12", "purpose": "Entrata degli elementi di una lista." }
     ],
     "breakpoints": [
+      { "name": "sm", "value": "640px" },
       { "name": "md", "value": "768px" },
       { "name": "lg", "value": "1024px" },
       { "name": "xl", "value": "1280px" },
@@ -51,80 +73,115 @@
       "name": "Pulsante principale",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Una sola azione principale per schermata: arancio con testo nero.",
-      "html": "<button class=\"ds-btn-primary\">Verifica e salva</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border: 1px solid transparent; border-radius: 9999px; background: #ff8200; color: #000; font: 700 14px/1 'Red Hat Display', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16,1,0.3,1), transform 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: #ff952e; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+      "description": "Azione principale della schermata: una sola. Arancio con testo nero.",
+      "html": "<button class=\"ds-btn-primary\">Aggiorna i dati</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border: 1px solid transparent; border-radius: 9999px; background: var(--brand, #ff8200); color: var(--brand-ink, #000); font: 600 14px/1 'Red Hat Text', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.32,0.72,0,1), transform 150ms cubic-bezier(0.32,0.72,0,1); } .ds-btn-primary:hover { background: var(--brand-hover, #ff952e); } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid var(--ring, #c45f00); outline-offset: 2px; }"
     },
     {
       "name": "Pulsante secondario",
       "kind": "button",
-      "refersTo": "button-outline",
-      "description": "Azioni secondarie come Aggiorna i dati.",
-      "html": "<button class=\"ds-btn-outline\">Aggiorna i dati</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border: 1px solid #878f98; border-radius: 9999px; background: #fff; color: #000; font: 700 14px/1 'Red Hat Display', system-ui, sans-serif; cursor: pointer; transition: border-color 150ms, background-color 150ms, transform 150ms; } .ds-btn-outline:hover { border-color: #000; background: #e9ebed; } .ds-btn-outline:active { transform: scale(0.97); } .ds-btn-outline:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+      "refersTo": "button-secondary",
+      "description": "Grigio pieno come i pulsanti bordered di Apple, per tutte le altre azioni.",
+      "html": "<button class=\"ds-btn-secondary\">Condividi</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border: 1px solid transparent; border-radius: 9999px; background: var(--muted, #e8e8ed); color: var(--titolo, #000); font: 600 14px/1 'Red Hat Text', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.32,0.72,0,1), transform 150ms cubic-bezier(0.32,0.72,0,1); } .ds-btn-secondary:hover { background: var(--muted-hover, #dcdce1); } .ds-btn-secondary:active { transform: scale(0.97); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--ring, #c45f00); outline-offset: 2px; }"
     },
     {
       "name": "Campo di testo",
       "kind": "input",
       "refersTo": "input",
-      "description": "Campo a pillola con bordo a 3:1 e anello di focus arancio profondo.",
-      "html": "<input class=\"ds-input\" placeholder=\"Cerca un cliente\" />",
-      "css": ".ds-input { height: 40px; width: 280px; padding: 0 16px; border: 1px solid #878f98; border-radius: 9999px; background: #fff; color: #000; font: 400 14px 'Red Hat Display', system-ui, sans-serif; transition: border-color 150ms; } .ds-input::placeholder { color: #565e67; } .ds-input:hover { border-color: #000; } .ds-input:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+      "description": "Capsula con bordo a 3,6:1; al focus bordo arancio profondo e alone morbido come su macOS.",
+      "html": "<input class=\"ds-input\" placeholder=\"Cerca…\" />",
+      "css": ".ds-input { height: 40px; width: 260px; padding: 0 16px; border: 1px solid var(--input, #86868b); border-radius: 9999px; background: var(--card, #fff); color: var(--titolo, #000); font: 400 14px/1 'Red Hat Text', system-ui, sans-serif; transition: border-color 150ms cubic-bezier(0.32,0.72,0,1), box-shadow 150ms cubic-bezier(0.32,0.72,0,1); } .ds-input::placeholder { color: var(--muted-foreground, #636366); } .ds-input:focus-visible { outline: none; border-color: var(--ring, #c45f00); box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand, #ff8200) 28%, transparent); }"
     },
     {
-      "name": "Scelta a pillole",
+      "name": "Controllo a segmenti",
       "kind": "chip",
-      "refersTo": "segmented-active",
-      "description": "Scelta singola (metrica, giorni o settimane) su binario grigio.",
-      "html": "<div class=\"ds-seg\" role=\"group\"><button aria-pressed=\"true\">Lead</button><button aria-pressed=\"false\">Opportunità</button><button aria-pressed=\"false\">Venduto</button></div>",
-      "css": ".ds-seg { display: inline-flex; padding: 4px; border-radius: 9999px; background: #e9ebed; } .ds-seg button { height: 32px; padding: 0 12px; border: 0; border-radius: 9999px; background: transparent; color: #565e67; font: 600 14px 'Red Hat Display', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-seg button:hover { color: #000; } .ds-seg button[aria-pressed=true] { background: #fff; color: #000; box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); } .ds-seg button:focus-visible { outline: 2px solid #c45f00; outline-offset: 2px; }"
+      "refersTo": "segmented-track",
+      "description": "Binario grigio con una sola pillola bianca rialzata sotto la scelta attiva (nell'app la pillola scorre).",
+      "html": "<div class=\"ds-seg\" role=\"group\" aria-label=\"Periodo\"><button aria-pressed=\"false\">7 giorni</button><button aria-pressed=\"true\">30 giorni</button><button aria-pressed=\"false\">90 giorni</button><button aria-pressed=\"false\">Date</button></div>",
+      "css": ".ds-seg { display: inline-flex; padding: 4px; border-radius: 9999px; background: var(--muted, #e8e8ed); } .ds-seg button { height: 32px; padding: 0 14px; border: 0; border-radius: 9999px; background: transparent; color: var(--muted-foreground, #636366); font: 600 14px/1 'Red Hat Text', system-ui, sans-serif; cursor: pointer; transition: color 150ms cubic-bezier(0.32,0.72,0,1), transform 150ms cubic-bezier(0.32,0.72,0,1); } .ds-seg button:hover { color: var(--titolo, #000); } .ds-seg button:active { transform: scale(0.96); } .ds-seg button[aria-pressed=\"true\"] { background: var(--raised, #fff); color: var(--titolo, #000); box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.04), 0 1px 3px rgb(0 0 0 / 0.12); } .ds-seg button:focus-visible { outline: 2px solid var(--ring, #c45f00); outline-offset: 2px; }"
     },
     {
-      "name": "Voce di menu",
-      "kind": "nav",
-      "refersTo": "nav-item-active",
-      "description": "Menu nero; voce attiva arancio con testo nero.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\">Panoramica</a><a class=\"ds-nav-item\" href=\"#\">Impostazioni</a></nav>",
-      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; width: 232px; padding: 16px; background: #000; border-radius: 14px; } .ds-nav-item { display: flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 9999px; color: rgb(255 255 255 / 0.66); font: 600 14px 'Red Hat Display', system-ui, sans-serif; text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav-item:hover { background: #17181a; color: #fff; } .ds-nav-item.is-active { background: #ff8200; color: #000; } .ds-nav-item:focus-visible { outline: 2px solid #ff8200; outline-offset: 2px; }"
-    },
-    {
-      "name": "Pannello dei numeri",
+      "name": "Scheda",
       "kind": "card",
-      "refersTo": "kpi-panel",
-      "description": "Componente firma: numeri chiave in nero pieno con variazione sul periodo precedente.",
-      "html": "<section class=\"ds-kpi\"><div><p class=\"ds-kpi-l\">Lead</p><p class=\"ds-kpi-v\">128</p><p class=\"ds-kpi-d\"><span class=\"up\">+12,3%</span> da 114</p></div><div><p class=\"ds-kpi-l\">Vinte</p><p class=\"ds-kpi-v\">9</p><p class=\"ds-kpi-d\"><span class=\"down\">-25%</span> da 12</p></div></section>",
-      "css": ".ds-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 24px 32px; border-radius: 22px; background: #000; color: #fff; font-family: 'Red Hat Display', system-ui, sans-serif; font-variant-numeric: tabular-nums; } .ds-kpi p { margin: 0; } .ds-kpi-l { font: 600 13px/1.35 inherit; color: rgb(255 255 255 / 0.66); } .ds-kpi-v { font-size: 36px; font-weight: 900; line-height: 1; letter-spacing: -0.025em; margin: 6px 0 !important; } .ds-kpi-d { font-size: 14px; color: rgb(255 255 255 / 0.66); } .ds-kpi-d .up { color: #4ade80; font-weight: 600; } .ds-kpi-d .down { color: #f87171; font-weight: 600; }"
+      "refersTo": "card",
+      "description": "Scheda bianca sospesa sul grigio con ombra morbida e angoli ampi; niente bordo.",
+      "html": "<div class=\"ds-card-page\"><section class=\"ds-card\"><h2>Lead per canale</h2><p>Contatti creati nel periodo, per origine.</p><div class=\"ds-card-num\">1.248</div></section></div>",
+      "css": ".ds-card-page { background: var(--background, #f5f5f7); padding: 24px; } .ds-card { display: flex; flex-direction: column; gap: 16px; max-width: 360px; padding: 24px; border-radius: 22px; background: var(--card, #fff); color: var(--foreground, #1d1d1f); box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.05), 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -10px rgb(0 0 0 / 0.1); } @supports (corner-shape: squircle) { .ds-card { border-radius: 30px; corner-shape: squircle; } } .ds-card h2 { margin: 0; font: 700 19px/1.25 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.015em; color: var(--titolo, #000); } .ds-card p { margin: -12px 0 0; font: 400 14px/1.5 'Red Hat Text', system-ui, sans-serif; color: var(--muted-foreground, #636366); } .ds-card-num { font: 800 22px/1.1 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; color: var(--titolo, #000); }"
+    },
+    {
+      "name": "Widget dei numeri",
+      "kind": "custom",
+      "refersTo": "numbers-widget",
+      "description": "Uno dei due soli oggetti neri: i numeri chiave in Display 800 con variazione e valore precedente.",
+      "html": "<section class=\"ds-widget\" aria-label=\"Numeri principali\"><div><span class=\"ds-w-lab\">Lead</span><span class=\"ds-w-val\">1.248</span><span class=\"ds-w-delta\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 7h10v10\"/><path d=\"M7 17 17 7\"/></svg>+12,4%</span> <span class=\"ds-w-lab\">da 1.110</span></div><div><span class=\"ds-w-lab\">Vinte</span><span class=\"ds-w-val\">86</span><span class=\"ds-w-delta ds-w-bad\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m7 7 10 10\"/><path d=\"M17 7v10H7\"/></svg>−3,1%</span> <span class=\"ds-w-lab\">da 89</span></div></section>",
+      "css": ".ds-widget { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; padding: 28px 32px; border-radius: 22px; background: var(--inverse, #000); color: var(--inverse-foreground, #fff); } .ds-widget > div { display: flex; flex-direction: column; gap: 6px; } .ds-w-lab { font: 600 13px/1.35 'Red Hat Text', system-ui, sans-serif; color: var(--inverse-muted, rgb(255 255 255 / 0.66)); } .ds-w-val { font: 800 36px/1 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; } .ds-w-delta { display: inline-flex; align-items: center; gap: 2px; font: 600 14px/1 'Red Hat Text', system-ui, sans-serif; color: var(--on-inverse-success, #4ade80); } .ds-w-bad { color: var(--on-inverse-danger, #f87171); }"
+    },
+    {
+      "name": "Barra laterale",
+      "kind": "nav",
+      "refersTo": "sidebar",
+      "description": "Colonna grigio chiaro con la tessera nera del logo, icone arancio, voce attiva arancio con testo nero.",
+      "html": "<nav class=\"ds-side\" aria-label=\"Menu principale\"><div class=\"ds-tile\">SalesProcess</div><a href=\"#\" aria-current=\"page\" class=\"ds-item\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg>Panoramica</a><p class=\"ds-group\">Clienti (2)</p><a href=\"#\" class=\"ds-item\"><span class=\"ds-ini\">A</span>Cliente A</a><a href=\"#\" class=\"ds-item\"><span class=\"ds-ini\">B</span>Cliente B</a></nav>",
+      "css": ".ds-side { display: flex; flex-direction: column; gap: 6px; width: 240px; padding: 16px 12px; background: var(--sidebar, #ececf0); border-right: 1px solid var(--sidebar-border, #d9d9de); font-family: 'Red Hat Text', system-ui, sans-serif; } .ds-tile { display: flex; align-items: center; height: 56px; padding: 0 14px; margin-bottom: 18px; border-radius: 14px; background: var(--inverse, #000); color: #fff; font: 800 18px/1 'Red Hat Display', system-ui, sans-serif; box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.04), 0 1px 3px rgb(0 0 0 / 0.12); } .ds-item { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 12px; border-radius: 9999px; color: var(--foreground, #1d1d1f); font-size: 14px; font-weight: 500; text-decoration: none; transition: background-color 150ms cubic-bezier(0.32,0.72,0,1); } .ds-item svg { color: var(--brand-icona, #d96c00); } .ds-item:hover { background: var(--sidebar-hover, rgb(0 0 0 / 0.05)); } .ds-item[aria-current=\"page\"] { background: var(--brand, #ff8200); color: var(--brand-ink, #000); font-weight: 600; } .ds-item[aria-current=\"page\"] svg { color: var(--brand-ink, #000); } .ds-item:focus-visible { outline: 2px solid var(--ring, #c45f00); outline-offset: 2px; } .ds-group { margin: 14px 12px 2px; font-size: 12px; font-weight: 600; color: var(--muted-foreground, #636366); } .ds-ini { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background: var(--muted, #e8e8ed); color: var(--muted-foreground, #636366); font-size: 11px; font-weight: 700; }"
+    },
+    {
+      "name": "Interruttore",
+      "kind": "custom",
+      "refersTo": "switch-on",
+      "description": "Proporzioni di iOS: pomello sempre bianco, binario arancio quando acceso.",
+      "html": "<label class=\"ds-sw-row\"><button role=\"switch\" aria-checked=\"true\" class=\"ds-sw\"><span></span></button>Confronta con il periodo precedente</label>",
+      "css": ".ds-sw-row { display: inline-flex; align-items: center; gap: 10px; font: 500 14px/1 'Red Hat Text', system-ui, sans-serif; color: var(--titolo, #000); } .ds-sw { position: relative; width: 48px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 9999px; background: color-mix(in oklab, var(--input, #86868b) 50%, transparent); cursor: pointer; transition: background-color 220ms cubic-bezier(0.32,0.72,0,1); } .ds-sw[aria-checked=\"true\"] { background: var(--brand, #ff8200); } .ds-sw span { position: absolute; top: 1px; left: 1px; width: 24px; height: 24px; border-radius: 9999px; background: #fff; box-shadow: 0 2px 6px rgb(0 0 0 / 0.18), 0 0 0 0.5px rgb(0 0 0 / 0.04); transition: transform 220ms cubic-bezier(0.32,0.72,0,1); } .ds-sw[aria-checked=\"true\"] span { transform: translateX(20px); } .ds-sw:focus-visible { outline: 2px solid var(--ring, #c45f00); outline-offset: 2px; }"
+    },
+    {
+      "name": "Etichetta di stato",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Capsula con tinta di stato; il testo dice sempre lo stato.",
+      "html": "<span class=\"ds-badge\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Collegato</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: 9999px; background: var(--success-soft, #e6f4ec); color: var(--success, #17733f); font: 600 12px/1 'Red Hat Text', system-ui, sans-serif; }"
     }
   ],
   "narrative": {
-    "northStar": "Il cruscotto in nero e arancio",
-    "overview": "È uno strumento di lavoro, non una vetrina: il titolare apre l'app per sapere in pochi secondi quanti lead, opportunità e vendite ha portato ogni cliente, e cosa controllare. Il marchio SalesProcess entra nei dettagli precisi: il nero pieno del menu e del pannello dei numeri, l'arancio solo dove c'è un'azione o una selezione, un solo carattere (Red Hat Display) usato pesante per titoli e numeri. Tutto il resto è grigio freddo e silenzioso, così i numeri parlano.",
+    "northStar": "L'app nativa col marchio SalesProcess",
+    "overview": "SalesProcess Insights ha l'aspetto di un'app Apple per Mac e iPad, vestita col marchio: barra laterale grigio chiaro, barra degli strumenti che diventa vetro quando la pagina scorre, titolo grande che si ritira nella barra, schede bianche sospese sul grigio Apple con ombre morbide e angoli continui. Il titolare la deve riconoscere come un'app che usa già ogni giorno: controlli a segmenti, interruttori, liste e finestre si comportano come su Mac e iPhone.\n\nIl marchio entra in tre punti precisi. L'arancio è il colore d'accento di sistema, come il blu sulle app Apple: voce attiva, icone della barra laterale, interruttori, azione principale, grafici. Sopra l'arancio il testo è sempre nero. Il nero pieno vive solo in due oggetti: il widget dei numeri chiave e la tessera col logo ufficiale. La gerarchia tipografica imita SF Display e SF Text: Red Hat Display 800 per titoli grandi e numeri, Red Hat Text per tutto il resto.\n\nLa densità è quella di uno strumento di lavoro: schede ampie (24px di margine interno) con dati compatti, tabelle a righe da 44px, movimento breve (150–320ms) che mostra cosa è cambiato. Il sistema rifiuta il cruscotto di prima, con menu nero e card piatte bordate.",
     "keyCharacteristics": [
-      "Nero pieno del marchio per menu e pannello dei numeri; grigio freddo chiaro per il fondo; card bianche.",
-      "Arancio solo per l'azione principale, la voce di menu attiva, gli interruttori accesi e i dati del periodo attuale nei grafici.",
-      "Un solo carattere, Red Hat Display: 900 per titoli e numeri, 800 per i titoli di sezione, 600 per le etichette. Cifre tabellari ovunque.",
-      "Tutti i controlli a pillola; pannelli con raggio grande; nessuna ombra sulle superfici.",
-      "Tema chiaro e scuro progettati insieme, ogni coppia di colori misurata con la formula WCAG."
+      "Fondo grigio Apple, schede bianche sospese con ombra morbida a più livelli; nel tema scuro fondo nero e schede grafite con un filo di luce.",
+      "Angoli continui (squircle) dove il browser li supporta; controlli tutti a capsula.",
+      "Arancio come colore d'accento di sistema, sempre con testo nero sopra.",
+      "Nero pieno solo nel widget dei numeri e nella tessera del logo.",
+      "Red Hat Display 800 per titoli e numeri, Red Hat Text per testi e controlli; cifre tabellari ovunque.",
+      "Vetro (saturazione e sfocatura) solo sulle barre sotto cui scorre del contenuto.",
+      "Tema chiaro e scuro progettati insieme, ogni coppia di colori misurata."
     ],
     "rules": [
-      { "name": "La regola dell'unico arancio", "body": "L'arancio pieno compare su una sola azione per schermata più gli stati di selezione. Se due pulsanti sono arancio, uno dei due è sbagliato.", "section": "colors" },
-      { "name": "La regola del testo nero sull'arancio", "body": "Sopra l'arancio il testo è sempre nero, in entrambi i temi.", "section": "colors" },
-      { "name": "La regola delle cifre allineate", "body": "Tutta l'app usa cifre tabellari (tnum): i numeri nelle colonne e nei pannelli non ballano quando cambiano.", "section": "typography" },
-      { "name": "La regola niente maiuscolo", "body": "Etichette e titoli in minuscolo normale; nessun testo tutto maiuscolo con spaziatura larga.", "section": "typography" },
-      { "name": "La regola del piatto", "body": "Una card non ha mai ombra. Se serve più gerarchia si usa il pannello nero o la tinta, non un'ombra.", "section": "elevation" }
+      { "name": "La regola del testo nero sull'arancio", "body": "Sopra l'arancio il testo e le icone sono sempre neri, in entrambi i temi.", "section": "colors" },
+      { "name": "La regola dell'accento di sistema", "body": "L'arancio pieno marca ciò che è attivo o principale: una sola azione principale per schermata, più gli stati di selezione (voce attiva, interruttore acceso). Se due pulsanti sono arancio, uno dei due è sbagliato.", "section": "colors" },
+      { "name": "La regola dei due neri", "body": "Il nero pieno come superficie esiste in due oggetti soli: il widget dei numeri e la tessera del logo. Menu, barre, schede di benvenuto e finestre non sono mai nere.", "section": "colors" },
+      { "name": "La regola dei soli token", "body": "Nei componenti si usano solo i token di `app/globals.css` (classi come `bg-brand`, `bg-muted`, `text-muted-foreground`, `rounded-panel`, `shadow-card`), mai colori scritti a mano.", "section": "colors" },
+      { "name": "La regola delle cifre allineate", "body": "Tutta l'app usa cifre tabellari (`tnum`): i numeri nelle colonne e nel widget non ballano quando cambiano.", "section": "typography" },
+      { "name": "La regola delle due famiglie", "body": "Display solo per titoli (h1, h2, h3) e numeri; Text per tutto il resto. Niente terzo carattere, niente monospazio per i dati.", "section": "typography" },
+      { "name": "La regola niente maiuscolo", "body": "Etichette e titoli in minuscolo normale; nessun testo tutto maiuscolo con spaziatura larga, nessun occhiello sopra i titoli.", "section": "typography" },
+      { "name": "La regola del vetro col contenuto", "body": "Il vetro compare solo su una barra sotto cui scorre del contenuto. In cima alla pagina la barra è trasparente e senza filo.", "section": "elevation" },
+      { "name": "La regola dell'ombra morbida", "body": "Le ombre sono diffuse e a più livelli, mai dure, mai spostate di lato, mai colorate. Il widget nero non ha ombra: si stacca col colore.", "section": "elevation" }
     ],
     "dos": [
-      "Do usare solo i token di app/globals.css (classi come bg-brand, rounded-panel, p-panel, text-section), mai colori scritti a mano.",
-      "Do mettere testo nero sopra l'arancio, in entrambi i temi.",
+      "Do usare solo i token di `app/globals.css` (es. `bg-brand`, `bg-muted`, `bg-card shadow-card`, `rounded-panel`, `p-panel`, `text-section`), mai colori scritti a mano.",
+      "Do mettere testo e icone neri sopra l'arancio, in entrambi i temi.",
+      "Do dare a ogni nuova scelta tra poche opzioni il controllo a segmenti con la pillola che scorre.",
+      "Do usare il vetro solo su barre fisse sotto cui scorre del contenuto, trasparenti finché la pagina è in cima.",
       "Do accompagnare ogni colore di stato con un'icona Lucide e una parola.",
       "Do dare a ogni nuova schermata il suo scheletro di caricamento con la forma reale, uno stato vuoto che dice cosa fare e un errore con la strada per risolverlo.",
       "Do misurare il contrasto di ogni nuova coppia di colori, sia nel tema chiaro sia in quello scuro."
     ],
     "donts": [
-      "Don't usare ombre sulle card o gradienti decorativi.",
-      "Don't usare un secondo carattere o un monospazio per le etichette dei dati.",
-      "Don't usare emoji o frecce testuali come icone: solo Lucide.",
+      "Don't usare il nero pieno come superficie fuori dal widget dei numeri e dalla tessera del logo: niente menu, barre o schede nere.",
       "Don't usare il bianco sopra l'arancio, né l'arancio come colore del testo su fondo chiaro.",
+      "Don't usare ombre dure, spostate di lato o colorate, né gradienti decorativi.",
+      "Don't mettere schede dentro le schede: dentro una scheda si divide con fili e blocchi.",
+      "Don't usare un terzo carattere, un monospazio per i dati o testo tutto maiuscolo con spaziatura larga.",
+      "Don't mettere occhielli o didascalie sopra il titolo della pagina.",
+      "Don't usare emoji o frecce testuali come icone: solo Lucide.",
       "Don't aggiungere animazioni continue o decorative: il movimento risponde a un'azione o mostra un ricalcolo."
     ]
   }

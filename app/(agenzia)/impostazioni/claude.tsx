@@ -41,7 +41,7 @@ export function SchedaClaude({ indirizzo, stato }: { indirizzo: string; stato: S
         <CopiaIndirizzo indirizzo={indirizzo} />
       </div>
 
-      <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm text-muted-foreground marker:font-bold marker:text-titolo">
+      <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm text-muted-foreground marker:font-semibold marker:text-titolo">
         <li>In Claude apri Personalizza, poi Connettori (su claude.ai: claude.ai/customize/connectors).</li>
         <li>Premi «Aggiungi connettore personalizzato», chiamalo SalesProcess Insights e incolla l&apos;indirizzo qui sopra.</li>
         <li>Premi «Connetti»: si apre una pagina di questa app. Inserisci la password dell&apos;app e premi «Consenti».</li>

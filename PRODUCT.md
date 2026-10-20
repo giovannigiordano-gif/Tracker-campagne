@@ -43,7 +43,7 @@ Incrocia i dati del CRM (GHL) con quelli pubblicitari (Meta) a livello di singol
 ## Evidence on Hand
 
 - Dati reali di un cliente di prova (un sub-account) usati per verifiche; nessuna testimonianza, case study o dato commerciale da mostrare nell'interfaccia.
-- Logo ufficiale non presente nel progetto: il simbolo è ridisegnato in SVG (components/brand.tsx).
+- Logo ufficiale in public/brand/salesprocess-logo.png (scritta bianca: vive solo sul nero, nella tessera del logo); il simbolo è ridisegnato in SVG con le misure del logo (components/brand.tsx).
 
 ## Product Principles
 

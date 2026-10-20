@@ -60,8 +60,8 @@ export function AnalisiPanel({ analisi, locationId, nomeCliente }: { analisi: An
   if (!aperta) {
     return (
       <Riquadro id="analisi" titolo="Analisi" descrizione={descrizione}>
-        <div className="flex flex-col items-start gap-3 rounded-block bg-muted p-5">
-          <Sparkles className="size-5 text-muted-foreground" aria-hidden />
+        <div className="flex flex-col items-start gap-3">
+          <Sparkles className="size-5 text-brand-icona" aria-hidden />
           <p className="max-w-[65ch] text-sm">
             Nessuna analisi salvata per {nomeCliente}. Collega Claude all&apos;app (Impostazioni, scheda «Claude»), poi in Claude o Cowork chiedi per
             esempio: <em>«Analizza le campagne di {nomeCliente} degli ultimi 30 giorni e salva l&apos;analisi»</em>.

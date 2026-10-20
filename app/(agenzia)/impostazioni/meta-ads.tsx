@@ -1,6 +1,6 @@
 // Scheda "Meta Ads" delle Impostazioni: collegamento al server MCP ufficiale di Meta (sola lettura).
 // Mostra lo stato senza mai esporre i token: data del collegamento, scadenza, permessi, ultima verifica.
-import { CircleAlert, CircleCheck, LogIn, TriangleAlert } from "lucide-react";
+import { ChevronRight, CircleAlert, CircleCheck, LogIn, TriangleAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,7 @@ export function SchedaMetaAds({ meta, esito, ritorno }: { meta: RiepilogoMetaMcp
           <p className="text-muted-foreground">
             Meta permette il collegamento solo tramite un&apos;app Meta for Developers tua. Si crea una volta sola:
           </p>
-          <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground marker:font-bold marker:text-titolo">
+          <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground marker:font-semibold marker:text-titolo">
             <li>Su developers.facebook.com/apps crea un&apos;app (o aprine una) e aggiungi il caso d&apos;uso «Create &amp; manage ads with ads MCP server».</li>
             <li>
               In «Facebook Login for Business», tra gli indirizzi di reindirizzamento OAuth validi, aggiungi:
@@ -156,8 +156,9 @@ export function SchedaMetaAds({ meta, esito, ritorno }: { meta: RiepilogoMetaMcp
           )}
 
           {verifica && verifica.strumentiAbilitati.length > 0 && (
-            <details>
-              <summary className="w-fit font-semibold text-titolo underline-offset-4 hover:underline">
+            <details className="group/apri">
+              <summary className="inline-flex w-fit list-none items-center gap-1 font-semibold text-titolo underline-offset-4 hover:underline [&::-webkit-details-marker]:hidden">
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform motion-base group-open/apri:rotate-90" aria-hidden />
                 {verifica.strumentiAbilitati.length} strumenti di lettura per l&apos;AI
                 {verifica.strumentiEsclusi > 0 && `, ${verifica.strumentiEsclusi} spenti`}
               </summary>

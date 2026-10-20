@@ -67,7 +67,7 @@ function ScheletroNumeri({ quanti = 6 }: { quanti?: number }) {
 
 function ScheletroPannello({ className, righe = 4 }: { className?: string; righe?: number }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-4 rounded-panel bg-card p-panel ring-1 ring-border", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-4 rounded-panel bg-card p-panel shadow-card", className)}>
       <Skeleton className="h-5 w-44" />
       <Skeleton className="h-3.5 w-72 max-w-full" />
       <div className="mt-2 flex flex-col gap-3">
@@ -98,7 +98,7 @@ export function ScheletroPanoramica() {
 // Segnaposto di una scheda cliente della Panoramica, con la sua forma reale
 function ScheletroScheda() {
   return (
-    <div className="flex min-w-0 flex-col gap-5 rounded-panel bg-card p-panel ring-1 ring-border">
+    <div className="flex min-w-0 flex-col gap-5 rounded-panel bg-card p-panel shadow-card">
       <Skeleton className="h-5 w-48 max-w-full" />
       <div className="grid grid-cols-3 gap-x-4 gap-y-3">
         {Array.from({ length: 5 }, (_, i) => (
@@ -128,7 +128,7 @@ export function ScheletroCliente() {
       </div>
       <Skeleton className="h-14 rounded-panel" />
       <ScheletroNumeri />
-      <div className="flex flex-col gap-4 rounded-panel bg-card p-panel ring-1 ring-border">
+      <div className="flex flex-col gap-4 rounded-panel bg-card p-panel shadow-card">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-72" />
       </div>

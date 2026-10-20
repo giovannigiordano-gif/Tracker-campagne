@@ -23,7 +23,7 @@ function Alert({ className, variant, ...props }: React.ComponentProps<"div"> & V
 }
 
 function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="alert-title" className={cn("col-start-2 font-bold text-titolo", className)} {...props} />
+  return <div data-slot="alert-title" className={cn("col-start-2 font-semibold text-titolo", className)} {...props} />
 }
 
 function AlertDescription({ className, ...props }: React.ComponentProps<"div">) {

@@ -1,5 +1,6 @@
 "use client"
-// Notifiche brevi (salvato, errore...). Basate su Base UI Toast: annunciate ai lettori di schermo
+// Notifiche brevi (salvato, errore...), in vetro chiaro come le notifiche del Mac.
+// Basate su Base UI Toast: annunciate ai lettori di schermo
 // senza rubare il focus, chiudibili, spariscono da sole dopo 5 secondi (gli errori dopo 8).
 import { useCallback } from "react"
 import { Toast } from "@base-ui/react/toast"
@@ -20,7 +21,7 @@ function ElencoNotifiche() {
         key={t.id}
         toast={t}
         className={cn(
-          "relative flex w-full items-start gap-3 rounded-block bg-inverse p-4 pr-11 text-inverse-foreground shadow-overlay select-none superficie-inversa",
+          "relative flex w-full items-start gap-3 rounded-block bg-card/85 p-4 pr-11 text-foreground shadow-overlay backdrop-blur-xl backdrop-saturate-150 select-none",
           "transition-[opacity,transform] motion-base",
           "data-starting-style:translate-y-2 data-starting-style:opacity-0",
           "data-ending-style:translate-x-4 data-ending-style:opacity-0 data-ending-style:duration-[var(--dur-fast)] data-limited:hidden"
@@ -29,19 +30,19 @@ function ElencoNotifiche() {
         <Icona
           className={cn(
             "mt-0.5 size-5 shrink-0",
-            tipo === "successo" && "text-on-inverse-success",
-            tipo === "errore" && "text-on-inverse-danger",
-            tipo === "info" && "text-brand"
+            tipo === "successo" && "text-success",
+            tipo === "errore" && "text-danger",
+            tipo === "info" && "text-brand-icona"
           )}
           aria-hidden
         />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Toast.Title className="text-sm font-bold" />
-          <Toast.Description className="text-sm text-inverse-muted" />
+          <Toast.Title className="text-sm font-semibold text-titolo" />
+          <Toast.Description className="text-sm text-muted-foreground" />
         </div>
         <Toast.Close
           aria-label="Chiudi la notifica"
-          className="absolute top-2.5 right-2.5 inline-flex size-8 items-center justify-center rounded-control text-inverse-muted transition-colors motion-fast hover:bg-inverse-raised hover:text-inverse-foreground"
+          className="absolute top-2.5 right-2.5 inline-flex size-8 items-center justify-center rounded-control text-muted-foreground transition-colors motion-fast hover:bg-muted hover:text-titolo"
         >
           <XIcon className="size-4" aria-hidden />
         </Toast.Close>

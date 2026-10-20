@@ -32,10 +32,10 @@ async function Panoramica({ searchParams }: Pick<PageProps<"/">, "searchParams">
 
   if (righe.length === 0) {
     return (
-      <div className="superficie-inversa flex max-w-2xl flex-col items-start gap-5 rounded-panel bg-inverse p-8 text-inverse-foreground lg:p-10">
-        <h1 className="text-title text-inverse-foreground">Più clienti, più dati. Inizia dal primo.</h1>
-        <p className="text-body text-inverse-muted">Per vedere i numeri dell&apos;agenzia aggiungi i clienti che segui. Bastano tre passi:</p>
-        <ol className="flex list-decimal flex-col gap-2 pl-5 text-inverse-foreground marker:font-black marker:text-brand">
+      <div className="flex max-w-2xl flex-col items-start gap-5 rounded-panel bg-card p-8 shadow-card lg:p-10">
+        <h1 className="text-title">Più clienti, più dati. Inizia dal primo.</h1>
+        <p className="text-body text-muted-foreground">Per vedere i numeri dell&apos;agenzia aggiungi i clienti che segui. Bastano tre passi:</p>
+        <ol className="flex list-decimal flex-col gap-2 pl-5 text-foreground marker:font-bold marker:text-brand-icona">
           {PRIMI_PASSI.map((p) => <li key={p}>{p}</li>)}
         </ol>
         <Link href={`/impostazioni?${query}`} className={buttonVariants({ size: "lg" })}>Aggiungi il primo cliente</Link>

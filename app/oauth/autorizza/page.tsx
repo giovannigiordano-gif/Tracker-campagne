@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import { BookOpenCheck, ShieldCheck, TriangleAlert } from "lucide-react";
-import { Marchio } from "@/components/brand";
+import { TesseraLogo } from "@/components/brand";
 import { configAccesso } from "@/lib/accesso";
 import { CAMPI_AUTORIZZAZIONE, indirizzoRisposta, leggiRichiesta } from "@/lib/connettore/autorizza";
 import { ErroreClient, verificaClient } from "@/lib/connettore/client";
@@ -20,11 +20,9 @@ export const metadata: Metadata = {
 export default function PaginaAutorizza(props: PageProps<"/oauth/autorizza">) {
   return (
     <main id="contenuto" tabIndex={-1} className="grid min-h-dvh place-items-center px-4 py-10 outline-none">
-      <div className="w-full max-w-md overflow-hidden rounded-panel bg-card ring-1 ring-border">
-        <div className="superficie-inversa bg-inverse px-panel py-5">
-          <Marchio />
-        </div>
-        <div className="flex flex-col gap-5 p-panel">
+      <div className="flex w-full max-w-md flex-col items-center gap-6">
+        <TesseraLogo className="w-auto" />
+        <div className="flex w-full flex-col gap-5 rounded-panel bg-card p-panel shadow-card sm:p-8">
           <Suspense fallback={<div className="h-72" />}>
             <Contenuto {...props} />
           </Suspense>

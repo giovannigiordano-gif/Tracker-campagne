@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Marchio } from "@/components/brand";
+import { TesseraLogo } from "@/components/brand";
 import { configAccesso, haAccesso } from "@/lib/accesso";
 import { percorsoSicuro } from "@/lib/sessione";
 import { ModuloAccesso } from "./form";
@@ -15,11 +15,9 @@ export const metadata: Metadata = {
 export default function PaginaAccesso(props: PageProps<"/accesso">) {
   return (
     <main id="contenuto" tabIndex={-1} className="grid min-h-dvh place-items-center px-4 py-10 outline-none">
-      <div className="w-full max-w-sm overflow-hidden rounded-panel bg-card ring-1 ring-border">
-        <div className="superficie-inversa bg-inverse px-panel py-5">
-          <Marchio />
-        </div>
-        <div className="flex flex-col gap-5 p-panel">
+      <div className="flex w-full max-w-sm flex-col items-center gap-6">
+        <TesseraLogo className="w-auto" />
+        <div className="flex w-full flex-col gap-5 rounded-panel bg-card p-panel shadow-card sm:p-8">
           <Suspense fallback={<div className="h-48" />}>
             <Contenuto {...props} />
           </Suspense>

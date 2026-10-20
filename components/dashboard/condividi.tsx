@@ -156,8 +156,8 @@ export function Condividi({ locationId, nome }: { locationId: string; nome: stri
         )}
 
         {link && conferma && (
-          <div className="flex flex-col gap-3 rounded-block bg-muted p-4" role="group" aria-labelledby="conferma-condivisione">
-            <p id="conferma-condivisione" className="font-bold text-titolo">
+          <div className="flex flex-col gap-3 rounded-block p-4 ring-1 ring-border" role="group" aria-labelledby="conferma-condivisione">
+            <p id="conferma-condivisione" className="font-semibold text-titolo">
               {conferma === "nuovo" ? "Creare un nuovo link?" : "Disattivare il link?"}
             </p>
             <p className="text-sm">

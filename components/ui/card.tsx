@@ -1,5 +1,6 @@
-// Pannello: il contenitore delle sezioni. Piatto come il sito (niente ombre), angoli da 22px.
-// Varianti: default (superficie bianca/antracite) e inverse (nero del marchio).
+// Pannello: il contenitore delle sezioni, come le schede delle app Apple: bianco sospeso sul grigio con
+// un'ombra morbida (nel tema scuro un filo di luce), angoli ampi e continui.
+// Varianti: default, inverse (nero del marchio: widget dei numeri), muted (stati vuoti).
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
@@ -7,7 +8,7 @@ import { cn } from "cn"
 const cardVariants = cva("flex min-w-0 flex-col gap-stack rounded-panel p-panel", {
   variants: {
     variant: {
-      default: "bg-card text-foreground ring-1 ring-border",
+      default: "bg-card text-foreground shadow-card",
       inverse: "superficie-inversa bg-inverse text-inverse-foreground",
       muted: "bg-muted text-foreground",
     },

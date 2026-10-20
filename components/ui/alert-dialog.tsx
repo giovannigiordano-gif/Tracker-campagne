@@ -14,7 +14,7 @@ function AlertDialogContent({ className, children, ...props }: AlertDialogPrimit
     <AlertDialogPrimitive.Portal>
       <AlertDialogPrimitive.Backdrop
         className={cn(
-          "fixed inset-0 z-[var(--z-modal)] min-h-dvh bg-black/50 transition-opacity motion-base",
+          "fixed inset-0 z-[var(--z-modal)] min-h-dvh bg-black/35 backdrop-blur-[2px] transition-opacity motion-base",
           "data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-[var(--dur-fast)]"
         )}
       />

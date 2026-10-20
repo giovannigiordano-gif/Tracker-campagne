@@ -85,7 +85,7 @@ function Numero({
   return (
     <div className={cn("flex min-w-0 flex-col gap-0.5", className)}>
       <dt className="text-caption text-muted-foreground">{etichetta}</dt>
-      <dd className="truncate text-xl leading-tight font-black tracking-tight text-titolo">{valore}</dd>
+      <dd className="truncate text-numero text-titolo">{valore}</dd>
       {delta !== undefined && (
         <dd className="text-xs">
           <Delta pct={delta} inversa={inversa} neutra={neutra} />

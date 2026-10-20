@@ -152,3 +152,32 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - «Lead al giorno da Meta» ha una sola serie (lead arrivati nel CRM), quindi niente legenda: il titolo dice cosa mostra.
 - Tabella e CSV delle campagne: tolta la colonna «Lead Meta»; «Lead GHL» diventa «Lead» e «Costo per lead reale» diventa «Costo per lead».
 - Vale anche per la pagina condivisa con il cliente.
+
+## 2026-10-20 — Redesign "app Apple" col marchio SalesProcess
+Richiesta del titolare: una grafica come le app Apple, coi colori SalesProcess. Scelte sue: le app di Mac e iPhone (non il sito apple.com); nero solo nel pannello dei numeri e nella tessera del logo. Direzione fissata da lui, senza estrazione di alternative. Contratto in `.impeccable/surfaces/app-agenzia-layout-tsx.md`.
+- **Mondo**:
+  - fondo #f5f5f7, schede bianche sospese con ombra morbida a più livelli (nel tema scuro un filo di luce);
+  - angoli continui (`corner-shape: squircle`) dove il browser li supporta;
+  - testo #1d1d1f, secondario #636366 (≥ 4,9:1 su bianco, fondo, binari e barra laterale);
+  - tema scuro come le app Apple al buio: fondo nero, schede #1c1c1e.
+- **Caratteri**: Red Hat Display 800 per titoli grandi (34px) e numeri, Red Hat Text per testi e controlli, come SF Display e SF Text. Il 900 di prima diventa 800, più vicino al "bold" dei titoli Apple.
+- **Barra laterale chiara**:
+  - in alto la tessera nera col logo ufficiale (il logo ha la scritta bianca, quindi vive solo sul nero);
+  - icone nel colore d'accento arancio (#d96c00 su fondo chiaro);
+  - voce attiva arancio con testo nero; iniziale del cliente in un quadratino.
+- **Firma**: la barra degli strumenti è trasparente in cima e diventa vetro con un filo quando la pagina scorre.
+  - Da 1024px il titolo grande della pagina, uscito dalla vista, ricompare piccolo nello spazio tra i controlli.
+  - Tra 1024 e 1279px l'etichetta del confronto si accorcia in "Confronta" (frase intera per i lettori di schermo).
+  - Su telefono il titolo prende il centro della barra e la tessera del logo gli lascia il posto.
+- **Controlli**:
+  - controlli a segmenti con una sola pillola bianca che scorre (`components/ui/pillola.tsx`: periodo, ordinamento, indice delle sezioni, tema);
+  - interruttori nelle proporzioni di iOS con pomello sempre bianco;
+  - pulsanti secondari grigi pieni (come i "bordered" di Apple);
+  - campi con alone arancio al focus, come su macOS.
+- **Contenuti**:
+  - tabelle come le liste del Mac (intestazioni grigie leggere, righe alternate);
+  - i numeri di "Campagne Meta" in una griglia divisa da fili, senza schede dentro la scheda;
+  - le sezioni apribili con la freccia Lucide che ruota, al posto del triangolo del browser;
+  - etichette dei grafici come gli HUD di macOS (scuri traslucidi).
+- **Tolto**: la didascalia nella barra di Impostazioni (faceva da occhiello sopra il titolo); il pannello nero di benvenuto (ora scheda bianca).
+- **Revisione finale**: revisore indipendente (impeccable-finish-reviewer), esito "fix" con 8 correzioni, applicate in un solo giro.

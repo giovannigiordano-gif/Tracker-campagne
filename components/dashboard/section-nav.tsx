@@ -2,10 +2,12 @@
 // Indice delle sezioni della pagina cliente: resta in alto e segna la sezione che stai guardando.
 // sottoBarra: true quando sopra c'è la barra dei filtri fissa (pagine dell'agenzia), false nella pagina condivisa.
 import { useEffect, useState } from "react";
+import { Pillola, usePillola } from "@/components/ui/pillola";
 import { cn } from "@/lib/utils";
 
 export function SectionNav({ sezioni, sottoBarra = true }: { sezioni: { id: string; label: string }[]; sottoBarra?: boolean }) {
   const [attiva, setAttiva] = useState(sezioni[0]?.id);
+  const { binario, stile, pronta, animata } = usePillola<HTMLUListElement>(attiva);
 
   useEffect(() => {
     const osservatore = new IntersectionObserver(
@@ -26,19 +28,22 @@ export function SectionNav({ sezioni, sottoBarra = true }: { sezioni: { id: stri
     <nav
       aria-label="Sezioni della pagina"
       className={cn(
-        "sticky z-[calc(var(--z-sticky)-1)] -mx-4 hidden overflow-x-auto bg-background/90 px-4 py-2 backdrop-blur-md lg:-mx-8 lg:block lg:px-8",
-        sottoBarra ? "top-[4.25rem] lg:top-[4.5rem]" : "top-0"
+        "vetro sticky z-[calc(var(--z-sticky)-1)] -mx-4 hidden overflow-x-auto px-4 py-2 lg:-mx-8 lg:block lg:px-8",
+        sottoBarra ? "top-16" : "top-0"
       )}
     >
-      <ul className="flex w-max gap-1">
+      <ul ref={binario} className="relative flex w-max gap-0.5 rounded-control bg-muted p-1">
+        <Pillola stile={stile} animata={animata} />
         {sezioni.map((s) => (
           <li key={s.id}>
             <a
               href={`#${s.id}`}
               aria-current={attiva === s.id ? "true" : undefined}
+              data-attiva={attiva === s.id}
               className={cn(
-                "inline-flex h-8 items-center rounded-control px-3.5 text-sm font-semibold transition-colors motion-fast",
-                attiva === s.id ? "bg-titolo text-background" : "text-muted-foreground hover:bg-muted hover:text-titolo"
+                "relative inline-flex h-8 items-center rounded-control px-3.5 text-sm font-semibold transition-colors motion-fast",
+                attiva === s.id ? "text-titolo" : "text-muted-foreground hover:text-titolo",
+                attiva === s.id && !pronta && "bg-raised shadow-raised"
               )}
             >
               {s.label}

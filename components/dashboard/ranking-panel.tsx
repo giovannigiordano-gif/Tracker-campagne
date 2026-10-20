@@ -40,7 +40,7 @@ function Elenco({
   const mostrate = tutte ? ordinate : ordinate.slice(0, VISIBILI);
 
   if (ordinate.length === 0) {
-    return <p className="rounded-block bg-muted px-4 py-6 text-center text-sm text-muted-foreground">{scheda.vuoto}</p>;
+    return <p className="py-6 text-center text-sm text-muted-foreground">{scheda.vuoto}</p>;
   }
 
   return (
@@ -71,7 +71,7 @@ function Elenco({
                   {attiva && <Check className="size-4 shrink-0" aria-hidden />}
                   <span className="truncate" title={v.etichetta}>{v.etichetta}</span>
                 </span>
-                <span className="text-right text-sm font-bold text-titolo">{formatNumero(v.lead)}</span>
+                <span className="text-right text-sm font-semibold text-titolo">{formatNumero(v.lead)}</span>
                 <span className="text-right text-sm text-muted-foreground">{formatValuta(v.venduto, valuta)}</span>
                 <span className="col-span-3 h-1.5">
                   <span

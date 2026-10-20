@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { richiediAccessoPagina } from "@/lib/accesso";
 import { connection } from "next/server";
 import { headers } from "next/headers";
-import { ChevronDown, CircleAlert, CircleCheck, FileKey, TriangleAlert } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, FileKey, TriangleAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BoxErrore, ScheletroImpostazioni, TitoloPagina } from "@/components/bits";
 import { Badge } from "@/components/ui/badge";
@@ -110,7 +110,7 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
 
           {clienti.length === 0 && (
             <Card variant="muted" className="items-start">
-              <p className="font-bold text-titolo">Ancora nessun cliente.</p>
+              <p className="font-semibold text-titolo">Ancora nessun cliente.</p>
               <p className="text-sm text-muted-foreground">
                 Cercalo nel riquadro &quot;Aggiungi un cliente&quot; tra i sub-account della tua agenzia: dopo l&apos;aggiunta ti chiediamo il suo token.
               </p>
@@ -121,11 +121,11 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
             {clienti.map((c, i) => (
               <li key={c.locationId} className="entra-a-scaletta" style={{ "--i": i } as React.CSSProperties}>
                 <details
-                  className="group rounded-panel bg-card ring-1 ring-border open:ring-titolo/20"
+                  className="group rounded-panel bg-card shadow-card"
                   open={c.token.origine === "nessuno"}
                 >
                   <summary className="flex min-h-14 list-none flex-wrap items-center gap-x-3 gap-y-1 rounded-panel px-5 py-3 transition-colors motion-fast hover:bg-muted/60 [&::-webkit-details-marker]:hidden">
-                    <span className="font-bold text-titolo">{c.name}</span>
+                    <span className="font-semibold text-titolo">{c.name}</span>
                     <StatoToken token={c.token} />
                     {!c.active && <Badge variant="outline">Nascosto</Badge>}
                     <span className="ml-auto text-caption text-muted-foreground">
@@ -152,11 +152,12 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
                         </p>
                       )}
                       <TokenForm locationId={c.locationId} haToken={c.token.origine !== "nessuno"} />
-                      <details className="text-sm">
-                        <summary className="w-fit text-sm font-semibold text-titolo underline-offset-4 hover:underline">
+                      <details className="group/apri text-sm">
+                        <summary className="inline-flex w-fit list-none items-center gap-1 text-sm font-semibold text-titolo underline-offset-4 hover:underline [&::-webkit-details-marker]:hidden">
+                          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform motion-base group-open/apri:rotate-90" aria-hidden />
                           Come si crea il token
                         </summary>
-                        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground marker:font-bold marker:text-titolo">
+                        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground marker:font-semibold marker:text-titolo">
                           {PASSI_TOKEN.map((p) => <li key={p}>{p}</li>)}
                         </ol>
                       </details>

@@ -84,6 +84,10 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
   if (fusoValido(fuso) !== fuso) return { ok: false, messaggio: `Fuso orario "${fuso}" non valido (es. Europe/Rome)` };
   if (!/^[A-Z]{3}$/.test(valuta)) return { ok: false, messaggio: "Valuta non valida: usa il codice a 3 lettere (es. EUR)" };
   const sogliaNum = soglia === "" ? undefined : Number(soglia);
+  // Account pubblicitari Meta scelti (formato act_<numero>); si aggiornano solo se il modulo li contiene
+  const conAccountMeta = formData.get("metaAdAccountIdsPresenti") === "1";
+  const accountMeta = [...new Set(formData.getAll("metaAdAccountIds").map(String))];
+  if (accountMeta.some((a) => !/^act_\d{3,30}$/.test(a))) return { ok: false, messaggio: "Account pubblicitario Meta non valido" };
   if (sogliaNum !== undefined && !(sogliaNum > 0 && sogliaNum <= 100)) {
     return { ok: false, messaggio: "La soglia di calo lead deve essere un numero tra 1 e 100" };
   }
@@ -94,6 +98,7 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
     timezone: fuso,
     currency: valuta,
     notes: String(formData.get("notes") ?? "").trim(),
+    metaAdAccountIds: conAccountMeta ? accountMeta : attuale.metaAdAccountIds,
     active: formData.get("active") === "on",
     thresholds: { ...attuale.thresholds, leadDropPct: sogliaNum },
   };

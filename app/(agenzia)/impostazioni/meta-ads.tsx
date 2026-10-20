@@ -130,6 +130,31 @@ export function SchedaMetaAds({ meta, esito, ritorno }: { meta: RiepilogoMetaMcp
             )}
           </dl>
 
+          {verifica?.account && (
+            <section className="flex flex-col gap-2" aria-label="Account pubblicitari visibili">
+              <h3 className="font-semibold text-titolo">Account pubblicitari visibili ({verifica.account.length})</h3>
+              {verifica.account.length > 0 && (
+                <ul className="flex flex-col gap-1.5">
+                  {verifica.account.map((a) => (
+                    <li key={a.id} className="flex flex-col rounded-block bg-muted px-3 py-2">
+                      <span className="font-semibold text-titolo">{a.nome}</span>
+                      <span className="text-caption text-muted-foreground">
+                        {a.azienda ? `${a.azienda}, ` : ""}
+                        {a.id}
+                        {!a.interrogabile && `, non leggibile${a.motivo ? ` (${a.motivo})` : ""}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-caption text-muted-foreground">
+                Vedi solo gli account che hai scelto nella finestra di Meta e su cui hai un ruolo nel Business Manager. Per
+                aggiungerne altri premi «Collega di nuovo» e selezionali tutti. Poi associa ogni account al suo cliente nella
+                scheda del cliente, a sinistra.
+              </p>
+            </section>
+          )}
+
           {verifica && verifica.strumentiAbilitati.length > 0 && (
             <details>
               <summary className="w-fit font-semibold text-titolo underline-offset-4 hover:underline">

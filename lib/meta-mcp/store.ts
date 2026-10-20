@@ -5,6 +5,7 @@
 import type { OAuthDiscoveryState } from "@modelcontextprotocol/sdk/client/auth.js";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@modelcontextprotocol/sdk/shared/auth.js";
 import { archivio } from "../archivio";
+import type { AccountMeta } from "./account";
 import { metaAppId } from "./config";
 import { decrypt, encrypt } from "../crypto";
 
@@ -17,6 +18,7 @@ export type VerificaMetaMcp = {
   strumentiAbilitati: string[]; // strumenti di sola lettura che l'AI potrà usare
   strumentiEsclusi: number; // strumenti offerti da Meta ma spenti (scrittura o non necessari)
   accountVisibili: number | null; // account pubblicitari letti con ads_get_ad_accounts
+  account?: AccountMeta[]; // elenco degli account (id, nome, azienda): serve per associarli ai clienti
 };
 
 export type StatoMetaMcp = {

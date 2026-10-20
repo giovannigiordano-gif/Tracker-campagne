@@ -157,7 +157,13 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
                     </section>
                     <section className="flex flex-col gap-3" aria-label={`Dati di ${c.name}`}>
                       <h3 className="text-label">Dati del cliente</h3>
-                      <ClienteForm cliente={c} />
+                      <ClienteForm
+                        cliente={c}
+                        accountMeta={meta.ultimaVerifica?.account ?? []}
+                        assegnati={Object.fromEntries(
+                          clienti.filter((x) => x.locationId !== c.locationId).flatMap((x) => x.metaAdAccountIds.map((id) => [id, x.name]))
+                        )}
+                      />
                     </section>
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
                       <p className="text-sm text-muted-foreground">Non lo segui più? Toglilo dall&apos;app: su GHL resta tutto com&apos;è.</p>

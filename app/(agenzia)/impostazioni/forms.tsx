@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifica } from "@/components/ui/toast";
 import type { Account } from "@/lib/accounts";
+import type { AccountMeta } from "@/lib/meta-mcp/account";
 import type { GhlLocation } from "@/lib/ghl/types";
 
 function Invia({ children, variant, disabled }: { children: React.ReactNode; variant?: "default" | "outline"; disabled?: boolean }) {
@@ -179,7 +180,77 @@ export function RimuoviTokenButton({ locationId, nome }: { locationId: string; n
 }
 
 // ---------------------------------------------------------------- dati del cliente
-export function ClienteForm({ cliente }: { cliente: Account }) {
+// Scelta degli account pubblicitari Meta del cliente (uno o più). Elenco dall'ultima verifica del collegamento Meta.
+function AccountMetaCampo({
+  cliente,
+  disponibili,
+  assegnati,
+}: {
+  cliente: Account;
+  disponibili: AccountMeta[];
+  assegnati: Record<string, string>; // account già scelti per altri clienti: id -> nome del cliente
+}) {
+  const scelti = new Set(cliente.metaAdAccountIds);
+  // Account scelti in passato ma non più visibili su Meta: restano finché non li togli
+  const nonVisibili = cliente.metaAdAccountIds.filter((id) => !disponibili.some((a) => a.id === id));
+  const titoloId = `titolo-meta-${cliente.locationId}`;
+  return (
+    <fieldset className="flex flex-col gap-2 sm:col-span-2" aria-labelledby={titoloId}>
+      <input type="hidden" name="metaAdAccountIdsPresenti" value="1" />
+      <legend id={titoloId} className="text-sm font-semibold text-titolo">Account pubblicitari Meta</legend>
+      {disponibili.length === 0 && nonVisibili.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Collega Meta Ads (riquadro a destra): qui potrai scegliere gli account pubblicitari di questo cliente.
+        </p>
+      ) : (
+        <>
+          <p className="text-caption text-muted-foreground">
+            Scegli gli account dove girano le inserzioni del cliente: serviranno per spesa, costo per lead e incrocio con i lead di GHL.
+          </p>
+          <ul className="flex flex-col gap-1">
+            {disponibili.map((a) => (
+              <li key={a.id}>
+                <label className="flex min-h-11 items-center gap-3 rounded-block px-3 py-2 transition-colors motion-fast hover:bg-muted">
+                  <input type="checkbox" name="metaAdAccountIds" value={a.id} defaultChecked={scelti.has(a.id)} className="size-4 shrink-0" />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="font-semibold text-titolo">{a.nome}</span>
+                    <span className="text-caption text-muted-foreground">
+                      {a.azienda ? `${a.azienda}, ` : ""}
+                      {a.id}
+                      {assegnati[a.id] && `, già scelto per ${assegnati[a.id]}`}
+                      {!a.interrogabile && `, non leggibile da Meta${a.motivo ? ` (${a.motivo})` : ""}`}
+                    </span>
+                  </span>
+                </label>
+              </li>
+            ))}
+            {nonVisibili.map((id) => (
+              <li key={id}>
+                <label className="flex min-h-11 items-center gap-3 rounded-block px-3 py-2 transition-colors motion-fast hover:bg-muted">
+                  <input type="checkbox" name="metaAdAccountIds" value={id} defaultChecked className="size-4 shrink-0" />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="font-semibold text-titolo">{id}</span>
+                    <span className="text-caption text-muted-foreground">Non più visibile nel collegamento Meta</span>
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </fieldset>
+  );
+}
+
+export function ClienteForm({
+  cliente,
+  accountMeta = [],
+  assegnati = {},
+}: {
+  cliente: Account;
+  accountMeta?: AccountMeta[];
+  assegnati?: Record<string, string>;
+}) {
   const [esito, azione] = useActionState(modificaCliente, null);
   const errore = useEsito(esito, "Modifiche salvate");
   const id = (campo: string) => `${campo}-${cliente.locationId}`;
@@ -226,6 +297,7 @@ export function ClienteForm({ cliente }: { cliente: Account }) {
           placeholder="Settore, offerta, obiettivo delle campagne, CPL target"
         />
       </div>
+      <AccountMetaCampo cliente={cliente} disponibili={accountMeta} assegnati={assegnati} />
       <label className="flex items-center gap-3 text-sm font-medium text-titolo sm:col-span-2">
         <Switch name="active" defaultChecked={cliente.active} />
         Mostra il cliente in Panoramica e nel menu

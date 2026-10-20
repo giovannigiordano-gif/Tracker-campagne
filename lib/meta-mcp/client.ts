@@ -3,35 +3,10 @@
 // Il risultato (solo nomi degli strumenti e numero di account) viene salvato e mostrato in Impostazioni.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { leggiPaginaAccount, type AccountMeta } from "./account";
 import { classificaStrumenti, META_MCP_URL, type StrumentoMcp } from "./config";
 import { tokenValido } from "./oauth";
 import { modificaStatoMetaMcp, type VerificaMetaMcp } from "./store";
-
-// Conta gli account nella risposta di ads_get_ad_accounts (testo JSON o contenuto strutturato)
-function contaAccount(risposta: { content?: unknown; structuredContent?: unknown }): number | null {
-  const primoElenco = (v: unknown): unknown[] | null => {
-    if (Array.isArray(v)) return v;
-    if (v && typeof v === "object") {
-      for (const x of Object.values(v)) {
-        const trovato = primoElenco(x);
-        if (trovato) return trovato;
-      }
-    }
-    return null;
-  };
-  if (risposta.structuredContent) return primoElenco(risposta.structuredContent)?.length ?? null;
-  for (const parte of Array.isArray(risposta.content) ? risposta.content : []) {
-    if (parte && typeof parte === "object" && "text" in parte && typeof parte.text === "string") {
-      try {
-        const elenco = primoElenco(JSON.parse(parte.text));
-        if (elenco) return elenco.length;
-      } catch {
-        // testo non JSON: si ignora
-      }
-    }
-  }
-  return null;
-}
 
 export async function verificaCollegamento(): Promise<VerificaMetaMcp> {
   const il = new Date().toISOString();
@@ -63,12 +38,25 @@ export async function verificaCollegamento(): Promise<VerificaMetaMcp> {
       } while (cursore);
 
       const { abilitati, esclusi } = classificaStrumenti(strumenti);
-      let accountVisibili: number | null = null;
+      // Elenco completo degli account pubblicitari, pagina per pagina (al massimo 20 pagine da 50)
+      let account: AccountMeta[] | undefined;
       if (abilitati.includes("ads_get_ad_accounts")) {
-        const risposta = await client.callTool({ name: "ads_get_ad_accounts", arguments: {} });
-        // La risposta può avere anche il vecchio formato "toolResult": si leggono solo contenuto e contenuto strutturato
-        if (!risposta.isError) accountVisibili = contaAccount(risposta as { content?: unknown; structuredContent?: unknown });
+        account = [];
+        let cursore: string | null = null;
+        for (let pagina = 0; pagina < 20; pagina++) {
+          const risposta = await client.callTool({
+            name: "ads_get_ad_accounts",
+            arguments: { limit: 50, ...(cursore ? { cursor: cursore } : {}) },
+          });
+          if (risposta.isError) break;
+          // La risposta può avere anche il vecchio formato "toolResult": si leggono solo contenuto e contenuto strutturato
+          const letto = leggiPaginaAccount(risposta as { content?: unknown; structuredContent?: unknown });
+          account.push(...letto.account);
+          cursore = letto.prossima;
+          if (!cursore) break;
+        }
       }
+      const accountVisibili = account ? account.length : null;
       verifica = {
         il,
         ok: abilitati.length > 0,
@@ -78,6 +66,7 @@ export async function verificaCollegamento(): Promise<VerificaMetaMcp> {
         strumentiAbilitati: abilitati,
         strumentiEsclusi: esclusi,
         accountVisibili,
+        account,
       };
     } catch (e) {
       const testo = (e as Error).message ?? "";

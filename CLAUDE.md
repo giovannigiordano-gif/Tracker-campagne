@@ -93,16 +93,39 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - Nella pagina condivisa la sezione c'è (senza criticità) solo se il cliente ha account Meta associati; un errore Meta mostra un messaggio neutro.
   - La variazione della spesa è grigia (`Delta neutra`): spendere di più non è né buono né cattivo.
 - **Date.now() e Cache Components**: Next.js rifiuta `Date.now()` mentre prepara le pagine in anticipo. Per misurare durate si usa `performance.now()` (vedi `archivio.ts`), per l'ora corrente si chiama prima `await connection()`.
+- **Connettore per Claude** (fatto il 2026-10-20, scelta del titolare: le analisi le scrive Claude con il suo abbonamento, e si salvano anche nell'app). Sostituisce la chiamata all'API Anthropic prevista nella Fase 5: niente `ANTHROPIC_API_KEY`.
+  - L'app è un server MCP remoto su `<sito>/mcp` (Streamable HTTP senza sessioni, `WebStandardStreamableHTTPServerTransport` del SDK 1.32.1, `enableJsonResponse`). Il titolare lo aggiunge in Claude: Personalizza → Connettori → Aggiungi connettore personalizzato. Funziona su claude.ai, app desktop, mobile e Cowork.
+  - Requisiti verificati su claude.com/docs/connectors/building (authentication, lazy-authentication, index):
+    - 401 con `WWW-Authenticate: Bearer resource_metadata=…`;
+    - metadati RFC 9728 e RFC 8414 in `app/.well-known/…`;
+    - PKCE S256; `/token` in form-urlencoded;
+    - ritorno `https://claude.ai/api/mcp/auth_callback`;
+    - Claude usa il CIMD se ci sono `client_id_metadata_document_supported: true` e `"none"` tra i metodi del token endpoint;
+    - limiti: risultato di uno strumento circa 150.000 caratteri, 240 s per chiamata.
+  - OAuth senza archivio (`lib/connettore/`): codici e token firmati HMAC con `SESSION_SECRET`, impronta di `APP_PASSWORD` e una "generazione" in `secrets/connettore.json`.
+    - Durate: codice 2 minuti, accesso 1 ora, rinnovo 60 giorni con rotazione.
+    - "Scollega Claude" in Impostazioni incrementa la generazione e annulla tutti i token; anche cambiare la password li annulla.
+    - Limite noto: senza archivio un codice non si può segnare come già usato (lo protegge PKCE) e i token di rinnovo vecchi restano validi fino alla scadenza o allo scollegamento.
+  - Pagina di consenso `/oauth/autorizza` con la password dell'app, sempre richiesta.
+    - Accetta solo `client_id` https su `claude.ai`/`claude.com` (variabile `CONNETTORE_CLIENT_HOST` per cambiarli) e legge il CIMD per controllare il `redirect_uri`, con porta libera per gli indirizzi locali di Claude Code.
+    - Se il CIMD non si raggiunge, accetta solo il ritorno fisso di claude.ai.
+    - `X-Frame-Options: DENY` in next.config.
+  - `proxy.ts` lascia passare `/mcp`, `/oauth/…` e `/.well-known/…`, che hanno il proprio controllo.
+  - Strumenti (`lib/connettore/server.ts`), con annotazioni `readOnlyHint`:
+    - `elenco_clienti`, `panoramica_clienti`, `analisi_cliente`, `analisi_salvate`;
+    - `salva_analisi`, l'unica scrittura, solo nell'app;
+    - prompt `analisi_campagne` (sezioni fisse di PROGETTO.md) e `controllo_clienti`.
+  - Privacy: `analisi_cliente` usa `caricaDashboardCliente(…, { conDatiPersonali: false })` e `riepilogoCliente` (`lib/connettore/riepilogo.ts`, testato), che produce solo aggregati. Verificato sui dati reali: nessuna email né telefono, le sole sequenze lunghe di cifre sono ID di campagne Meta.
+  - Analisi salvate in `reports/<locationId>.json` nell'archivio (ultime 50, `lib/analisi.ts`); in PROGETTO.md era un `.md` per analisi, ma online così si consumano meno scritture. Sezione "Analisi" nella dashboard, solo per il titolare (non nel link condiviso), con storico ed "Elimina".
+  - Provato in locale l'intero giro: consenso, scambio, rinnovo, strumenti, salvataggio, revoca. Online il connettore funziona solo con `APP_PASSWORD` e `SESSION_SECRET` impostati.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
-  - analisi scritta dall'AI sulla sezione Campagne Meta (report e domanda libera), con chiave Anthropic oppure tramite il connettore Claude qui sotto;
-  - il token Meta scade intorno al 2026-12-19: il titolare deve premere "Collega di nuovo" in Impostazioni;
-  - richiesta del titolare (2026-10-14): usare l'app da Claude o Cowork con il proprio abbonamento, trasformando l'app in un connettore MCP. Serve l'app online e solo dati aggregati verso l'AI. Da progettare dopo, verificando la documentazione Anthropic.
+  - il token Meta scade intorno al 2026-12-19: il titolare deve premere "Collega di nuovo" in Impostazioni.
 
 ## Comandi
 - `npm run dev`: avvia l'app in locale (http://localhost:3000)
 - `npm run check`: verifica i collegamenti a GHL, Meta e Anthropic
-- `npm test`: test automatici (accesso, archivio, link condivisi, conteggi per canale, Meta e criticità)
+- `npm test`: test automatici (accesso, archivio, link condivisi, conteggi per canale, Meta e criticità, connettore per Claude)
 - `npm run build`: build di produzione
 
 ## Stato delle fasi
@@ -111,5 +134,5 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
 - [x] Fase 2: pipeline, opportunità e venduto, insieme al restyling Sales Process e alla dashboard interattiva (2026-10-12)
 - [x] Fase 3: client Meta Marketing API, sezione Campagne Meta con criticità, mappatura in Impostazioni (2026-10-20)
 - [ ] Fase 4: attribuzione e pagina Incrocio
-- [ ] Fase 5: MCP Meta e analisi AI, con fallback
+- [x] Fase 5: MCP Meta (2026-10-20) e analisi AI tramite il connettore per Claude, con l'abbonamento del titolare (2026-10-20)
 - [ ] Fase 6: login, Dockerfile, deploy su Railway o Render, README per utente non tecnico

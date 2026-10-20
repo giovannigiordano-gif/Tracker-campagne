@@ -3,13 +3,14 @@
 // le azioni distruttive chiedono conferma. I dati vengono salvati sul server dalle azioni in app/actions.ts.
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { KeyRound, Link2Off, RefreshCw, Search, Trash2, UserMinus } from "lucide-react";
+import { Copy, KeyRound, Link2Off, RefreshCw, Search, Trash2, UserMinus } from "lucide-react";
 import {
   aggiungiCliente,
   modificaCliente,
   rimuoviCliente,
   rimuoviToken,
   salvaToken,
+  scollegaConnettore,
   scollegaMetaMcp,
   svuotaCache,
   verificaMetaMcp,
@@ -412,6 +413,48 @@ export function ScollegaMetaButton() {
       conferma="Scollega"
       successo="Meta Ads scollegato"
       esegui={() => scollegaMetaMcp()}
+    />
+  );
+}
+
+// ---------------------------------------------------------------- connettore per Claude
+export function CopiaIndirizzo({ indirizzo }: { indirizzo: string }) {
+  const notifica = useNotifica();
+  async function copia() {
+    try {
+      await navigator.clipboard.writeText(indirizzo);
+      notifica("successo", "Indirizzo copiato", "Incollalo in Claude, nel nuovo connettore.");
+    } catch {
+      // Senza accesso agli appunti si seleziona il testo, da copiare a mano
+      const campo = document.getElementById("indirizzo-connettore") as HTMLInputElement | null;
+      campo?.select();
+      notifica("info", "Copia l'indirizzo a mano", "È già selezionato: premi Ctrl+C.");
+    }
+  }
+  return (
+    <div className="flex gap-2">
+      <Label htmlFor="indirizzo-connettore" className="sr-only">
+        Indirizzo del connettore
+      </Label>
+      <Input id="indirizzo-connettore" readOnly value={indirizzo} onFocus={(e) => e.currentTarget.select()} className="font-mono text-sm" />
+      <Button type="button" variant="outline" onClick={copia}>
+        <Copy aria-hidden /> Copia
+      </Button>
+    </div>
+  );
+}
+
+export function ScollegaClaudeButton() {
+  return (
+    <ConfermaAzione
+      etichetta="Scollega Claude"
+      icona={<Link2Off aria-hidden />}
+      variantePulsante="ghost"
+      titolo="Scollegare Claude dall'app?"
+      descrizione="Claude non potrà più leggere i dati né salvare analisi finché non ricolleghi il connettore (in Claude: Connetti, poi la password dell'app). Le analisi già salvate restano."
+      conferma="Scollega"
+      successo="Claude scollegato"
+      esegui={() => scollegaConnettore()}
     />
   );
 }

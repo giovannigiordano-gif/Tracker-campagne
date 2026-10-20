@@ -132,7 +132,12 @@ export function costruisciRighe(
   return { lead, opp, aperte };
 }
 
-export async function caricaDashboardCliente(account: Account, sel: Selezione): Promise<DatiCliente> {
+// conDatiPersonali: false per il connettore di Claude, che riceve solo aggregati
+export async function caricaDashboardCliente(
+  account: Account,
+  sel: Selezione,
+  { conDatiPersonali = true }: { conDatiPersonali?: boolean } = {},
+): Promise<DatiCliente> {
   // GHL e Meta in parallelo; un problema con Meta non deve bloccare i dati di GHL
   const [grezzi, meta] = await Promise.all([
     datiGrezziCliente(account, sel),
@@ -140,7 +145,7 @@ export async function caricaDashboardCliente(account: Account, sel: Selezione): 
       (e): EsitoMeta => ({ stato: "errore", tipo: "altro", messaggio: `Non riesco a leggere i dati da Meta (${(e as Error).message}).` })
     ),
   ]);
-  const { lead, opp, aperte } = costruisciRighe(grezzi, { conDatiPersonali: true });
+  const { lead, opp, aperte } = costruisciRighe(grezzi, { conDatiPersonali });
   const { corrente, precedente, fuso } = grezzi.periodo;
   return {
     cliente: { locationId: account.locationId, nome: account.name, valuta: account.currency, fuso },

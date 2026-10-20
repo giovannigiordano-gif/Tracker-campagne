@@ -1,5 +1,6 @@
 // Proxy: gira prima di ogni pagina e la blocca se il titolare non ha fatto l'accesso.
-// Restano libere: la pagina di accesso, i link condivisi con i clienti (/condivisa/…), i file statici.
+// Restano libere: la pagina di accesso, i link condivisi con i clienti (/condivisa/…), i file statici e il
+// connettore per Claude (/mcp, /oauth/…, /.well-known/…), che ha il proprio controllo con token e password.
 // Le pagine e le azioni ricontrollano l'accesso anche da sole (lib/accesso.ts).
 import { NextResponse, type NextRequest } from "next/server";
 import { NOME_COOKIE, sessioneValida } from "@/lib/sessione";
@@ -32,6 +33,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Tutto tranne file statici, pagina di accesso e link condivisi
-  matcher: ["/((?!_next/static|_next/image|icon\\.svg|favicon\\.ico|brand/|accesso|condivisa/).*)"],
+  // Tutto tranne file statici, pagina di accesso, link condivisi e connettore per Claude
+  matcher: ["/((?!_next/static|_next/image|icon\\.svg|favicon\\.ico|brand/|accesso|condivisa/|mcp$|oauth/|\\.well-known/).*)"],
 };

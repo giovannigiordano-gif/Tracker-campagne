@@ -32,6 +32,8 @@ import { formatGiorno } from "@/lib/period";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
 import { FunnelPanel } from "./funnel-panel";
 import { MetaPanel } from "./meta-panel";
+import { AnalisiPanel } from "./analisi-panel";
+import type { Analisi } from "@/lib/analisi";
 import { ProvenienzaPanel, type SchedaProvenienza } from "./ranking-panel";
 import { SectionNav } from "./section-nav";
 import { TrendPanel } from "./trend-panel";
@@ -68,6 +70,7 @@ const creaColonneVendite = (valuta: string): Colonna<RigaVendita>[] => hv.column
 const SEZIONI = [
   { id: "numeri", label: "Numeri" },
   { id: "meta", label: "Campagne Meta" },
+  { id: "analisi", label: "Analisi" },
   { id: "andamento", label: "Andamento" },
   { id: "provenienza", label: "Provenienza" },
   { id: "pipeline", label: "Pipeline" },
@@ -80,10 +83,12 @@ export function ClientDashboard({
   dati,
   confronto,
   modo = "agenzia",
+  analisi = [],
 }: {
   dati: DatiCliente;
   confronto: boolean;
   modo?: "agenzia" | "condivisa";
+  analisi?: Analisi[]; // analisi scritte da Claude: solo nella vista del titolare
 }) {
   const { cliente, periodo, pipelines } = dati;
   const valuta = cliente.valuta;
@@ -187,8 +192,12 @@ export function ClientDashboard({
       </header>
 
       <SectionNav
-        // Nella pagina condivisa, senza account Meta associati, la sezione non c'è
-        sezioni={modo === "condivisa" && dati.meta.stato === "non-associato" ? SEZIONI.filter((s) => s.id !== "meta") : SEZIONI}
+        // Nella pagina condivisa niente analisi e, senza account Meta associati, niente sezione Meta
+        sezioni={
+          modo === "condivisa"
+            ? SEZIONI.filter((s) => s.id !== "analisi" && !(s.id === "meta" && dati.meta.stato === "non-associato"))
+            : SEZIONI
+        }
         sottoBarra={modo === "agenzia"}
       />
 
@@ -250,6 +259,8 @@ export function ClientDashboard({
       </div>
 
       <MetaPanel dati={dati} confronto={confronto} modo={modo} />
+
+      {modo === "agenzia" && <AnalisiPanel analisi={analisi} locationId={cliente.locationId} nomeCliente={cliente.nome} />}
 
       <TrendPanel id="andamento" lead={lead} opp={opp} giorni={periodo.giorni} giorniPrec={periodo.giorniPrec} confronto={confronto} valuta={valuta} />
 

@@ -1,5 +1,5 @@
-// Impostazioni: clienti seguiti (da accounts.json), token GHL cifrati, cache.
-// La mappatura con gli account pubblicitari Meta arriva nella Fase 3 del progetto.
+// Impostazioni: clienti seguiti (da accounts.json), token GHL cifrati, account Meta, collegamenti
+// a Meta Ads e a Claude (connettore), cache.
 import { Suspense } from "react";
 import { richiediAccessoPagina } from "@/lib/accesso";
 import { connection } from "next/server";
@@ -21,6 +21,9 @@ import {
   TokenForm,
 } from "./forms";
 import { SchedaMetaAds, type EsitoRitornoMeta } from "./meta-ads";
+import { SchedaClaude } from "./claude";
+import { indirizzoBase, indirizzoMcp } from "@/lib/connettore/indirizzi";
+import { leggiStato } from "@/lib/connettore/stato";
 
 export const metadata = { title: "Impostazioni" };
 
@@ -65,7 +68,10 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
   await connection(); // dati letti a ogni richiesta, mai al momento della build
   await richiediAccessoPagina(); // secondo controllo, oltre al proxy
   const { meta: esitoMeta } = await searchParams; // esito del ritorno da Meta (collegato, annullato, errore)
-  const { clienti, disponibili, erroreSubAccount, archivioNonConfigurato, meta } = await caricaImpostazioni();
+  const [{ clienti, disponibili, erroreSubAccount, archivioNonConfigurato, meta }, statoClaude] = await Promise.all([
+    caricaImpostazioni(),
+    leggiStato(),
+  ]);
   const h = await headers();
   // Indirizzo a cui Meta rimanda dopo l'accesso (da inserire nell'app Meta): lo stesso calcolato da lib/meta-mcp/indirizzi.ts
   const base = process.env.APP_URL?.trim().replace(/\/$/, "") || `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
@@ -185,6 +191,7 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
             {erroreSubAccount ? <BoxErrore messaggio={erroreSubAccount} /> : <AggiungiClienteForm disponibili={disponibili} />}
           </Card>
           <SchedaMetaAds meta={meta} esito={esitoRitorno} ritorno={ritornoMeta} />
+          <SchedaClaude indirizzo={indirizzoMcp(indirizzoBase(h))} stato={statoClaude} />
           <Card>
             <CardHeader>
               <CardTitle>Cache</CardTitle>

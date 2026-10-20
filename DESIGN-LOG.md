@@ -131,3 +131,18 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Tabella per campagna con la tabella unica riusabile ed esportazione CSV; la riga "Senza campagna Meta" sta in fondo.
 - Panoramica: nelle schede clienti si aggiungono "Spesa Meta" e "Costo per lead"; le criticità Meta finiscono tra gli avvisi della scheda.
 - Stati: cliente senza account Meta → invito ad associarli in Impostazioni (nella pagina condivisa la sezione sparisce); collegamento scaduto → messaggio con il pulsante per le Impostazioni (nella pagina condivisa un messaggio neutro).
+
+## 2026-10-20 — Connettore per Claude: consenso, sezione Analisi, scheda Impostazioni
+- Pagina di consenso `/oauth/autorizza`: stessa struttura della pagina di accesso (barra nera col marchio, card stretta).
+  - Tre righe con icona: cosa potrà fare, cosa non potrà fare, avviso «se non hai appena premuto Connetti, chiudi».
+  - Password con mostra/nascondi; «Consenti» è l'azione principale (arancio) e «Annulla» la secondaria.
+  - Il nome del client si mostra insieme all'host (claude.ai), perché il nome lo scrive il client stesso.
+- Sezione «Analisi» nella dashboard cliente, dopo «Campagne Meta», solo per il titolare.
+  - Analisi più recente aperta, storico a destra da 1024px in su (sotto su schermi stretti) ed «Elimina» con conferma.
+  - Testo markdown con react-markdown e remark-gfm: niente HTML eseguito, link pericolosi scartati.
+  - Gli stili sono mappati sui token: titoli `text-section`, corpo `text-body`, tabelle con `ring-border`, larghezza massima 75ch.
+  - Senza analisi: riquadro grigio con l'esempio di richiesta da fare a Claude e il link alla scheda in Impostazioni.
+- Impostazioni, scheda «Claude»:
+  - indirizzo del connettore in un campo di sola lettura con «Copia»;
+  - 4 passi numerati (è una sequenza vera);
+  - avviso ambra in locale; badge «Collegato» e «Scollega Claude» dopo il primo collegamento.

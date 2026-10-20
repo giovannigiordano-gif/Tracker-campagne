@@ -6,6 +6,7 @@ import { richiediAccessoPagina } from "@/lib/accesso";
 import { BoxErrore, ScheletroCliente } from "@/components/bits";
 import { ClientDashboard } from "@/components/dashboard/client-dashboard";
 import { getAccount } from "@/lib/accounts";
+import { leggiAnalisi } from "@/lib/analisi";
 import { caricaDashboardCliente } from "@/lib/data/cliente";
 import { messaggioErrore } from "@/lib/data/panoramica";
 import { GhlError } from "@/lib/ghl/http";
@@ -35,8 +36,12 @@ async function Cliente({ params, searchParams }: Props) {
   if (!account) notFound();
 
   try {
-    const dati = await caricaDashboardCliente(account, leggiSelezione(query));
-    return <ClientDashboard dati={dati} confronto={leggiConfronto(query)} />;
+    // Le analisi salvate non devono bloccare la dashboard se l'archivio non risponde
+    const [dati, analisi] = await Promise.all([
+      caricaDashboardCliente(account, leggiSelezione(query)),
+      leggiAnalisi(locationId).catch(() => []),
+    ]);
+    return <ClientDashboard dati={dati} confronto={leggiConfronto(query)} analisi={analisi} />;
   } catch (e) {
     const problemaToken = e instanceof GhlError && (e.tipo === "auth" || e.tipo === "token_mancante");
     return (

@@ -18,6 +18,12 @@ import { elencoSubAccount } from "@/lib/data/impostazioni";
 import { verificaTokenLocation } from "@/lib/ghl/client";
 import { deleteLocationToken, saveLocationToken } from "@/lib/ghl/tokens";
 import { fusoValido } from "@/lib/period";
+import { eliminaAnalisi } from "@/lib/analisi";
+import { indirizzoRisposta, leggiRichiesta } from "@/lib/connettore/autorizza";
+import { ErroreClient, verificaClient } from "@/lib/connettore/client";
+import { indirizzoBase } from "@/lib/connettore/indirizzi";
+import { chiaviConnettore, registraCollegamento, scollegaClaude } from "@/lib/connettore/stato";
+import { creaToken, DURATA_CODICE_MS, SCOPE } from "@/lib/connettore/token";
 
 export type EsitoAzione = { ok: boolean; messaggio: string } | null;
 
@@ -232,5 +238,67 @@ export async function verificaMetaMcp(): Promise<EsitoAzione> {
 export async function scollegaMetaMcp() {
   await richiediAccesso();
   await scollegaMeta();
+  refresh();
+}
+
+// ---------------------------------------------------------------- connettore per Claude
+// Consenso dalla pagina /oauth/autorizza: con la password dell'app si crea il codice che Claude scambia
+// con i token. Nessun accesso richiesto prima: la pagina si apre da Claude, la password fa da controllo.
+export type EsitoConsenso = { ok: true; indirizzo: string } | { ok: false; messaggio: string } | null;
+
+export async function autorizzaConnettore(_prev: EsitoConsenso, formData: FormData): Promise<EsitoConsenso> {
+  const config = configAccesso();
+  if (config.stato !== "pronto") return { ok: false, messaggio: "Il connettore funziona solo online, con la password dell'app impostata." };
+
+  const intestazioni = await headers();
+  const ip = intestazioni.get("x-forwarded-for")?.split(",")[0]?.trim() || "locale";
+  const sbagliati = tentativi.get(ip) ?? 0;
+  if (sbagliati > 0) await new Promise((r) => setTimeout(r, Math.min(sbagliati, 10) * 500));
+  if (!passwordCorretta(String(formData.get("password") ?? ""), config.password)) {
+    tentativi.set(ip, sbagliati + 1);
+    return { ok: false, messaggio: "Password sbagliata. Riprova." };
+  }
+  tentativi.delete(ip);
+
+  // Si ricontrolla tutto: i campi nascosti del modulo si possono modificare
+  const base = indirizzoBase(intestazioni);
+  const lettura = leggiRichiesta((nome) => {
+    const v = formData.get(nome);
+    return typeof v === "string" && v !== "" ? v : null;
+  }, base);
+  if (!lettura.ok) return { ok: false, messaggio: lettura.errore };
+  const { richiesta } = lettura;
+  try {
+    await verificaClient(richiesta.clientId, richiesta.ritorno);
+  } catch (e) {
+    if (e instanceof ErroreClient) return { ok: false, messaggio: e.message };
+    throw e;
+  }
+  const chiavi = await chiaviConnettore();
+  if (!chiavi) return { ok: false, messaggio: "App non configurata." };
+
+  const codice = creaToken<"codice">(
+    { t: "codice", cid: richiesta.clientId, r: richiesta.risorsa, sc: SCOPE, ru: richiesta.ritorno, cc: richiesta.challenge },
+    DURATA_CODICE_MS,
+    chiavi
+  );
+  // Data dell'ultimo collegamento, mostrata in Impostazioni: se il salvataggio non riesce il collegamento va avanti
+  await registraCollegamento().catch(() => {});
+  return { ok: true, indirizzo: indirizzoRisposta(richiesta.ritorno, { code: codice, state: richiesta.stato, iss: base }) };
+}
+
+// Annulla tutti i token dati a Claude: per usarlo di nuovo bisogna ricollegare il connettore
+export async function scollegaConnettore() {
+  await richiediAccesso();
+  await scollegaClaude();
+  refresh();
+}
+
+// ---------------------------------------------------------------- analisi salvate
+export async function eliminaAnalisiSalvata(locationId: string, id: string) {
+  await richiediAccesso();
+  verificaId(locationId);
+  if (typeof id !== "string" || !/^[A-Za-z0-9-]{1,40}$/.test(id)) throw new Error("Analisi non valida");
+  await eliminaAnalisi(locationId, id);
   refresh();
 }

@@ -26,7 +26,7 @@ function spazioFinto() {
         statusCode: 200,
         stream: new Response(v.testo).body,
         headers: new Headers(),
-        blob: { etag: v.etag, pathname, contentType: "text/plain", size: v.testo.length },
+        blob: { etag: `W/${v.etag}`, pathname, contentType: "text/plain", size: v.testo.length }, // come Vercel con risposta compressa
       };
     },
     async put(pathname: string, testo: string, opzioni: { ifMatch?: string }) {
@@ -37,7 +37,10 @@ function spazioFinto() {
         f();
       }
       const attuale = voci.get(pathname);
-      if (opzioni.ifMatch && attuale?.etag !== opzioni.ifMatch) throw new BlobPreconditionFailedError();
+      if (opzioni.ifMatch && attuale?.etag !== opzioni.ifMatch) {
+        // Vercel a volte lo segnala come errore generico: l'archivio deve riconoscerlo lo stesso
+        throw conteggi.put % 2 ? new BlobPreconditionFailedError() : new Error("Vercel Blob: Precondition failed: ETag mismatch.");
+      }
       const etag = `"v${++versione}"`;
       voci.set(pathname, { testo, etag });
       return { pathname, etag };
@@ -114,4 +117,12 @@ test("archivio Blob: senza dati restituisce il predefinito; cancella toglie i da
   await archivio.modifica("da-togliere.json", 0, () => 5);
   await archivio.cancella("da-togliere.json");
   assert.equal(await creaArchivioBlob(spazioFinto().client).leggi("da-togliere.json", 0), 0);
+});
+
+test("archivio Blob: una seconda modifica funziona anche con l'ETag \"debole\" restituito in lettura", async () => {
+  const archivio = creaArchivioBlob(spazioFinto().client);
+  await archivio.modifica("contatore.json", 0, (n) => n + 1);
+  await archivio.modifica("contatore.json", 0, (n) => n + 1);
+  await archivio.modifica("contatore.json", 0, (n) => n + 1);
+  assert.equal(await archivio.leggi("contatore.json", 0), 3);
 });

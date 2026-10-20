@@ -49,6 +49,14 @@ const TENTATIVI = 4;
 
 type Letto = { valore: unknown; etag: string | null; letto: number };
 
+// In lettura Vercel può restituire l'ETag "debole" (W/"…", quando comprime la risposta); per salvare con ifMatch
+// serve quello normale ("…"): il valore è lo stesso, si toglie solo il prefisso. Verificato il 2026-10-20.
+const etagNormale = (etag: string) => etag.replace(/^W\//, "");
+
+// Il rifiuto per salvataggio altrui arriva come BlobPreconditionFailedError oppure come errore generico
+const precondizioneFallita = (e: unknown) =>
+  e instanceof BlobPreconditionFailedError || /precondition failed/i.test((e as Error)?.message ?? "");
+
 export function creaArchivioBlob(client: ClientBlob): Archivio {
   const memoria = new Map<string, Letto>();
 
@@ -56,7 +64,7 @@ export function creaArchivioBlob(client: ClientBlob): Archivio {
     const r = await client.get(PREFISSO + nome, { access: "private", useCache: false });
     if (!r || r.statusCode !== 200) return { valore: predefinito, etag: null };
     const testo = await new Response(r.stream).text();
-    return { valore: JSON.parse(decrypt(testo)) as T, etag: r.blob.etag };
+    return { valore: JSON.parse(decrypt(testo)) as T, etag: etagNormale(r.blob.etag) };
   }
 
   return {
@@ -86,7 +94,7 @@ export function creaArchivioBlob(client: ClientBlob): Archivio {
           return structuredClone(nuovo);
         } catch (e) {
           // Qualcun altro ha salvato nel frattempo: si rilegge e si riprova
-          if (e instanceof BlobPreconditionFailedError && tentativo < TENTATIVI) continue;
+          if (precondizioneFallita(e) && tentativo < TENTATIVI) continue;
           throw e;
         }
       }

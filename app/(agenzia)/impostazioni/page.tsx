@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { richiediAccessoPagina } from "@/lib/accesso";
 import { connection } from "next/server";
+import { headers } from "next/headers";
 import { ChevronDown, CircleAlert, CircleCheck, FileKey, TriangleAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BoxErrore, ScheletroImpostazioni, TitoloPagina } from "@/components/bits";
@@ -19,13 +20,14 @@ import {
   SvuotaCacheButton,
   TokenForm,
 } from "./forms";
+import { SchedaMetaAds, type EsitoRitornoMeta } from "./meta-ads";
 
 export const metadata = { title: "Impostazioni" };
 
-export default function ImpostazioniPage() {
+export default function ImpostazioniPage({ searchParams }: PageProps<"/impostazioni">) {
   return (
     <Suspense fallback={<ScheletroImpostazioni />}>
-      <Impostazioni />
+      <Impostazioni searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -59,10 +61,17 @@ const PASSI_TOKEN = [
   "Copia il token e incollalo qui: l'app lo verifica prima di salvarlo, cifrato.",
 ];
 
-async function Impostazioni() {
+async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "searchParams">) {
   await connection(); // dati letti a ogni richiesta, mai al momento della build
   await richiediAccessoPagina(); // secondo controllo, oltre al proxy
-  const { clienti, disponibili, erroreSubAccount, archivioNonConfigurato } = await caricaImpostazioni();
+  const { meta: esitoMeta } = await searchParams; // esito del ritorno da Meta (collegato, annullato, errore)
+  const { clienti, disponibili, erroreSubAccount, archivioNonConfigurato, meta } = await caricaImpostazioni();
+  const h = await headers();
+  // Indirizzo a cui Meta rimanda dopo l'accesso (da inserire nell'app Meta): lo stesso calcolato da lib/meta-mcp/indirizzi.ts
+  const base = process.env.APP_URL?.trim().replace(/\/$/, "") || `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  const ritornoMeta = `${base}/api/meta-mcp/ritorno`;
+  const esitoRitorno: EsitoRitornoMeta =
+    esitoMeta === "collegato" || esitoMeta === "annullato" || esitoMeta === "errore" ? esitoMeta : null;
   const senzaToken = clienti.filter((c) => c.token.origine === "nessuno").length;
 
   return (
@@ -169,6 +178,7 @@ async function Impostazioni() {
             </CardHeader>
             {erroreSubAccount ? <BoxErrore messaggio={erroreSubAccount} /> : <AggiungiClienteForm disponibili={disponibili} />}
           </Card>
+          <SchedaMetaAds meta={meta} esito={esitoRitorno} ritorno={ritornoMeta} />
           <Card>
             <CardHeader>
               <CardTitle>Cache</CardTitle>

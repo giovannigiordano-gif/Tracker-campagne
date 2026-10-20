@@ -4,6 +4,7 @@ import { archivio } from "../archivio";
 import * as cache from "../cache";
 import { getAgencyClient } from "../ghl/client";
 import { getTokenInfo } from "../ghl/tokens";
+import { riepilogoMetaMcp } from "../meta-mcp/store";
 import type { GhlLocation } from "../ghl/types";
 
 // Elenco dei sub-account dell'agency (anagrafica: cache di 6 ore, anche su disco)
@@ -27,6 +28,7 @@ export async function caricaImpostazioni() {
 
   const giaAggiunti = new Set(clienti.map((c) => c.locationId));
   return {
+    meta: await riepilogoMetaMcp(), // stato del collegamento a Meta Ads, senza token
     archivioNonConfigurato: archivio.tipo === "non-configurato", // su Vercel senza spazio Blob: non si salva nulla
     clienti: conToken,
     disponibili: subAccount.filter((l) => !giaAggiunti.has(l.id)),

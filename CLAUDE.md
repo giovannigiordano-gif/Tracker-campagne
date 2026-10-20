@@ -70,9 +70,13 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - `.env.vercel.local` contiene il token dello spazio Blob, scaricato con `vercel env pull`. Serve a `npm run carica-su-vercel`, che copia online clienti e token senza sovrascrivere ciò che c'è già.
   - Attenzione: `vercel link` e `vercel blob create-store` creano `.env.local` e aggiungono righe a `.gitignore`. Bisogna rinominare `.env.local` (in locale l'app userebbe lo spazio Blob online) e ripristinare `.gitignore` (la riga `.env*` escluderebbe anche `.env.example`).
   - Per ripubblicare con nuove variabili serve un nuovo deploy: un commit su `main` oppure `vercel redeploy`. Non usare `vercel deploy` dalla cartella locale, che caricherebbe anche file locali.
+- **Meta Ads MCP** (server ufficiale `https://mcp.facebook.com/ads`, avviato il 2026-10-20). Codice in `lib/meta-mcp/`, rotte `app/api/meta-mcp/collega` (POST) e `app/api/meta-mcp/ritorno` (GET), scheda "Meta Ads" in Impostazioni (`app/(agenzia)/impostazioni/meta-ads.tsx`).
+  - OAuth 2.1 con il SDK ufficiale `@modelcontextprotocol/sdk` 1.32.1: PKCE S256, controllo dello `state`, token cifrati in `secrets/meta-mcp.json` nell'archivio, rinnovo automatico 5 minuti prima della scadenza.
+  - Permessi chiesti: solo `ads_mcp_management ads_read`. Strumenti abilitati: solo quelli in `STRUMENTI_LETTURA` che Meta non segnala come modifiche (`classificaStrumenti`, testata).
+  - Verificato il 2026-10-20: la registrazione automatica dei client (DCR) di Meta risponde "Dynamic registration is not available for this client", sia con indirizzo locale sia online. Serve quindi l'ID di un'app Meta for Developers del titolare (`META_APP_ID`, non segreto) con il caso d'uso "Create & manage ads with ads MCP server" e gli indirizzi `<sito>/api/meta-mcp/ritorno` in "Facebook Login for Business".
+  - La verifica del collegamento usa solo `tools/list` e `ads_get_ad_accounts`, e salva nomi degli strumenti e numero di account.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
-  - collegamento Meta MCP iniziato in `lib/meta-mcp/`, NON committato e in pausa;
   - richiesta del titolare (2026-10-14): usare l'app da Claude o Cowork con il proprio abbonamento, trasformando l'app in un connettore MCP. Serve l'app online e solo dati aggregati verso l'AI. Da progettare dopo, verificando la documentazione Anthropic.
 
 ## Comandi

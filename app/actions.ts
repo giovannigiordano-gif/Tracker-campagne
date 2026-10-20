@@ -11,6 +11,8 @@ import { creaSessione, DURATA_SESSIONE_MS, NOME_COOKIE, passwordCorretta, percor
 import { getAccount, removeAccount, upsertAccount, type Account } from "@/lib/accounts";
 import * as cache from "@/lib/cache";
 import { condivisioni } from "@/lib/condivisioni";
+import { verificaCollegamento } from "@/lib/meta-mcp/client";
+import { scollegaMeta } from "@/lib/meta-mcp/oauth";
 import { elencoSubAccount } from "@/lib/data/impostazioni";
 import { verificaTokenLocation } from "@/lib/ghl/client";
 import { deleteLocationToken, saveLocationToken } from "@/lib/ghl/tokens";
@@ -197,4 +199,20 @@ export async function accedi(_prev: EsitoAzione, formData: FormData): Promise<Es
 export async function esci() {
   (await cookies()).delete(NOME_COOKIE);
   redirect("/accesso");
+}
+
+// ---------------------------------------------------------------- Meta Ads (server MCP ufficiale)
+// Verifica con chiamate di sola lettura: strumenti disponibili e account pubblicitari visibili
+export async function verificaMetaMcp(): Promise<EsitoAzione> {
+  await richiediAccesso();
+  const esito = await verificaCollegamento();
+  refresh();
+  return { ok: esito.ok, messaggio: esito.messaggio };
+}
+
+// L'app dimentica il collegamento (su Meta non cambia nulla)
+export async function scollegaMetaMcp() {
+  await richiediAccesso();
+  await scollegaMeta();
+  refresh();
 }

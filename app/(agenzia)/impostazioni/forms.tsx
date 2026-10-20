@@ -3,14 +3,16 @@
 // le azioni distruttive chiedono conferma. I dati vengono salvati sul server dalle azioni in app/actions.ts.
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { KeyRound, Search, Trash2, UserMinus } from "lucide-react";
+import { KeyRound, Link2Off, RefreshCw, Search, Trash2, UserMinus } from "lucide-react";
 import {
   aggiungiCliente,
   modificaCliente,
   rimuoviCliente,
   rimuoviToken,
   salvaToken,
+  scollegaMetaMcp,
   svuotaCache,
+  verificaMetaMcp,
   type EsitoAzione,
 } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -278,5 +280,48 @@ export function SvuotaCacheButton() {
     >
       Svuota la cache
     </Button>
+  );
+}
+
+// ---------------------------------------------------------------- Meta Ads
+export function VerificaMetaButton() {
+  const [inCorso, setInCorso] = useState(false);
+  const notifica = useNotifica();
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      loading={inCorso}
+      onClick={async () => {
+        setInCorso(true);
+        try {
+          const esito = await verificaMetaMcp();
+          if (esito?.ok) notifica("successo", "Meta Ads risponde", esito.messaggio);
+          else notifica("errore", "Verifica non riuscita", esito?.messaggio);
+        } catch {
+          notifica("errore", "Verifica non riuscita", "Riprova tra un momento.");
+        } finally {
+          setInCorso(false);
+        }
+      }}
+    >
+      {!inCorso && <RefreshCw aria-hidden />}
+      {inCorso ? "Verifica in corso" : "Verifica collegamento"}
+    </Button>
+  );
+}
+
+export function ScollegaMetaButton() {
+  return (
+    <ConfermaAzione
+      etichetta="Scollega"
+      icona={<Link2Off aria-hidden />}
+      variantePulsante="ghost"
+      titolo="Scollegare Meta Ads dall'app?"
+      descrizione="L'app dimentica il collegamento e non potrà più leggere le campagne da Meta finché non lo ricolleghi. Su Meta non cambia nulla: se vuoi, puoi revocare l'accesso anche dalle impostazioni del tuo account Meta."
+      conferma="Scollega"
+      successo="Meta Ads scollegato"
+      esegui={() => scollegaMetaMcp()}
+    />
   );
 }

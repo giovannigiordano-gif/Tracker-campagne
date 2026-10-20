@@ -115,12 +115,12 @@ export function righeCampagne(dati: DatiMeta, lead: LeadRow[], opp: OppRow[], gi
   for (const l of lead) {
     if (!daMeta(l.canale) || !giorni.has(l.giorno)) continue;
     const id = l.campagnaId ?? SENZA_CAMPAGNA_META;
-    riga(id, l.campagnaId ? (l.campagna ?? l.campagnaId) : "Lead Meta senza campagna riconosciuta").leadGhl++;
+    riga(id, l.campagnaId ? (l.campagna ?? l.campagnaId) : "Lead da Meta senza campagna riconosciuta").leadGhl++;
   }
   for (const o of opp) {
     if (!daMeta(o.canale)) continue;
     const id = o.campagnaId ?? SENZA_CAMPAGNA_META;
-    const nome = o.campagnaId ? (o.campagna ?? o.campagnaId) : "Lead Meta senza campagna riconosciuta";
+    const nome = o.campagnaId ? (o.campagna ?? o.campagnaId) : "Lead da Meta senza campagna riconosciuta";
     if (o.creata && giorni.has(o.creata)) riga(id, nome).opportunita++;
     if (o.status === "won" && o.chiusa && giorni.has(o.chiusa)) {
       const c = riga(id, nome);

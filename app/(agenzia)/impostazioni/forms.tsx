@@ -303,7 +303,7 @@ export function ClienteForm({
           <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{cliente.currency}</span>
         </div>
         <p id={id("aiuto-cpl")} className="text-caption text-muted-foreground">
-          Sopra questo costo per lead reale (spesa Meta / lead in GHL) l&apos;app lo segnala tra le criticità.
+          Sopra questo costo per lead (spesa Meta / lead arrivati in GHL) l&apos;app lo segnala tra le criticità.
         </p>
       </div>
       <div className="flex flex-col gap-2 sm:col-span-2">

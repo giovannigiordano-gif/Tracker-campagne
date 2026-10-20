@@ -84,14 +84,20 @@ test("il riepilogo ha i numeri di GHL, di Meta e l'incrocio, con fonte e periodo
   assert.equal(r.ghl.numeri.attuale.venduto, 1000);
   assert.equal(r.ghl.percentualeAttribuiti, 66.67);
   assert.ok(r.ghl.fonte.includes("GoHighLevel"));
-  const meta = r.meta as { stato: string; numeri: { attuale: { spesa: number; leadMeta: number } }; incrocio: { attuale: { leadGhl: number; cplReale: number; roas: number } } };
+  const meta = r.meta as { stato: string; numeri: { attuale: { spesa: number } }; incrocio: { attuale: { lead: number; costoPerLead: number; roas: number } } };
   assert.equal(meta.stato, "ok");
   assert.equal(meta.numeri.attuale.spesa, 150);
-  assert.equal(meta.numeri.attuale.leadMeta, 3);
-  assert.equal(meta.incrocio.attuale.leadGhl, 2);
-  assert.equal(meta.incrocio.attuale.cplReale, 75);
+  assert.equal(meta.incrocio.attuale.lead, 2);
+  assert.equal(meta.incrocio.attuale.costoPerLead, 75);
   assert.equal(meta.incrocio.attuale.roas, 6.67);
   assert.equal(r.cliente.obiettivoCostoPerLead, 40);
+});
+
+test("a Claude arrivano solo i lead del CRM: niente lead contati da Meta né costo per lead di Meta", () => {
+  const json = JSON.stringify(riepilogoCliente(dati(), { notes: "", thresholds: {} }));
+  assert.ok(!/"(leadMeta|cplMeta|leadGhl|cplReale)"/.test(json), "trovato un campo con i lead di Meta o il vecchio nome");
+  const r = riepilogoCliente(dati(), { notes: "", thresholds: {} });
+  assert.equal(r.ghl.numeri.attuale.leadDaMetaAds, 2);
 });
 
 test("senza account Meta il riepilogo lo dice invece di inventare numeri", () => {

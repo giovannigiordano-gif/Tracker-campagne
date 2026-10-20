@@ -146,3 +146,9 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
   - indirizzo del connettore in un campo di sola lettura con «Copia»;
   - 4 passi numerati (è una sequenza vera);
   - avviso ambra in locale; badge «Collegato» e «Scollega Claude» dopo il primo collegamento.
+
+## 2026-10-20 — Tolto il confronto tra lead di Meta e lead del CRM (richiesta del titolare)
+- «Campagne Meta» ora ha 6 riquadri in 3 colonne: Spesa, Lead da Meta (GHL), Costo per lead, Opportunità da Meta, Costo per vendita, ROAS dal CRM.
+- «Lead al giorno da Meta» ha una sola serie (lead arrivati nel CRM), quindi niente legenda: il titolo dice cosa mostra.
+- Tabella e CSV delle campagne: tolta la colonna «Lead Meta»; «Lead GHL» diventa «Lead» e «Costo per lead reale» diventa «Costo per lead».
+- Vale anche per la pagina condivisa con il cliente.

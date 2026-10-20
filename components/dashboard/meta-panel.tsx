@@ -1,6 +1,6 @@
 "use client";
 // Sezione "Campagne Meta" della dashboard cliente: criticità, numeri chiave, andamento e tabella per campagna.
-// Fonti: Meta (spesa, impression, clic, lead secondo Meta) e GoHighLevel (lead, opportunità e vendite arrivati
+// Fonti: Meta (spesa, impression, clic) e GoHighLevel (lead, opportunità e vendite arrivati
 // dal canale Meta Ads, abbinati alle campagne per ID). Non dipende dai filtri della pagina.
 import { useMemo } from "react";
 import Link from "next/link";
@@ -107,9 +107,8 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
         ),
       }),
       h.accessor("spesa", { header: "Spesa", sortFn: "basic", meta: { numerica: true }, cell: (i) => <span className="font-semibold">{soldi(i.getValue())}</span> }),
-      h.accessor("leadMeta", { header: "Lead Meta", sortFn: "basic", meta: { numerica: true }, cell: (i) => formatNumero(i.getValue()) }),
-      h.accessor("leadGhl", { header: "Lead GHL", sortFn: "basic", meta: { numerica: true }, cell: (i) => <span className="font-semibold">{formatNumero(i.getValue())}</span> }),
-      h.accessor(num((r) => r.cplReale), { id: "cpl", header: "Costo per lead reale", sortFn: "basic", meta: { numerica: true }, cell: (i) => soldi(i.row.original.cplReale) }),
+      h.accessor("leadGhl", { header: "Lead", sortFn: "basic", meta: { numerica: true }, cell: (i) => <span className="font-semibold">{formatNumero(i.getValue())}</span> }),
+      h.accessor(num((r) => r.cplReale), { id: "cpl", header: "Costo per lead", sortFn: "basic", meta: { numerica: true }, cell: (i) => soldi(i.row.original.cplReale) }),
       h.accessor("opportunita", { header: "Opportunità", sortFn: "basic", meta: { numerica: true }, cell: (i) => formatNumero(i.getValue()) }),
       h.accessor("vinte", { header: "Vendite", sortFn: "basic", meta: { numerica: true }, cell: (i) => formatNumero(i.getValue()) }),
       h.accessor(num((r) => r.roas), { id: "roas", header: "ROAS CRM", sortFn: "basic", meta: { numerica: true }, cell: (i) => (i.row.original.roas === null ? "n.d." : `${i.row.original.roas.toFixed(1).replace(".", ",")}x`) }),
@@ -176,12 +175,10 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
         </section>
       )}
 
-      <dl className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-2 md:grid-cols-3">
         <Numero etichetta="Spesa" fonte="Meta" valore={fmt(km.spesa)} delta={d(km.spesa, kmPrec.spesa)} neutra />
-        <Numero etichetta="Lead secondo Meta" fonte="Meta" valore={formatNumero(km.leadMeta)} delta={d(km.leadMeta, kmPrec.leadMeta)} />
-        <Numero etichetta="Lead arrivati in GHL" fonte="GHL" valore={formatNumero(inc.leadGhl)} delta={d(inc.leadGhl, incPrec.leadGhl)} />
-        <Numero etichetta="Costo per lead reale" fonte="Meta + GHL" valore={fmt(inc.cplReale)} delta={d(inc.cplReale, incPrec.cplReale)} inversa />
-        <Numero etichetta="Costo per lead di Meta" fonte="Meta" valore={fmt(km.cplMeta)} delta={d(km.cplMeta, kmPrec.cplMeta)} inversa />
+        <Numero etichetta="Lead da Meta" fonte="GHL" valore={formatNumero(inc.leadGhl)} delta={d(inc.leadGhl, incPrec.leadGhl)} />
+        <Numero etichetta="Costo per lead" fonte="Meta + GHL" valore={fmt(inc.cplReale)} delta={d(inc.cplReale, incPrec.cplReale)} inversa />
         <Numero etichetta="Opportunità da Meta" fonte="GHL" valore={formatNumero(inc.opportunita)} delta={d(inc.opportunita, incPrec.opportunita)} />
         <Numero etichetta="Costo per vendita" fonte="Meta + GHL" valore={fmt(inc.costoVendita)} delta={d(inc.costoVendita, incPrec.costoVendita)} inversa />
         <Numero
@@ -220,14 +217,8 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
           </div>
         </figure>
         <figure className="flex flex-col gap-2">
-          <figcaption className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-label text-titolo">Lead al giorno</span>
-            <span className="flex items-center gap-3 text-caption text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-[var(--viz-attuale)]" aria-hidden />arrivati in GHL</span>
-              <span className="flex items-center gap-1.5"><span className="h-0 w-4 border-t-2 border-dashed border-[var(--viz-resto)]" aria-hidden />secondo Meta</span>
-            </span>
-          </figcaption>
-          <div className="h-48" role="img" aria-label={`Lead al giorno: ${inc.leadGhl} arrivati in GHL e ${km.leadMeta} secondo Meta nel periodo`}>
+          <figcaption className="text-label text-titolo">Lead al giorno da Meta</figcaption>
+          <div className="h-48" role="img" aria-label={`Lead al giorno arrivati in GHL dal canale Meta Ads: ${inc.leadGhl} nel periodo`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={serie} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                 <CartesianGrid vertical={false} stroke="var(--viz-griglia)" />
@@ -240,14 +231,11 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
                     if (!active || !p) return null;
                     return (
                       <div className="superficie-inversa rounded-block bg-inverse px-3 py-2 text-xs text-inverse-foreground shadow-overlay">
-                        <div className="font-bold">{formatGiornoBreve(p.giorno)}</div>
-                        <div>arrivati in GHL: {p.leadGhl}</div>
-                        <div className="text-inverse-muted">secondo Meta: {p.leadMeta}</div>
+                        {formatGiornoBreve(p.giorno)}: <span className="font-bold">{p.leadGhl} lead</span>
                       </div>
                     );
                   }}
                 />
-                <Line type="monotone" dataKey="leadMeta" stroke="var(--viz-resto)" strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={!riduci} animationDuration={300} />
                 <Line type="monotone" dataKey="leadGhl" stroke="var(--viz-attuale)" strokeWidth={2} dot={false} isAnimationActive={!riduci} animationDuration={300} />
               </LineChart>
             </ResponsiveContainer>
@@ -266,14 +254,14 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
           vuoto="Nessuna campagna con spesa o lead nel periodo."
           csv={{
             nomeFile: `campagne-meta-${dati.cliente.nome}`,
-            intestazione: ["Campagna", "Stato", "Spesa", "Lead Meta", "Lead GHL", "Costo per lead reale", "Opportunità", "Vendite", "Venduto", "ROAS CRM", "CTR %", "Costo per clic"],
-            riga: (r) => [r.nome, r.stato ?? "", r.spesa.toFixed(2), r.leadMeta, r.leadGhl, r.cplReale?.toFixed(2) ?? "", r.opportunita, r.vinte, r.venduto.toFixed(2), r.roas?.toFixed(2) ?? "", r.ctr?.toFixed(2) ?? "", r.cpc?.toFixed(2) ?? ""],
+            intestazione: ["Campagna", "Stato", "Spesa", "Lead", "Costo per lead", "Opportunità", "Vendite", "Venduto", "ROAS CRM", "CTR %", "Costo per clic"],
+            riga: (r) => [r.nome, r.stato ?? "", r.spesa.toFixed(2), r.leadGhl, r.cplReale?.toFixed(2) ?? "", r.opportunita, r.vinte, r.venduto.toFixed(2), r.roas?.toFixed(2) ?? "", r.ctr?.toFixed(2) ?? "", r.cpc?.toFixed(2) ?? ""],
           }}
         />
       </section>
 
       <Fonte aggiornatoIl={meta.stato === "ok" ? meta.dati.aggiornatoIl : null}>
-        Fonte Meta (spesa, impression, clic, lead secondo Meta; giorni nel fuso dell&apos;account pubblicitario) e GoHighLevel (lead,
+        Fonte Meta (spesa, impression, clic; giorni nel fuso dell&apos;account pubblicitario) e GoHighLevel (lead,
         opportunità e vendite con canale Meta Ads, abbinati alle campagne per ID). Periodo {formatGiornoBreve(periodo.daGiorno)} -{" "}
         {formatGiornoBreve(periodo.aGiorno)}.
         {errori.length > 0 && modo === "agenzia" && ` Account non letti: ${errori.join("; ")}.`}

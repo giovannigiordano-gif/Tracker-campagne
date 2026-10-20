@@ -59,7 +59,7 @@ export function calcolaCriticita({
     elenco.push({
       livello: "attenzione",
       tipo: "cpl-alto",
-      testo: `Costo per lead reale ${fmt(ora.cplReale)}: sopra l'obiettivo di ${fmt(obiettivoCpl)}.`,
+      testo: `Costo per lead ${fmt(ora.cplReale)}: sopra l'obiettivo di ${fmt(obiettivoCpl)}.`,
     });
   } else if (!obiettivoCpl) {
     const prima = kpiIncrocio(kpiMeta(meta.righe, precedente).spesa, lead, [], precedente);
@@ -74,7 +74,7 @@ export function calcolaCriticita({
       elenco.push({
         livello: "attenzione",
         tipo: "cpl-alto",
-        testo: `Costo per lead reale ${fmt(ora.cplReale)}: peggiorato del ${pct}% rispetto al periodo precedente (${fmt(prima.cplReale)}).`,
+        testo: `Costo per lead ${fmt(ora.cplReale)}: peggiorato del ${pct}% rispetto al periodo precedente (${fmt(prima.cplReale)}).`,
       });
     }
   }
@@ -95,7 +95,7 @@ export function calcolaCriticita({
       elenco.push({
         livello: "errore",
         tipo: "spesa-senza-risultati",
-        testo: `La campagna ${c.nome} ha speso ${fmt(spesa)} negli ultimi ${GIORNI_SENZA_RISULTATI} giorni senza nessun lead, né su Meta né in GHL.`,
+        testo: `La campagna ${c.nome} ha speso ${fmt(spesa)} negli ultimi ${GIORNI_SENZA_RISULTATI} giorni senza nessun lead.`,
         campagnaId: c.id,
       });
     }

@@ -13,7 +13,7 @@ import {
   variazionePct,
   type Kpi,
 } from "../metrics/dashboard";
-import { kpiIncrocio, kpiMeta, righeCampagne, serieGiornaliera, SENZA_CAMPAGNA_META } from "../metrics/meta";
+import { kpiIncrocio, kpiMeta, righeCampagne, serieGiornaliera, SENZA_CAMPAGNA_META, type KpiIncrocio, type KpiMeta } from "../metrics/meta";
 import { STATI_ACCOUNT } from "../meta/normalize";
 
 // Arrotonda i numeri a 2 decimali, per un riepilogo più corto e leggibile
@@ -32,8 +32,7 @@ export const DEFINIZIONI = {
   vinte_perse_venduto: "Opportunità vinte o perse nel periodo (data dell'ultimo cambio di stato); venduto = valore delle vinte.",
   tassoChiusura: "Vinte / (vinte + perse), in %.",
   canale_meta_ads: "Lead e opportunità con attribuzione 'Paid Social' o con ID di campagna/annuncio Meta.",
-  costoPerLeadReale: "Spesa Meta / lead arrivati in GHL dal canale Meta Ads.",
-  costoPerLeadMeta: "Spesa Meta / lead secondo Meta (action_type 'lead').",
+  costoPerLead: "Spesa Meta / lead arrivati in GHL dal canale Meta Ads (i lead si contano solo nel CRM).",
   roasCrm: "Venduto in GHL dal canale Meta Ads / spesa Meta.",
   pipeline:
     "GHL non conserva lo storico dei cambi di fase: 'oggiInQuestaFase' è reale, 'raggiunteStima' e 'conversioneStimaPct' sono stime (fasi percorse in ordine) e possono essere inaffidabili con fasi di uscita intermedie.",
@@ -41,10 +40,24 @@ export const DEFINIZIONI = {
     "Abbinamento lead → campagna dai campi di attribuzione di GHL: una parte dei lead può non avere campagna (vedi percentualeAttribuiti).",
 };
 
+// Lead e costo per lead solo dal CRM (scelta del titolare del 2026-10-20): i lead conteggiati da Meta non si
+// mandano a Claude, così il confronto tra le due cifre non entra nelle analisi.
+function numeriMeta({ leadMeta: _leadMeta, cplMeta: _cplMeta, ...resto }: KpiMeta) {
+  return arrotondaTutto(resto);
+}
+function incrocio({ leadGhl, cplReale, ...resto }: KpiIncrocio) {
+  return { lead: leadGhl, costoPerLead: arrotonda(cplReale), ...arrotondaTutto(resto) };
+}
+
+// Numeri GHL: "leadMeta" diventa "leadDaMetaAds" (sono contatti del CRM con canale Meta Ads, non lead contati da Meta)
+function numeriGhl({ leadMeta, ...resto }: Kpi) {
+  return { leadDaMetaAds: leadMeta, ...arrotondaTutto(resto) };
+}
+
 function variazioni(a: Kpi, p: Kpi) {
   return {
     lead: arrotonda(variazionePct(a.lead, p.lead)),
-    leadMeta: arrotonda(variazionePct(a.leadMeta, p.leadMeta)),
+    leadDaMetaAds: arrotonda(variazionePct(a.leadMeta, p.leadMeta)),
     opportunita: arrotonda(variazionePct(a.oppCreate, p.oppCreate)),
     vinte: arrotonda(variazionePct(a.vinte, p.vinte)),
     venduto: arrotonda(variazionePct(a.venduto, p.venduto)),
@@ -74,8 +87,8 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
   const ghl = {
     fonte: "GoHighLevel (sub-account del cliente)",
     numeri: {
-      attuale: arrotondaTutto(kpi),
-      precedente: arrotondaTutto(kpiPrec),
+      attuale: numeriGhl(kpi),
+      precedente: numeriGhl(kpiPrec),
       variazioniPct: variazioni(kpi, kpiPrec),
     },
     percentualeAttribuiti: leadPeriodo.length ? arrotonda((attribuiti / leadPeriodo.length) * 100) : null,
@@ -124,28 +137,29 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
     // Stessa granularità dell'andamento GHL
     const andamento =
       granularita === "giorno"
-        ? punti.map((p) => ({ da: p.giorno, a: p.giorno, spesa: arrotonda(p.spesa), leadMeta: p.leadMeta, leadGhl: p.leadGhl }))
+        ? punti.map((p) => ({ da: p.giorno, a: p.giorno, spesa: arrotonda(p.spesa), lead: p.leadGhl }))
         : Array.from({ length: Math.ceil(punti.length / 7) }, (_, i) => {
             const blocco = punti.slice(i * 7, i * 7 + 7);
             return {
               da: blocco[0].giorno,
               a: blocco.at(-1)!.giorno,
               spesa: arrotonda(blocco.reduce((s, p) => s + p.spesa, 0)),
-              leadMeta: blocco.reduce((s, p) => s + p.leadMeta, 0),
-              leadGhl: blocco.reduce((s, p) => s + p.leadGhl, 0),
+              lead: blocco.reduce((s, p) => s + p.leadGhl, 0),
             };
           });
     sezioneMeta = {
       stato: "ok",
       fonte: "Meta Marketing API (insights per campagna e giorno) incrociata con GoHighLevel",
       account: d.account.map((a) => ({ id: a.id, nome: a.nome, valuta: a.valuta, stato: STATI_ACCOUNT[a.stato] ?? `codice ${a.stato}` })),
-      numeri: { attuale: arrotondaTutto(km), precedente: arrotondaTutto(kmPrec) },
+      numeri: { attuale: numeriMeta(km), precedente: numeriMeta(kmPrec) },
       incrocio: {
-        attuale: arrotondaTutto(kpiIncrocio(km.spesa, lead, opp, giorni)),
-        precedente: arrotondaTutto(kpiIncrocio(kmPrec.spesa, lead, opp, giorniPrec)),
+        attuale: incrocio(kpiIncrocio(km.spesa, lead, opp, giorni)),
+        precedente: incrocio(kpiIncrocio(kmPrec.spesa, lead, opp, giorniPrec)),
       },
-      campagne: righeCampagne(d, lead, opp, giorni).map((c) => ({
+      campagne: righeCampagne(d, lead, opp, giorni).map(({ leadMeta: _leadMeta, leadGhl, cplReale, ...c }) => ({
         ...arrotondaTutto(c),
+        lead: leadGhl,
+        costoPerLead: arrotonda(cplReale),
         id: c.id === SENZA_CAMPAGNA_META ? null : c.id,
         obiettivo: obiettivi.get(c.id) ?? null,
       })),

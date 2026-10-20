@@ -63,6 +63,13 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - Scelta automatica: Blob se esiste `BLOB_STORE_ID` o `BLOB_READ_WRITE_TOKEN`, oppure con `ARCHIVIO=file|blob` per forzarla.
   - Su Vercel senza Blob collegato le letture sono vuote e i salvataggi danno un errore chiaro; le Impostazioni lo segnalano.
   - SDK: `@vercel/blob` 2.8.1. Usano l'archivio `accounts.ts`, `ghl/tokens.ts` e `condivisioni.ts`; `cache.ts` scrive su disco solo in modalità file.
+- **Configurazione Vercel fatta il 2026-10-20** (con Vercel CLI 64.7.0, account del titolare, team `spit5`, progetto `tracker-campagne`).
+  - Spazio Blob privato `tracker-campagne-dati` in `fra1`, collegato a tutti gli ambienti.
+  - Variabili di produzione: `APP_PASSWORD`, `SESSION_SECRET` (diversa da quella locale), `ENCRYPTION_KEY` (UGUALE a quella locale, così i token copiati restano leggibili), `GHL_AGENCY_TOKEN`, `GHL_COMPANY_ID`, `GHL_API_VERSION` e `BLOB_READ_WRITE_TOKEN`, messa da Vercel.
+  - La password per entrare online è solo in `.env.produzione.local` sul computer del titolare (escluso da git).
+  - `.env.vercel.local` contiene il token dello spazio Blob, scaricato con `vercel env pull`. Serve a `npm run carica-su-vercel`, che copia online clienti e token senza sovrascrivere ciò che c'è già.
+  - Attenzione: `vercel link` e `vercel blob create-store` creano `.env.local` e aggiungono righe a `.gitignore`. Bisogna rinominare `.env.local` (in locale l'app userebbe lo spazio Blob online) e ripristinare `.gitignore` (la riga `.env*` escluderebbe anche `.env.example`).
+  - Per ripubblicare con nuove variabili serve un nuovo deploy: un commit su `main` oppure `vercel redeploy`. Non usare `vercel deploy` dalla cartella locale, che caricherebbe anche file locali.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
   - collegamento Meta MCP iniziato in `lib/meta-mcp/`, NON committato e in pausa;

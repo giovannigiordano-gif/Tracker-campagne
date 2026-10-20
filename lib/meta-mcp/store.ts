@@ -5,7 +5,7 @@
 import type { OAuthDiscoveryState } from "@modelcontextprotocol/sdk/client/auth.js";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@modelcontextprotocol/sdk/shared/auth.js";
 import { archivio } from "../archivio";
-import type { AccountMeta } from "./account";
+import { idAccountMeta, type AccountMeta } from "./account";
 import { metaAppId } from "./config";
 import { decrypt, encrypt } from "../crypto";
 
@@ -95,7 +95,10 @@ export async function riepilogoMetaMcp(): Promise<RiepilogoMetaMcp> {
     scadeIl: s.scadeIl ?? null,
     rinnovoAutomatico: Boolean(s.tokens?.refresh_token),
     permessi: s.tokens?.scope?.split(/[\s,]+/).filter(Boolean) ?? [],
-    ultimaVerifica: s.ultimaVerifica ?? null,
+    // Elenchi salvati prima del 2026-10-20 hanno gli id senza "act_": si uniformano qui
+    ultimaVerifica: s.ultimaVerifica
+      ? { ...s.ultimaVerifica, account: s.ultimaVerifica.account?.map((a) => ({ ...a, id: idAccountMeta(a.id) })) }
+      : null,
     ultimoErrore: s.ultimoErrore ?? null,
   };
 }

@@ -11,6 +11,7 @@ import { creaSessione, DURATA_SESSIONE_MS, NOME_COOKIE, passwordCorretta, percor
 import { getAccount, removeAccount, upsertAccount, type Account } from "@/lib/accounts";
 import * as cache from "@/lib/cache";
 import { condivisioni } from "@/lib/condivisioni";
+import { idAccountMeta } from "@/lib/meta-mcp/account";
 import { verificaCollegamento } from "@/lib/meta-mcp/client";
 import { scollegaMeta } from "@/lib/meta-mcp/oauth";
 import { elencoSubAccount } from "@/lib/data/impostazioni";
@@ -86,7 +87,8 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
   const sogliaNum = soglia === "" ? undefined : Number(soglia);
   // Account pubblicitari Meta scelti (formato act_<numero>); si aggiornano solo se il modulo li contiene
   const conAccountMeta = formData.get("metaAdAccountIdsPresenti") === "1";
-  const accountMeta = [...new Set(formData.getAll("metaAdAccountIds").map(String))];
+  // Un identificativo di sole cifre (elenchi salvati prima del 2026-10-20) diventa act_<numero>
+  const accountMeta = [...new Set(formData.getAll("metaAdAccountIds").map((v) => idAccountMeta(String(v).trim())))];
   if (accountMeta.some((a) => !/^act_\d{3,30}$/.test(a))) return { ok: false, messaggio: "Account pubblicitario Meta non valido" };
   if (sogliaNum !== undefined && !(sogliaNum > 0 && sogliaNum <= 100)) {
     return { ok: false, messaggio: "La soglia di calo lead deve essere un numero tra 1 e 100" };

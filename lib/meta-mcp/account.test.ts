@@ -37,3 +37,9 @@ test("risposta vuota o inattesa: nessun account", () => {
   assert.deepEqual(leggiPaginaAccount({}).account, []);
   assert.deepEqual(leggiPaginaAccount({ content: [{ type: "text", text: "non è JSON" }] }).account, []);
 });
+
+test("gli identificativi vengono sempre portati al formato act_<numero>", async () => {
+  const { idAccountMeta } = await import("./account");
+  assert.equal(idAccountMeta("1234567890123456"), "act_1234567890123456");
+  assert.equal(idAccountMeta("act_1234567890123456"), "act_1234567890123456");
+});

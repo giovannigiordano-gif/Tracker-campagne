@@ -8,12 +8,23 @@ import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------- variazione
 // Verde se migliora, rosso se peggiora; la freccia e il segno dicono la direzione anche senza colori.
-export function Delta({ pct, inversa = false, suNero = false }: { pct: number | null; inversa?: boolean; suNero?: boolean }) {
+// "neutra" per i numeri che salendo non sono né buoni né cattivi (es. la spesa): solo grigio.
+export function Delta({
+  pct,
+  inversa = false,
+  neutra = false,
+  suNero = false,
+}: {
+  pct: number | null;
+  inversa?: boolean;
+  neutra?: boolean;
+  suNero?: boolean;
+}) {
   if (pct === null || !Number.isFinite(pct)) {
     return <span className={suNero ? "text-inverse-muted" : "text-muted-foreground"}>n.d.</span>;
   }
-  const buona = inversa ? pct < 0 : pct > 0;
-  const cattiva = inversa ? pct > 0 : pct < 0;
+  const buona = !neutra && (inversa ? pct < 0 : pct > 0);
+  const cattiva = !neutra && (inversa ? pct > 0 : pct < 0);
   const Icona = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : Minus;
   return (
     <span

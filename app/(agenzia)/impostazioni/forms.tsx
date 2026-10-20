@@ -287,6 +287,24 @@ export function ClienteForm({
           <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
         </div>
       </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor={id("maxCpl")}>Costo per lead obiettivo</Label>
+        <div className="relative">
+          <Input
+            id={id("maxCpl")}
+            name="maxCpl"
+            inputMode="decimal"
+            defaultValue={cliente.thresholds.maxCpl ?? ""}
+            placeholder="es. 15"
+            className="pr-14"
+            aria-describedby={id("aiuto-cpl")}
+          />
+          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{cliente.currency}</span>
+        </div>
+        <p id={id("aiuto-cpl")} className="text-caption text-muted-foreground">
+          Sopra questo costo per lead reale (spesa Meta / lead in GHL) l&apos;app lo segnala tra le criticità.
+        </p>
+      </div>
       <div className="flex flex-col gap-2 sm:col-span-2">
         <Label htmlFor={id("notes")}>Note per l&apos;analisi AI</Label>
         <Textarea

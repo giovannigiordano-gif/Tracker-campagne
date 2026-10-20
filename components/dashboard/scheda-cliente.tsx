@@ -67,14 +67,28 @@ function Canali({ riga }: { riga: RigaPanoramica }) {
   );
 }
 
-function Numero({ etichetta, valore, delta, className }: { etichetta: string; valore: string; delta?: number | null; className?: string }) {
+function Numero({
+  etichetta,
+  valore,
+  delta,
+  inversa = false,
+  neutra = false,
+  className,
+}: {
+  etichetta: string;
+  valore: string;
+  delta?: number | null;
+  inversa?: boolean;
+  neutra?: boolean;
+  className?: string;
+}) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-0.5", className)}>
       <dt className="text-caption text-muted-foreground">{etichetta}</dt>
       <dd className="truncate text-xl leading-tight font-black tracking-tight text-titolo">{valore}</dd>
       {delta !== undefined && (
         <dd className="text-xs">
-          <Delta pct={delta} />
+          <Delta pct={delta} inversa={inversa} neutra={neutra} />
         </dd>
       )}
     </div>
@@ -125,6 +139,23 @@ export function SchedaCliente({ riga, confronto, query }: { riga: RigaPanoramica
               className="col-span-2"
             />
             <Numero etichetta="Chiusura" valore={formatPercentuale(kpi.tassoChiusura)} delta={d(kpi.tassoChiusura, kpiPrec?.tassoChiusura)} />
+            {riga.meta && (
+              <>
+                <Numero
+                  etichetta="Spesa Meta"
+                  valore={formatValuta(riga.meta.spesa, riga.valuta, riga.meta.spesa >= 100_000)}
+                  delta={d(riga.meta.spesa, riga.meta.spesaPrec)}
+                  neutra
+                  className="col-span-2"
+                />
+                <Numero
+                  etichetta="Costo per lead"
+                  valore={riga.meta.cplReale === null ? "n.d." : formatValuta(riga.meta.cplReale, riga.valuta)}
+                  delta={d(riga.meta.cplReale, riga.meta.cplRealePrec)}
+                  inversa
+                />
+              </>
+            )}
           </dl>
 
           <section className="flex flex-col gap-1.5" aria-label="Andamento dei lead">

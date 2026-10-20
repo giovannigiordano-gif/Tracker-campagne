@@ -31,6 +31,7 @@ import {
 import { formatGiorno } from "@/lib/period";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
 import { FunnelPanel } from "./funnel-panel";
+import { MetaPanel } from "./meta-panel";
 import { ProvenienzaPanel, type SchedaProvenienza } from "./ranking-panel";
 import { SectionNav } from "./section-nav";
 import { TrendPanel } from "./trend-panel";
@@ -66,6 +67,7 @@ const creaColonneVendite = (valuta: string): Colonna<RigaVendita>[] => hv.column
 
 const SEZIONI = [
   { id: "numeri", label: "Numeri" },
+  { id: "meta", label: "Campagne Meta" },
   { id: "andamento", label: "Andamento" },
   { id: "provenienza", label: "Provenienza" },
   { id: "pipeline", label: "Pipeline" },
@@ -184,7 +186,11 @@ export function ClientDashboard({
         )}
       </header>
 
-      <SectionNav sezioni={SEZIONI} sottoBarra={modo === "agenzia"} />
+      <SectionNav
+        // Nella pagina condivisa, senza account Meta associati, la sezione non c'è
+        sezioni={modo === "condivisa" && dati.meta.stato === "non-associato" ? SEZIONI.filter((s) => s.id !== "meta") : SEZIONI}
+        sottoBarra={modo === "agenzia"}
+      />
 
       {/* Filtri della pagina */}
       <div className="-mt-4 flex flex-wrap items-center gap-2 rounded-panel bg-card px-4 py-3 ring-1 ring-border">
@@ -242,6 +248,8 @@ export function ClientDashboard({
           di chiusura alla data in cui l&apos;opportunità è stata chiusa.
         </Fonte>
       </div>
+
+      <MetaPanel dati={dati} confronto={confronto} modo={modo} />
 
       <TrendPanel id="andamento" lead={lead} opp={opp} giorni={periodo.giorni} giorniPrec={periodo.giorniPrec} confronto={confronto} valuta={valuta} />
 

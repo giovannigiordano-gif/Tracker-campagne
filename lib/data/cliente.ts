@@ -7,6 +7,7 @@ import { getLocationClient } from "../ghl/client";
 import type { Contact, Opportunity, Pipeline } from "../ghl/types";
 import { SENZA_FONTE, type LeadRow, type OppRow } from "../metrics/dashboard";
 import { giornoInFuso, risolviPeriodo, type Selezione } from "../period";
+import { caricaMetaCliente, type EsitoMeta } from "./meta-cliente";
 
 export type AperteFase = { n: number; valore: number; giorniMedi: number | null };
 
@@ -26,6 +27,8 @@ export type DatiCliente = {
   // Situazione attuale delle opportunità aperte, per pipeline e fase (non dipende dal periodo)
   aperte: Record<string, Record<string, AperteFase>>;
   aggiornatoIl: number;
+  meta: EsitoMeta; // campagne Meta degli account associati al cliente (sola lettura)
+  obiettivoCpl: number | null; // costo per lead obiettivo impostato in Impostazioni
 };
 
 const GIORNO_MS = 86_400_000;
@@ -130,7 +133,13 @@ export function costruisciRighe(
 }
 
 export async function caricaDashboardCliente(account: Account, sel: Selezione): Promise<DatiCliente> {
-  const grezzi = await datiGrezziCliente(account, sel);
+  // GHL e Meta in parallelo; un problema con Meta non deve bloccare i dati di GHL
+  const [grezzi, meta] = await Promise.all([
+    datiGrezziCliente(account, sel),
+    caricaMetaCliente(account, sel).catch(
+      (e): EsitoMeta => ({ stato: "errore", tipo: "altro", messaggio: `Non riesco a leggere i dati da Meta (${(e as Error).message}).` })
+    ),
+  ]);
   const { lead, opp, aperte } = costruisciRighe(grezzi, { conDatiPersonali: true });
   const { corrente, precedente, fuso } = grezzi.periodo;
   return {
@@ -148,5 +157,7 @@ export async function caricaDashboardCliente(account: Account, sel: Selezione): 
     opp,
     aperte,
     aggiornatoIl: grezzi.aggiornatoIl,
+    meta,
+    obiettivoCpl: account.thresholds.maxCpl ?? null,
   };
 }

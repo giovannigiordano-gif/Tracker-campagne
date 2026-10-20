@@ -45,6 +45,8 @@ export type ClientBlob = {
 
 const PREFISSO = "dati/";
 const MEMORIA_MS = 30_000; // letture ripetute entro 30 s servite dalla memoria: meno operazioni sul piano Hobby
+// L'età delle letture si misura con performance.now() e non con l'orologio: Next.js non accetta Date.now()
+// mentre prepara le pagine in anticipo (es. il titolo della pagina cliente)
 const TENTATIVI = 4;
 
 type Letto = { valore: unknown; etag: string | null; letto: number };
@@ -71,9 +73,9 @@ export function creaArchivioBlob(client: ClientBlob): Archivio {
     tipo: "blob",
     async leggi<T>(nome: string, predefinito: T) {
       const inMemoria = memoria.get(nome);
-      if (inMemoria && Date.now() - inMemoria.letto < MEMORIA_MS) return structuredClone(inMemoria.valore) as T;
+      if (inMemoria && performance.now() - inMemoria.letto < MEMORIA_MS) return structuredClone(inMemoria.valore) as T;
       const { valore, etag } = await leggiDallOrigine(nome, predefinito);
-      memoria.set(nome, { valore, etag, letto: Date.now() });
+      memoria.set(nome, { valore, etag, letto: performance.now() });
       return structuredClone(valore);
     },
 
@@ -90,7 +92,7 @@ export function creaArchivioBlob(client: ClientBlob): Archivio {
             cacheControlMaxAge: 60,
             ...(etag ? { ifMatch: etag } : {}),
           });
-          memoria.set(nome, { valore: nuovo, etag: salvato.etag, letto: Date.now() });
+          memoria.set(nome, { valore: nuovo, etag: salvato.etag, letto: performance.now() });
           return structuredClone(nuovo);
         } catch (e) {
           // Qualcun altro ha salvato nel frattempo: si rilegge e si riprova

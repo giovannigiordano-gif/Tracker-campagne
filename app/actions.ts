@@ -37,8 +37,14 @@ function leggiId(formData: FormData) {
 export async function aggiornaDati(formData: FormData) {
   await richiediAccesso();
   const id = formData.get("locationId");
-  // Con un cliente: svuota solo la sua cache. Senza: tutta la cache GHL.
-  await cache.invalidate(typeof id === "string" && ID_RE.test(id) ? `ghl:${id}:` : "ghl:");
+  // Con un cliente: svuota solo la sua cache (GHL e account Meta associati). Senza: tutta la cache GHL e Meta.
+  if (typeof id === "string" && ID_RE.test(id)) {
+    await cache.invalidate(`ghl:${id}:`);
+    for (const act of (await getAccount(id))?.metaAdAccountIds ?? []) await cache.invalidate(`meta:${act}:`);
+  } else {
+    await cache.invalidate("ghl:");
+    await cache.invalidate("meta:");
+  }
   refresh();
 }
 
@@ -80,11 +86,16 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
   const fuso = String(formData.get("timezone") ?? "").trim();
   const valuta = String(formData.get("currency") ?? "").trim().toUpperCase();
   const soglia = String(formData.get("leadDropPct") ?? "").trim();
+  const obiettivoCpl = String(formData.get("maxCpl") ?? "").trim().replace(",", ".");
 
   if (!nome) return { ok: false, messaggio: "Il nome non può essere vuoto" };
   if (fusoValido(fuso) !== fuso) return { ok: false, messaggio: `Fuso orario "${fuso}" non valido (es. Europe/Rome)` };
   if (!/^[A-Z]{3}$/.test(valuta)) return { ok: false, messaggio: "Valuta non valida: usa il codice a 3 lettere (es. EUR)" };
   const sogliaNum = soglia === "" ? undefined : Number(soglia);
+  const obiettivoCplNum = obiettivoCpl === "" ? undefined : Number(obiettivoCpl);
+  if (obiettivoCplNum !== undefined && !(obiettivoCplNum > 0 && obiettivoCplNum < 100000)) {
+    return { ok: false, messaggio: "Il costo per lead obiettivo deve essere un importo maggiore di zero" };
+  }
   // Account pubblicitari Meta scelti (formato act_<numero>); si aggiornano solo se il modulo li contiene
   const conAccountMeta = formData.get("metaAdAccountIdsPresenti") === "1";
   // Un identificativo di sole cifre (elenchi salvati prima del 2026-10-20) diventa act_<numero>
@@ -102,7 +113,7 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
     notes: String(formData.get("notes") ?? "").trim(),
     metaAdAccountIds: conAccountMeta ? accountMeta : attuale.metaAdAccountIds,
     active: formData.get("active") === "on",
-    thresholds: { ...attuale.thresholds, leadDropPct: sogliaNum },
+    thresholds: { ...attuale.thresholds, leadDropPct: sogliaNum, maxCpl: obiettivoCplNum },
   };
   await upsertAccount(aggiornato);
   // Il fuso orario cambia il modo di contare i giorni: si ricalcola tutto

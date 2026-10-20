@@ -79,21 +79,37 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - Risposta reale (2026-10-20): `structuredContent.ad_accounts[]` con `ad_account_id` (solo il numero, l'app lo porta a `act_<numero>`), `ad_account_name`, `business_name`, `is_queryable`, `not_queryable_reason`, `next_cursor`. Lettura in `lib/meta-mcp/account.ts` (testata).
   - Il token vede solo gli account scelti nella finestra di approvazione di Meta e su cui il titolare ha un ruolo. Per aggiungerne altri si usa "Collega di nuovo". Il token dura circa 60 giorni e Meta non dà un refresh_token: alla scadenza va ricollegato.
 - **Account Meta per cliente** (2026-10-20): nella scheda di ogni cliente in Impostazioni c'è la scelta multipla "Account pubblicitari Meta", con l'elenco dall'ultima verifica e l'indicazione di quelli già scelti per altri clienti. Si salva in `metaAdAccountIds` (formato `act_<numero>`, validato in `modificaCliente`).
+- **Sezione "Campagne Meta"** (2026-10-20, scelte del titolare: in ogni cliente + criticità in Panoramica; prima numeri e criticità, il testo scritto dall'AI dopo).
+  - Il token del collegamento MCP funziona anche sulla Graph/Marketing API `v26.0` (verificato). Client in `lib/meta/graph.ts`: solo GET, segue `paging.next`, riprova con attesa sui codici di limite (4, 17, 32, 613, 80000-80014); codice 190 = collegamento scaduto.
+  - Letture per account (`lib/data/meta-cliente.ts`): insights `level=campaign`, `time_increment=1` su periodo precedente + corrente in una chiamata; campagne (nome, stato, obiettivo); annunci con `effective_status` DISAPPROVED/WITH_ISSUES e `issues_info`; account (nome, valuta, `account_status`, fuso); frequenza degli ultimi 7 giorni. Chiavi di cache `meta:<act>:…`, svuotate da "Aggiorna i dati".
+  - Lead lato Meta = `actions` con `action_type` "lead" (`lib/meta/normalize.ts`).
+  - Incrocio (`lib/metrics/meta.ts`): costo per lead reale = spesa / lead GHL del canale "Meta Ads"; costo per opportunità e per vendita; ROAS dal CRM = venduto / spesa; tabella per campagna unita ai dati GHL tramite l'ID campagna.
+  - Criticità (`lib/metrics/criticita.ts`, testate), solo nella vista dell'agenzia e negli avvisi della Panoramica:
+    - account non attivo (`account_status` ≠ 1): errore;
+    - costo per lead reale sopra "Costo per lead obiettivo" (`thresholds.maxCpl`, in Impostazioni); senza obiettivo, se peggiora di oltre il 50% sul periodo precedente con almeno 5 lead in entrambi: attenzione;
+    - spesa senza risultati: campagne attive con obiettivo lead (`OUTCOME_LEADS`, `LEAD_GENERATION`) che negli ultimi 3 giorni spendono almeno l'obiettivo (o 30) senza lead né su Meta né in GHL: errore;
+    - annunci rifiutati o con problemi nelle campagne attive: errore se rifiutati, altrimenti attenzione;
+    - frequenza degli ultimi 7 giorni oltre 3: attenzione.
+  - Nella pagina condivisa la sezione c'è (senza criticità) solo se il cliente ha account Meta associati; un errore Meta mostra un messaggio neutro.
+  - La variazione della spesa è grigia (`Delta neutra`): spendere di più non è né buono né cattivo.
+- **Date.now() e Cache Components**: Next.js rifiuta `Date.now()` mentre prepara le pagine in anticipo. Per misurare durate si usa `performance.now()` (vedi `archivio.ts`), per l'ora corrente si chiama prima `await connection()`.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
+  - analisi scritta dall'AI sulla sezione Campagne Meta (report e domanda libera), con chiave Anthropic oppure tramite il connettore Claude qui sotto;
+  - il token Meta scade intorno al 2026-12-19: il titolare deve premere "Collega di nuovo" in Impostazioni;
   - richiesta del titolare (2026-10-14): usare l'app da Claude o Cowork con il proprio abbonamento, trasformando l'app in un connettore MCP. Serve l'app online e solo dati aggregati verso l'AI. Da progettare dopo, verificando la documentazione Anthropic.
 
 ## Comandi
 - `npm run dev`: avvia l'app in locale (http://localhost:3000)
 - `npm run check`: verifica i collegamenti a GHL, Meta e Anthropic
-- `npm test`: test automatici (link condivisi, conteggi per canale)
+- `npm test`: test automatici (accesso, archivio, link condivisi, conteggi per canale, Meta e criticità)
 - `npm run build`: build di produzione
 
 ## Stato delle fasi
 - [x] Fase 0: scaffold, .env.example, `npm run check`, test di accesso GHL (2026-10-12)
 - [x] Fase 1: client GHL, cache, Panoramica agency, Contatti e lead, Impostazioni con token cifrati (2026-10-12)
 - [x] Fase 2: pipeline, opportunità e venduto, insieme al restyling Sales Process e alla dashboard interattiva (2026-10-12)
-- [ ] Fase 3: client Meta Marketing API, pagina Campagne, mappatura in Impostazioni
+- [x] Fase 3: client Meta Marketing API, sezione Campagne Meta con criticità, mappatura in Impostazioni (2026-10-20)
 - [ ] Fase 4: attribuzione e pagina Incrocio
 - [ ] Fase 5: MCP Meta e analisi AI, con fallback
 - [ ] Fase 6: login, Dockerfile, deploy su Railway o Render, README per utente non tecnico

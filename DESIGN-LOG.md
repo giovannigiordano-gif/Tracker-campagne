@@ -118,3 +118,16 @@ Decisioni prese in autonomia durante il redesign (branch `redesign-salesprocess`
 - Il simbolo vettoriale (icona del browser, pagine di errore) è ridisegnato con le misure lette dai pixel del logo: cinque quadrati a zig-zag (20,5 / 17,5 / 13 / 10,5 / 7,8). Quello di prima era inventato e diverso.
 - Tolto il motto "Fatturare. Fatturare. Fatturare." in fondo al menu: è già nel logo.
 - Il logo usa un arancio leggermente più rosso (#FF7200) del colore del sito (#FF8200). L'interfaccia resta su #FF8200, misurato sul sito e già verificato per i contrasti.
+
+## 2026-10-20 — Sezione "Campagne Meta" nella dashboard cliente
+- Nuova sezione nell'indice della dashboard ("Campagne Meta"), prima di "Andamento". Non dipende dai filtri della pagina e lo dice nella descrizione.
+- Criticità in cima (solo vista agenzia): elenco con icona e testo, prima gli errori (rosso) poi le attenzioni (ambra). Il colore non è mai l'unico segnale.
+- 8 riquadri numerici, ognuno con la fonte a destra dell'etichetta ("Meta", "GHL", "Meta + GHL"), così ogni numero si riconduce alla sua origine.
+  - I costi usano la variazione inversa (salire è rosso).
+  - La spesa ha una variazione neutra, grigia: spendere di più non è né bene né male.
+- Due grafici:
+  - spesa al giorno a barre (`--viz-barra`);
+  - lead al giorno a linee, GHL piena in arancio profondo (`--viz-attuale`) e Meta tratteggiata in grigio (`--viz-resto`), con legenda: due serie, quindi la legenda c'è sempre.
+- Tabella per campagna con la tabella unica riusabile ed esportazione CSV; la riga "Senza campagna Meta" sta in fondo.
+- Panoramica: nelle schede clienti si aggiungono "Spesa Meta" e "Costo per lead"; le criticità Meta finiscono tra gli avvisi della scheda.
+- Stati: cliente senza account Meta → invito ad associarli in Impostazioni (nella pagina condivisa la sezione sparisce); collegamento scaduto → messaggio con il pulsante per le Impostazioni (nella pagina condivisa un messaggio neutro).

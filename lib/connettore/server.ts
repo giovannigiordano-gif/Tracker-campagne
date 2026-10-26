@@ -1,23 +1,23 @@
 // Server MCP del connettore: gli strumenti che Claude (claude.ai, app desktop, Cowork) usa per leggere i dati
 // dell'app e scrivere le analisi con l'abbonamento del titolare.
-// Regole: SOLA LETTURA su GHL e Meta; a Claude arrivano solo dati aggregati (riepilogo.ts), mai dati personali.
-// L'unica scrittura è "salva_analisi", che salva il testo dell'analisi nell'app (non tocca GHL né Meta).
+// Regole: SOLA LETTURA su GHL, Meta e LinkedIn; a Claude arrivano solo dati aggregati (riepilogo.ts), mai dati personali.
+// L'unica scrittura è "salva_analisi", che salva il testo dell'analisi nell'app (non tocca GHL, Meta né LinkedIn).
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { readAccounts, type Account } from "../accounts";
 import { leggiAnalisi, MASSIMO_CARATTERI, salvaAnalisi } from "../analisi";
 import { caricaDashboardCliente } from "../data/cliente";
-import { caricaPanoramica } from "../data/panoramica";
+import { caricaPanoramica, type NumeriAds } from "../data/panoramica";
 import { etichettaSelezione, leggiSelezione, type Selezione } from "../period";
 import { riepilogoCliente } from "./riepilogo";
 
-const ISTRUZIONI = `SalesProcess Insights è la dashboard interna di un'agenzia di marketing: per ogni cliente legge contatti, opportunità e vendite da GoHighLevel (CRM) e le campagne da Meta Ads, in SOLA LETTURA.
+const ISTRUZIONI = `SalesProcess Insights è la dashboard interna di un'agenzia di marketing: per ogni cliente legge contatti, opportunità e vendite da GoHighLevel (CRM) e le campagne da Meta Ads e LinkedIn Ads, in SOLA LETTURA.
 Come usarlo:
 - "elenco_clienti" per i clienti seguiti e il loro contesto (settore, obiettivi, costo per lead obiettivo).
 - "panoramica_clienti" per un confronto veloce tra clienti, con avvisi e criticità.
-- "analisi_cliente" per tutti i numeri di un cliente: GHL, campagne Meta, incrocio tra i due, criticità.
+- "analisi_cliente" per tutti i numeri di un cliente: GHL, campagne Meta e LinkedIn, incrocio con il CRM, criticità.
 - "salva_analisi" per salvare nell'app un'analisi completa: il titolare la ritrova nella dashboard del cliente.
-Regole: cita sempre la fonte (GHL o Meta) e il periodo dei numeri; i lead si contano solo nel CRM (GHL): non confrontarli con i lead conteggiati da Meta e non parlare di discrepanze tra i due; non inventare dati che non ci sono; questa app non può modificare, mettere in pausa o creare campagne: le azioni consigliate le farà il titolare. Rispondi in italiano.`;
+Regole: cita sempre la fonte (GHL, Meta o LinkedIn) e il periodo dei numeri; i lead si contano solo nel CRM (GHL): non confrontarli con i lead conteggiati da Meta o LinkedIn e non parlare di discrepanze tra le cifre; non inventare dati che non ci sono; questa app non può modificare, mettere in pausa o creare campagne: le azioni consigliate le farà il titolare. Rispondi in italiano.`;
 
 const SCHEMA_PERIODO = {
   giorni: z.enum(["7", "30", "90"]).optional().describe("Ultimi 7, 30 o 90 giorni (predefinito 30). Ignorato se ci sono da e a."),
@@ -60,6 +60,19 @@ async function protetto(fn: () => Promise<ReturnType<typeof testo>>) {
   }
 }
 
+// Spesa e costo per lead di una piattaforma nella panoramica (null: nessun account associato)
+const due = (n: number) => Math.round(n * 100) / 100;
+function numeriAds(n: NumeriAds | null) {
+  return (
+    n && {
+      spesa: due(n.spesa),
+      spesaPrecedente: due(n.spesaPrec),
+      costoPerLead: n.cplReale === null ? null : due(n.cplReale),
+      costoPerLeadPrecedente: n.cplRealePrec === null ? null : due(n.cplRealePrec),
+    }
+  );
+}
+
 const SOLA_LETTURA = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
 export function creaServerMcp() {
@@ -69,7 +82,7 @@ export function creaServerMcp() {
     "elenco_clienti",
     {
       title: "Elenco clienti",
-      description: "Clienti seguiti dall'agenzia, con contesto (note su settore, offerta, obiettivi), valuta, costo per lead obiettivo e account Meta associati.",
+      description: "Clienti seguiti dall'agenzia, con contesto (note su settore, offerta, obiettivi), valuta, costo per lead obiettivo e account Meta e LinkedIn associati.",
       annotations: { title: "Elenco clienti", ...SOLA_LETTURA },
     },
     () =>
@@ -84,6 +97,7 @@ export function creaServerMcp() {
             noteDiContesto: a.notes || null,
             obiettivoCostoPerLead: a.thresholds.maxCpl ?? null,
             accountMetaAssociati: a.metaAdAccountIds.length,
+            accountLinkedInAssociati: a.linkedinAdAccountIds.length,
           }))
         )
       )
@@ -94,7 +108,7 @@ export function creaServerMcp() {
     {
       title: "Panoramica clienti",
       description:
-        "Numeri chiave di tutti i clienti attivi nel periodo, con il periodo precedente per confronto: lead, opportunità, vinte, venduto (GHL), spesa e costo per lead (Meta + GHL), avvisi e criticità.",
+        "Numeri chiave di tutti i clienti attivi nel periodo, con il periodo precedente per confronto: lead, opportunità, vinte, venduto (GHL), spesa e costo per lead di Meta e LinkedIn (spesa della piattaforma / lead nel CRM), avvisi e criticità.",
       inputSchema: SCHEMA_PERIODO,
       annotations: { title: "Panoramica clienti", ...SOLA_LETTURA },
     },
@@ -104,7 +118,7 @@ export function creaServerMcp() {
         const righe = await caricaPanoramica(sel);
         return testo({
           periodo: etichettaSelezione(sel),
-          fonte: "GoHighLevel e Meta Marketing API",
+          fonte: "GoHighLevel, Meta Marketing API e LinkedIn Marketing API",
           clienti: righe.map((r) => ({
             id: r.locationId,
             nome: r.nome,
@@ -122,12 +136,8 @@ export function creaServerMcp() {
               tassoChiusuraPct: r.kpi.tassoChiusura === null ? null : Math.round(r.kpi.tassoChiusura * 10) / 10,
             },
             leadPerCanale: r.canali,
-            meta: r.meta && {
-              spesa: Math.round(r.meta.spesa * 100) / 100,
-              spesaPrecedente: Math.round(r.meta.spesaPrec * 100) / 100,
-              costoPerLead: r.meta.cplReale === null ? null : Math.round(r.meta.cplReale * 100) / 100,
-              costoPerLeadPrecedente: r.meta.cplRealePrec === null ? null : Math.round(r.meta.cplRealePrec * 100) / 100,
-            },
+            meta: numeriAds(r.meta),
+            linkedin: numeriAds(r.linkedin),
             avvisi: r.avvisi,
             datiMancanti: r.problemaToken ? "Token GHL mancante o scaduto: dati del CRM non disponibili." : null,
           })),
@@ -140,7 +150,7 @@ export function creaServerMcp() {
     {
       title: "Dati completi di un cliente",
       description:
-        "Tutti i numeri aggregati di un cliente nel periodo e nel periodo precedente: KPI di GoHighLevel, lead per canale, campagna, fonte e tag, andamento, pipeline; spesa e risultati delle campagne Meta, incrocio con i lead e le vendite del CRM, criticità. Solo aggregati, nessun dato personale.",
+        "Tutti i numeri aggregati di un cliente nel periodo e nel periodo precedente: KPI di GoHighLevel, lead per canale, campagna, fonte e tag, andamento, pipeline; spesa e risultati delle campagne Meta e LinkedIn, incrocio con i lead e le vendite del CRM, criticità. Solo aggregati, nessun dato personale.",
       inputSchema: { cliente: z.string().min(1).describe("Nome del cliente (anche parziale) o ID del sub-account GHL"), ...SCHEMA_PERIODO },
       annotations: { title: "Dati completi di un cliente", ...SOLA_LETTURA },
     },
@@ -182,7 +192,7 @@ export function creaServerMcp() {
     {
       title: "Salva analisi nell'app",
       description:
-        "Salva un'analisi scritta (markdown) nella dashboard del cliente, dove il titolare la ritrova con lo storico. Scrive solo nell'app: non modifica nulla su GoHighLevel né su Meta.",
+        "Salva un'analisi scritta (markdown) nella dashboard del cliente, dove il titolare la ritrova con lo storico. Scrive solo nell'app: non modifica nulla su GoHighLevel, Meta o LinkedIn.",
       inputSchema: {
         cliente: z.string().min(1).describe("Nome del cliente (anche parziale) o ID del sub-account GHL"),
         titolo: z.string().min(1).max(140).describe("Titolo breve, es. \"Campagne Meta: ultimi 30 giorni\""),
@@ -203,7 +213,7 @@ export function creaServerMcp() {
     "analisi_campagne",
     {
       title: "Analisi delle campagne di un cliente",
-      description: "Analisi completa di campagne Meta e risultati nel CRM per un cliente, salvata nell'app.",
+      description: "Analisi completa delle campagne Meta e LinkedIn e dei risultati nel CRM per un cliente, salvata nell'app.",
       argsSchema: {
         cliente: z.string().describe("Nome del cliente"),
         giorni: z.string().optional().describe("7, 30 o 90 (predefinito 30)"),
@@ -218,7 +228,7 @@ export function creaServerMcp() {
             text: `Analizza le campagne del cliente "${cliente}" negli ultimi ${giorni && ["7", "30", "90"].includes(giorni) ? giorni : "30"} giorni.
 1. Leggi i dati con analisi_cliente (e, se ci sono, l'ultima analisi con analisi_salvate per vedere cosa è cambiato).
 2. Scrivi un report in italiano con queste sezioni: Sintesi; Cosa funziona; Cosa non funziona; Azioni consigliate (da 3 a 5, in ordine di priorità).
-3. I lead sono quelli arrivati nel CRM (GHL): non confrontarli con i lead conteggiati da Meta. Per ogni numero indica la fonte (GHL o Meta) e il confronto con il periodo precedente quando è utile. Tieni conto delle note di contesto e del costo per lead obiettivo del cliente. Non inventare dati mancanti: dillo.
+3. I lead sono quelli arrivati nel CRM (GHL): non confrontarli con i lead conteggiati da Meta o LinkedIn. Per ogni numero indica la fonte (GHL, Meta o LinkedIn) e il confronto con il periodo precedente quando è utile. Tieni conto delle note di contesto e del costo per lead obiettivo del cliente. Non inventare dati mancanti: dillo.
 4. Le azioni le farà il titolare: l'app è in sola lettura.
 5. Alla fine salva il report con salva_analisi.`,
           },
@@ -241,7 +251,7 @@ export function creaServerMcp() {
           content: {
             type: "text",
             text: `Fai un controllo di tutti i clienti negli ultimi ${giorni && ["7", "30", "90"].includes(giorni) ? giorni : "7"} giorni con panoramica_clienti.
-Dimmi in poche righe per ciascuno com'è andata rispetto al periodo precedente, poi elenca le criticità in ordine di urgenza e per i 2 clienti più critici approfondisci con analisi_cliente. Cita sempre la fonte (GHL o Meta) dei numeri.`,
+Dimmi in poche righe per ciascuno com'è andata rispetto al periodo precedente, poi elenca le criticità in ordine di urgenza e per i 2 clienti più critici approfondisci con analisi_cliente. Cita sempre la fonte (GHL, Meta o LinkedIn) dei numeri.`,
           },
         },
       ],

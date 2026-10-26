@@ -1,5 +1,6 @@
 // Scheda di un cliente nella Panoramica: spaccato rapido dei suoi dati e pulsante per aprire la dashboard.
 // Numeri chiave, andamento dei lead, canali di provenienza e avvisi. Fonte: GoHighLevel, periodo scelto in alto.
+import { Fragment } from "react";
 import Link from "next/link";
 import { AlertTriangle, CircleAlert } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -139,22 +140,28 @@ export function SchedaCliente({ riga, confronto, query }: { riga: RigaPanoramica
               className="col-span-2"
             />
             <Numero etichetta="Chiusura" valore={formatPercentuale(kpi.tassoChiusura)} delta={d(kpi.tassoChiusura, kpiPrec?.tassoChiusura)} />
-            {riga.meta && (
-              <>
-                <Numero
-                  etichetta="Spesa Meta"
-                  valore={formatValuta(riga.meta.spesa, riga.valuta, riga.meta.spesa >= 100_000)}
-                  delta={d(riga.meta.spesa, riga.meta.spesaPrec)}
-                  neutra
-                  className="col-span-2"
-                />
-                <Numero
-                  etichetta="Costo per lead"
-                  valore={riga.meta.cplReale === null ? "n.d." : formatValuta(riga.meta.cplReale, riga.valuta)}
-                  delta={d(riga.meta.cplReale, riga.meta.cplRealePrec)}
-                  inversa
-                />
-              </>
+            {/* Spesa e costo per lead per ogni piattaforma con account associati (Meta, LinkedIn) */}
+            {([
+              ["Meta", riga.meta],
+              ["LinkedIn", riga.linkedin],
+            ] as const).map(([nome, ads]) =>
+              ads ? (
+                <Fragment key={nome}>
+                  <Numero
+                    etichetta={`Spesa ${nome}`}
+                    valore={formatValuta(ads.spesa, riga.valuta, ads.spesa >= 100_000)}
+                    delta={d(ads.spesa, ads.spesaPrec)}
+                    neutra
+                    className="col-span-2"
+                  />
+                  <Numero
+                    etichetta={`Costo lead ${nome}`}
+                    valore={ads.cplReale === null ? "n.d." : formatValuta(ads.cplReale, riga.valuta)}
+                    delta={d(ads.cplReale, ads.cplRealePrec)}
+                    inversa
+                  />
+                </Fragment>
+              ) : null
             )}
           </dl>
 

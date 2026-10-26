@@ -6,6 +6,7 @@ export type Account = {
   locationId: string; // ID del sub-account GHL
   name: string;
   metaAdAccountIds: string[]; // formato act_...
+  linkedinAdAccountIds: string[]; // ID numerici degli account pubblicitari LinkedIn
   currency: string; // es. EUR
   timezone: string; // es. Europe/Rome: i giorni si contano in questo fuso
   notes: string; // settore, offerta, obiettivo, target di CPL: contesto per l'AI
@@ -32,6 +33,7 @@ function completa(lista: Partial<Account>[]): Account[] {
       locationId: a.locationId,
       name: a.name ?? a.locationId,
       metaAdAccountIds: a.metaAdAccountIds ?? [],
+      linkedinAdAccountIds: a.linkedinAdAccountIds ?? [],
       currency: a.currency ?? "EUR",
       timezone: a.timezone ?? "Europe/Rome",
       notes: a.notes ?? "",

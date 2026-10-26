@@ -24,13 +24,19 @@ export type CampagnaMeta = { act: string; id: string; nome: string; stato: strin
 
 export type AnnuncioProblema = { act: string; annuncioId: string; campagnaId: string; stato: string; problema: string | null };
 
-export type AccountMetaInfo = { id: string; nome: string; valuta: string; stato: number; fuso: string | null };
+// stato: codice Meta (1 = attivo). Per LinkedIn: 1 se l'account pubblica, 0 altrimenti, con il motivo in statoTesto.
+export type AccountMetaInfo = { id: string; nome: string; valuta: string; stato: number; fuso: string | null; statoTesto?: string };
 
+// Campagna attiva che però non è in pubblicazione (segnale di LinkedIn: budget esaurito, account bloccato...)
+export type CampagnaFerma = { act: string; campagnaId: string; motivo: string };
+
+// Stessa forma per Meta e LinkedIn (lib/data/linkedin-cliente.ts): così calcoli e grafici sono gli stessi
 export type DatiMeta = {
   account: AccountMetaInfo[];
   righe: InsightGiorno[];
   campagne: CampagnaMeta[];
   problemi: AnnuncioProblema[];
+  campagneFerme?: CampagnaFerma[];
   frequenza7g: Record<string, number | null>; // frequenza media degli ultimi 7 giorni, per account
   errori: string[]; // account che non si sono potuti leggere
   aggiornatoIl: number;

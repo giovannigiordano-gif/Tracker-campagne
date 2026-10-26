@@ -1,7 +1,8 @@
 "use client";
-// Sezione "Campagne Meta" della dashboard cliente: criticità, numeri chiave, andamento e tabella per campagna.
-// Fonti: Meta (spesa, impression, clic) e GoHighLevel (lead, opportunità e vendite arrivati
-// dal canale Meta Ads, abbinati alle campagne per ID). Non dipende dai filtri della pagina.
+// Sezioni "Campagne Meta" e "Campagne LinkedIn" della dashboard cliente: criticità, numeri chiave, andamento e
+// tabella per campagna. Stesso pannello per le due piattaforme (lib/metrics/piattaforme.ts).
+// Fonti: la piattaforma (spesa, impression, clic) e GoHighLevel (lead, opportunità e vendite arrivati dal canale
+// della piattaforma, abbinati alle campagne). Non dipende dai filtri della pagina.
 import { useMemo } from "react";
 import Link from "next/link";
 import { AlertTriangle, CircleAlert } from "lucide-react";
@@ -13,11 +14,13 @@ import { formatGiornoBreve, formatNumero, formatPercentuale, formatValuta } from
 import { calcolaCriticita } from "@/lib/metrics/criticita";
 import { variazionePct } from "@/lib/metrics/dashboard";
 import { kpiIncrocio, kpiMeta, righeCampagne, serieGiornaliera, SENZA_CAMPAGNA_META, type RigaCampagna } from "@/lib/metrics/meta";
+import { opzioniIncrocio, PIATTAFORME, type IdPiattaforma } from "@/lib/metrics/piattaforme";
 import { useRiduciMovimento } from "@/lib/use-riduci-movimento";
 import { cn } from "@/lib/utils";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
 import { Delta, Fonte, Riquadro } from "./ui";
 
+// Stati delle campagne di Meta (effective_status) e di LinkedIn (status)
 const STATI_CAMPAGNA: Record<string, string> = {
   ACTIVE: "Attiva",
   PAUSED: "In pausa",
@@ -26,6 +29,11 @@ const STATI_CAMPAGNA: Record<string, string> = {
   DELETED: "Eliminata",
   IN_PROCESS: "In elaborazione",
   WITH_ISSUES: "Con problemi",
+  COMPLETED: "Conclusa",
+  CANCELED: "Annullata",
+  DRAFT: "Bozza",
+  PENDING_DELETION: "In eliminazione",
+  REMOVED: "Rimossa",
 };
 
 function Numero({
@@ -41,7 +49,7 @@ function Numero({
   delta?: number | null;
   inversa?: boolean; // per i costi: salire è un peggioramento
   neutra?: boolean; // né buono né cattivo (la spesa): variazione in grigio
-  fonte: "Meta" | "GHL" | "Meta + GHL";
+  fonte: string;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1 bg-card px-4 py-3.5">
@@ -61,35 +69,49 @@ function Numero({
 
 const asse = { tickLine: false, axisLine: false, tick: { fill: "var(--muted-foreground)", fontSize: 12 } } as const;
 
-export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confronto: boolean; modo: "agenzia" | "condivisa" }) {
+export function PannelloAds({
+  dati,
+  confronto,
+  modo,
+  piattaforma: idPiattaforma,
+}: {
+  dati: DatiCliente;
+  confronto: boolean;
+  modo: "agenzia" | "condivisa";
+  piattaforma: IdPiattaforma;
+}) {
   const riduci = useRiduciMovimento();
-  const { meta, periodo, lead, opp, obiettivoCpl } = dati;
+  const p = PIATTAFORME[idPiattaforma];
+  const esito = dati[idPiattaforma];
+  const { periodo, lead, opp, obiettivoCpl } = dati;
   const valuta = dati.cliente.valuta;
   const fmt = (n: number | null) => (n === null ? "n.d." : formatValuta(n, valuta));
 
   const calcoli = useMemo(() => {
-    if (meta.stato !== "ok") return null;
+    if (esito.stato !== "ok") return null;
     const g = new Set(periodo.giorni);
     const gp = new Set(periodo.giorniPrec);
-    const km = kpiMeta(meta.dati.righe, g);
-    const kmPrec = kpiMeta(meta.dati.righe, gp);
+    const opz = opzioniIncrocio(p, esito.dati);
+    const km = kpiMeta(esito.dati.righe, g);
+    const kmPrec = kpiMeta(esito.dati.righe, gp);
     return {
       km,
       kmPrec,
-      inc: kpiIncrocio(km.spesa, lead, opp, g),
-      incPrec: kpiIncrocio(kmPrec.spesa, lead, opp, gp),
-      campagne: righeCampagne(meta.dati, lead, opp, g),
-      serie: serieGiornaliera(meta.dati.righe, lead, periodo.giorni),
+      inc: kpiIncrocio(km.spesa, lead, opp, g, opz.canale),
+      incPrec: kpiIncrocio(kmPrec.spesa, lead, opp, gp, opz.canale),
+      campagne: righeCampagne(esito.dati, lead, opp, g, opz),
+      serie: serieGiornaliera(esito.dati.righe, lead, periodo.giorni, opz.canale),
       criticita: calcolaCriticita({
-        meta: meta.dati,
+        meta: esito.dati,
         lead,
         giorni: periodo.giorni,
         giorniPrec: periodo.giorniPrec,
         obiettivoCpl: obiettivoCpl ?? undefined,
         valuta,
+        ...opz,
       }),
     };
-  }, [meta, periodo, lead, opp, obiettivoCpl, valuta]);
+  }, [esito, p, periodo, lead, opp, obiettivoCpl, valuta]);
 
   const colonne = useMemo(() => {
     const h = createColumnHelper<typeof funzioniTabella, RigaCampagna>();
@@ -97,7 +119,7 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
     const soldi = (v: number | null) => (v === null || v < 0 ? "n.d." : formatValuta(v, valuta));
     return h.columns([
       h.accessor("nome", {
-        header: "Campagna",
+        header: p.tabella.colonna,
         sortFn: "alphanumeric",
         cell: (i) => (
           <span className="flex min-w-48 flex-col whitespace-normal">
@@ -115,32 +137,34 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
       h.accessor(num((r) => r.ctr), { id: "ctr", header: "CTR", sortFn: "basic", meta: { numerica: true }, cell: (i) => formatPercentuale(i.row.original.ctr) }),
       h.accessor(num((r) => r.cpc), { id: "cpc", header: "Costo per clic", sortFn: "basic", meta: { numerica: true }, cell: (i) => soldi(i.row.original.cpc) }),
     ]) as Colonna<RigaCampagna>[];
-  }, [valuta]);
+  }, [valuta, p]);
 
-  const descrizione = "Spesa e risultati da Meta, incrociati con i lead, le opportunità e le vendite arrivati in GHL dal canale Meta Ads. Non dipende dai filtri della pagina.";
+  const descrizione = `Spesa e risultati da ${p.nome}, incrociati con i lead, le opportunità e le vendite arrivati in GHL dal canale ${p.canale}. Non dipende dai filtri della pagina.`;
+  const fonteIncrocio = `${p.nome} + GHL`;
 
   // ---------------------------------------------------------------- stati senza dati
-  if (meta.stato === "non-associato") {
-    if (modo === "condivisa") return null;
+  if (esito.stato === "non-associato") {
+    // LinkedIn compare solo per i clienti che hanno un account associato: per gli altri sarebbe rumore
+    if (modo === "condivisa" || p.id !== "meta") return null;
     return (
-      <Riquadro id="meta" titolo="Campagne Meta" descrizione={descrizione}>
+      <Riquadro id={p.id} titolo={p.titolo} descrizione={descrizione}>
         <div className="flex flex-col items-start gap-3 text-sm">
-          <p>Nessun account pubblicitario Meta associato a questo cliente.</p>
+          <p>Nessun account pubblicitario {p.nome} associato a questo cliente.</p>
           <Link href="/impostazioni" className={buttonVariants({ variant: "outline", size: "sm" })}>Associa un account in Impostazioni</Link>
         </div>
       </Riquadro>
     );
   }
-  if (meta.stato === "errore" || !calcoli) {
+  if (esito.stato === "errore" || !calcoli) {
     return (
-      <Riquadro id="meta" titolo="Campagne Meta" descrizione={descrizione}>
+      <Riquadro id={p.id} titolo={p.titolo} descrizione={descrizione}>
         <div className="flex flex-col items-start gap-3 rounded-block bg-warning-soft p-4 text-sm" role="status">
           <p className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
-            {modo === "condivisa" ? "Dati delle campagne non disponibili in questo momento." : meta.stato === "errore" ? meta.messaggio : "Dati non disponibili."}
+            {modo === "condivisa" ? "Dati delle campagne non disponibili in questo momento." : esito.stato === "errore" ? esito.messaggio : "Dati non disponibili."}
           </p>
-          {modo === "agenzia" && meta.stato === "errore" && (meta.tipo === "scaduto" || meta.tipo === "non-collegato") && (
-            <Link href="/impostazioni#meta-ads" className={buttonVariants({ size: "sm" })}>Apri Impostazioni</Link>
+          {modo === "agenzia" && esito.stato === "errore" && (esito.tipo === "scaduto" || esito.tipo === "non-collegato") && (
+            <Link href={p.impostazioni} className={buttonVariants({ size: "sm" })}>Apri Impostazioni</Link>
           )}
         </div>
       </Riquadro>
@@ -149,10 +173,10 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
 
   const { km, kmPrec, inc, incPrec, campagne, serie, criticita } = calcoli;
   const d = (a: number | null, b: number | null) => (confronto && a !== null && b !== null ? variazionePct(a, b) : undefined);
-  const errori = meta.stato === "ok" ? meta.dati.errori : [];
+  const errori = esito.stato === "ok" ? esito.dati.errori : [];
 
   return (
-    <Riquadro id="meta" titolo="Campagne Meta" descrizione={descrizione}>
+    <Riquadro id={p.id} titolo={p.titolo} descrizione={descrizione}>
       {/* Criticità: solo per l'agenzia (sono note di lavoro, non per il cliente) */}
       {modo === "agenzia" && criticita.length > 0 && (
         <section aria-label="Criticità" className="flex flex-col gap-2">
@@ -177,14 +201,14 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
 
       {/* Numeri in una griglia divisa da fili sottili, come i riepiloghi delle app Apple (niente schede dentro la scheda) */}
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-block bg-border ring-1 ring-border md:grid-cols-3">
-        <Numero etichetta="Spesa" fonte="Meta" valore={fmt(km.spesa)} delta={d(km.spesa, kmPrec.spesa)} neutra />
-        <Numero etichetta="Lead da Meta" fonte="GHL" valore={formatNumero(inc.leadGhl)} delta={d(inc.leadGhl, incPrec.leadGhl)} />
-        <Numero etichetta="Costo per lead" fonte="Meta + GHL" valore={fmt(inc.cplReale)} delta={d(inc.cplReale, incPrec.cplReale)} inversa />
-        <Numero etichetta="Opportunità da Meta" fonte="GHL" valore={formatNumero(inc.opportunita)} delta={d(inc.opportunita, incPrec.opportunita)} />
-        <Numero etichetta="Costo per vendita" fonte="Meta + GHL" valore={fmt(inc.costoVendita)} delta={d(inc.costoVendita, incPrec.costoVendita)} inversa />
+        <Numero etichetta="Spesa" fonte={p.nome} valore={fmt(km.spesa)} delta={d(km.spesa, kmPrec.spesa)} neutra />
+        <Numero etichetta={`Lead da ${p.nome}`} fonte="GHL" valore={formatNumero(inc.leadGhl)} delta={d(inc.leadGhl, incPrec.leadGhl)} />
+        <Numero etichetta="Costo per lead" fonte={fonteIncrocio} valore={fmt(inc.cplReale)} delta={d(inc.cplReale, incPrec.cplReale)} inversa />
+        <Numero etichetta={`Opportunità da ${p.nome}`} fonte="GHL" valore={formatNumero(inc.opportunita)} delta={d(inc.opportunita, incPrec.opportunita)} />
+        <Numero etichetta="Costo per vendita" fonte={fonteIncrocio} valore={fmt(inc.costoVendita)} delta={d(inc.costoVendita, incPrec.costoVendita)} inversa />
         <Numero
           etichetta="ROAS dal CRM"
-          fonte="Meta + GHL"
+          fonte={fonteIncrocio}
           valore={inc.roas === null ? "n.d." : `${inc.roas.toFixed(1).replace(".", ",")}x`}
           delta={d(inc.roas, incPrec.roas)}
         />
@@ -194,7 +218,7 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
       <div className="grid gap-4 md:grid-cols-2">
         <figure className="flex flex-col gap-2">
           <figcaption className="text-label text-titolo">Spesa al giorno</figcaption>
-          <div className="h-48" role="img" aria-label={`Spesa giornaliera su Meta: totale ${fmt(km.spesa)} nel periodo`}>
+          <div className="h-48" role="img" aria-label={`Spesa giornaliera su ${p.nome}: totale ${fmt(km.spesa)} nel periodo`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={serie} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barCategoryGap={2}>
                 <CartesianGrid vertical={false} stroke="var(--viz-griglia)" />
@@ -203,11 +227,11 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
                 <Tooltip
                   cursor={{ fill: "var(--muted)" }}
                   content={({ active, payload }) => {
-                    const p = payload?.[0]?.payload as (typeof serie)[number] | undefined;
-                    if (!active || !p) return null;
+                    const punto = payload?.[0]?.payload as (typeof serie)[number] | undefined;
+                    if (!active || !punto) return null;
                     return (
                       <div className="hud px-3 py-2 text-xs">
-                        {formatGiornoBreve(p.giorno)}: <span className="font-semibold">{fmt(p.spesa)}</span>
+                        {formatGiornoBreve(punto.giorno)}: <span className="font-semibold">{fmt(punto.spesa)}</span>
                       </div>
                     );
                   }}
@@ -218,8 +242,8 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
           </div>
         </figure>
         <figure className="flex flex-col gap-2">
-          <figcaption className="text-label text-titolo">Lead al giorno da Meta</figcaption>
-          <div className="h-48" role="img" aria-label={`Lead al giorno arrivati in GHL dal canale Meta Ads: ${inc.leadGhl} nel periodo`}>
+          <figcaption className="text-label text-titolo">Lead al giorno da {p.nome}</figcaption>
+          <div className="h-48" role="img" aria-label={`Lead al giorno arrivati in GHL dal canale ${p.canale}: ${inc.leadGhl} nel periodo`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={serie} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                 <CartesianGrid vertical={false} stroke="var(--viz-griglia)" />
@@ -228,11 +252,11 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
                 <Tooltip
                   cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1 }}
                   content={({ active, payload }) => {
-                    const p = payload?.[0]?.payload as (typeof serie)[number] | undefined;
-                    if (!active || !p) return null;
+                    const punto = payload?.[0]?.payload as (typeof serie)[number] | undefined;
+                    if (!active || !punto) return null;
                     return (
                       <div className="hud px-3 py-2 text-xs">
-                        {formatGiornoBreve(p.giorno)}: <span className="font-semibold">{p.leadGhl} lead</span>
+                        {formatGiornoBreve(punto.giorno)}: <span className="font-semibold">{punto.leadGhl} lead</span>
                       </div>
                     );
                   }}
@@ -244,27 +268,30 @@ export function MetaPanel({ dati, confronto, modo }: { dati: DatiCliente; confro
         </figure>
       </div>
 
-      <section aria-label="Campagne" className="flex flex-col gap-2">
-        <h3 className="text-label text-titolo">Campagne del periodo ({campagne.length})</h3>
+      <section aria-label={p.tabella.titolo} className="flex flex-col gap-2">
+        <h3 className="text-label text-titolo">
+          {p.tabella.titolo} ({campagne.length})
+        </h3>
         <DataTable
           dati={campagne}
           colonne={colonne}
           ordinamento={[{ id: "spesa", desc: true }]}
           cercabili={["nome"]}
-          segnapostoRicerca="Cerca una campagna…"
-          vuoto="Nessuna campagna con spesa o lead nel periodo."
+          segnapostoRicerca={p.tabella.cerca}
+          vuoto={p.tabella.vuoto}
           csv={{
-            nomeFile: `campagne-meta-${dati.cliente.nome}`,
-            intestazione: ["Campagna", "Stato", "Spesa", "Lead", "Costo per lead", "Opportunità", "Vendite", "Venduto", "ROAS CRM", "CTR %", "Costo per clic"],
+            nomeFile: `campagne-${p.id}-${dati.cliente.nome}`,
+            intestazione: [p.tabella.colonna, "Stato", "Spesa", "Lead", "Costo per lead", "Opportunità", "Vendite", "Venduto", "ROAS CRM", "CTR %", "Costo per clic"],
             riga: (r) => [r.nome, r.stato ?? "", r.spesa.toFixed(2), r.leadGhl, r.cplReale?.toFixed(2) ?? "", r.opportunita, r.vinte, r.venduto.toFixed(2), r.roas?.toFixed(2) ?? "", r.ctr?.toFixed(2) ?? "", r.cpc?.toFixed(2) ?? ""],
           }}
         />
       </section>
 
-      <Fonte aggiornatoIl={meta.stato === "ok" ? meta.dati.aggiornatoIl : null}>
-        Fonte Meta (spesa, impression, clic; giorni nel fuso dell&apos;account pubblicitario) e GoHighLevel (lead,
-        opportunità e vendite con canale Meta Ads, abbinati alle campagne per ID). Periodo {formatGiornoBreve(periodo.daGiorno)} -{" "}
-        {formatGiornoBreve(periodo.aGiorno)}.
+      <Fonte aggiornatoIl={esito.stato === "ok" ? esito.dati.aggiornatoIl : null}>
+        Fonte {p.nome} (spesa, impression, clic; {p.giorniUtc ? "giorni in UTC" : "giorni nel fuso dell'account pubblicitario"}) e GoHighLevel
+        (lead, opportunità e vendite con canale {p.canale}, abbinati {p.perNome ? "ai gruppi di annunci per ID o nome in utm_campaign" : "alle campagne per ID"}).
+        {p.perNome && " In Campaign Manager le righe sono i «gruppi di annunci» (l'API di LinkedIn li chiama ancora campagne)."}
+        Periodo {formatGiornoBreve(periodo.daGiorno)} - {formatGiornoBreve(periodo.aGiorno)}.
         {errori.length > 0 && modo === "agenzia" && ` Account non letti: ${errori.join("; ")}.`}
       </Fonte>
     </Riquadro>

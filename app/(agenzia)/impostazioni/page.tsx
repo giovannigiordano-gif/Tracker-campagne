@@ -22,6 +22,9 @@ import {
 } from "./forms";
 import { SchedaMetaAds, type EsitoRitornoMeta } from "./meta-ads";
 import { SchedaClaude } from "./claude";
+import { SchedaLinkedInAds, type EsitoRitornoLinkedIn } from "./linkedin-ads";
+import { ritornoLinkedIn } from "@/lib/linkedin/indirizzi";
+import { riepilogoLinkedIn } from "@/lib/linkedin/store";
 import { indirizzoBase, indirizzoMcp } from "@/lib/connettore/indirizzi";
 import { leggiStato } from "@/lib/connettore/stato";
 
@@ -67,10 +70,12 @@ const PASSI_TOKEN = [
 async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "searchParams">) {
   await connection(); // dati letti a ogni richiesta, mai al momento della build
   await richiediAccessoPagina(); // secondo controllo, oltre al proxy
-  const { meta: esitoMeta } = await searchParams; // esito del ritorno da Meta (collegato, annullato, errore)
-  const [{ clienti, disponibili, erroreSubAccount, archivioNonConfigurato, meta }, statoClaude] = await Promise.all([
+  // Esito del ritorno da Meta e da LinkedIn (collegato, annullato, errore)
+  const { meta: esitoMeta, linkedin: esitoLinkedIn } = await searchParams;
+  const [{ clienti, disponibili, erroreSubAccount, archivioNonConfigurato, meta }, statoClaude, linkedin] = await Promise.all([
     caricaImpostazioni(),
     leggiStato(),
+    riepilogoLinkedIn(),
   ]);
   const h = await headers();
   // Indirizzo a cui Meta rimanda dopo l'accesso (da inserire nell'app Meta): lo stesso calcolato da lib/meta-mcp/indirizzi.ts
@@ -78,6 +83,8 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
   const ritornoMeta = `${base}/api/meta-mcp/ritorno`;
   const esitoRitorno: EsitoRitornoMeta =
     esitoMeta === "collegato" || esitoMeta === "annullato" || esitoMeta === "errore" ? esitoMeta : null;
+  const esitoRitornoLinkedIn: EsitoRitornoLinkedIn =
+    esitoLinkedIn === "collegato" || esitoLinkedIn === "annullato" || esitoLinkedIn === "errore" ? esitoLinkedIn : null;
   const senzaToken = clienti.filter((c) => c.token.origine === "nessuno").length;
 
   return (
@@ -170,6 +177,10 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
                         assegnati={Object.fromEntries(
                           clienti.filter((x) => x.locationId !== c.locationId).flatMap((x) => x.metaAdAccountIds.map((id) => [id, x.name]))
                         )}
+                        accountLinkedIn={linkedin.ultimaVerifica?.account ?? []}
+                        assegnatiLinkedIn={Object.fromEntries(
+                          clienti.filter((x) => x.locationId !== c.locationId).flatMap((x) => x.linkedinAdAccountIds.map((id) => [id, x.name]))
+                        )}
                       />
                     </section>
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
@@ -183,7 +194,7 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
           </ul>
         </section>
 
-        <div className="flex flex-col gap-4 xl:sticky xl:top-24">
+        <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>
               <CardTitle>Aggiungi un cliente</CardTitle>
@@ -192,6 +203,7 @@ async function Impostazioni({ searchParams }: Pick<PageProps<"/impostazioni">, "
             {erroreSubAccount ? <BoxErrore messaggio={erroreSubAccount} /> : <AggiungiClienteForm disponibili={disponibili} />}
           </Card>
           <SchedaMetaAds meta={meta} esito={esitoRitorno} ritorno={ritornoMeta} />
+          <SchedaLinkedInAds linkedin={linkedin} esito={esitoRitornoLinkedIn} ritorno={ritornoLinkedIn(h)} />
           <SchedaClaude indirizzo={indirizzoMcp(indirizzoBase(h))} stato={statoClaude} />
           <Card>
             <CardHeader>

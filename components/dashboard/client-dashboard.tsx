@@ -31,7 +31,7 @@ import {
 import { formatGiorno } from "@/lib/period";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
 import { FunnelPanel } from "./funnel-panel";
-import { MetaPanel } from "./meta-panel";
+import { PannelloAds } from "./pannello-ads";
 import { AnalisiPanel } from "./analisi-panel";
 import type { Analisi } from "@/lib/analisi";
 import { ProvenienzaPanel, type SchedaProvenienza } from "./ranking-panel";
@@ -70,6 +70,7 @@ const creaColonneVendite = (valuta: string): Colonna<RigaVendita>[] => hv.column
 const SEZIONI = [
   { id: "numeri", label: "Numeri" },
   { id: "meta", label: "Campagne Meta" },
+  { id: "linkedin", label: "Campagne LinkedIn" },
   { id: "analisi", label: "Analisi" },
   { id: "andamento", label: "Andamento" },
   { id: "provenienza", label: "Provenienza" },
@@ -192,12 +193,13 @@ export function ClientDashboard({
       </header>
 
       <SectionNav
-        // Nella pagina condivisa niente analisi e, senza account Meta associati, niente sezione Meta
-        sezioni={
-          modo === "condivisa"
-            ? SEZIONI.filter((s) => s.id !== "analisi" && !(s.id === "meta" && dati.meta.stato === "non-associato"))
-            : SEZIONI
-        }
+        // Nella pagina condivisa niente analisi e niente Meta senza account associati;
+        // LinkedIn compare solo per i clienti con un account LinkedIn associato
+        sezioni={SEZIONI.filter((s) => {
+          if (s.id === "linkedin") return dati.linkedin.stato !== "non-associato";
+          if (modo !== "condivisa") return true;
+          return s.id !== "analisi" && !(s.id === "meta" && dati.meta.stato === "non-associato");
+        })}
         sottoBarra={modo === "agenzia"}
       />
 
@@ -258,7 +260,9 @@ export function ClientDashboard({
         </Fonte>
       </div>
 
-      <MetaPanel dati={dati} confronto={confronto} modo={modo} />
+      <PannelloAds dati={dati} confronto={confronto} modo={modo} piattaforma="meta" />
+
+      <PannelloAds dati={dati} confronto={confronto} modo={modo} piattaforma="linkedin" />
 
       {modo === "agenzia" && <AnalisiPanel analisi={analisi} locationId={cliente.locationId} nomeCliente={cliente.nome} />}
 

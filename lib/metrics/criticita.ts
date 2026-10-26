@@ -1,14 +1,14 @@
-// Criticità delle campagne Meta di un cliente (scelte dal titolare il 2026-10-20):
-// costo per lead troppo alto, spesa senza risultati, segnali di Meta (account non attivo, annunci con problemi,
-// frequenza alta). Funzioni pure: le usano la dashboard del cliente e la Panoramica.
+// Criticità delle campagne di un cliente su Meta e su LinkedIn (scelte dal titolare il 2026-10-20):
+// costo per lead troppo alto, spesa senza risultati, segnali della piattaforma (account non attivo, annunci con
+// problemi, campagne attive ma ferme, frequenza alta). Funzioni pure: le usano la dashboard del cliente e la Panoramica.
 import { formatValuta } from "../format";
 import { STATI_ACCOUNT, type DatiMeta } from "../meta/normalize";
 import type { LeadRow } from "./dashboard";
-import { kpiIncrocio, kpiMeta } from "./meta";
+import { kpiIncrocio, kpiMeta, perIdCampagna, type OpzioniIncrocio } from "./meta";
 
 export type Criticita = {
   livello: "errore" | "attenzione";
-  tipo: "cpl-alto" | "spesa-senza-risultati" | "account-non-attivo" | "annunci-con-problemi" | "frequenza-alta";
+  tipo: "cpl-alto" | "spesa-senza-risultati" | "account-non-attivo" | "annunci-con-problemi" | "campagna-ferma" | "frequenza-alta";
   testo: string;
   campagnaId?: string;
 };
@@ -22,6 +22,12 @@ export const FREQUENZA_MASSIMA = 3; // negli ultimi 7 giorni
 // Obiettivi Meta delle campagne che cercano lead: le altre (notorietà, traffico...) non portano lead per definizione
 export const OBIETTIVI_LEAD = new Set(["OUTCOME_LEADS", "LEAD_GENERATION"]);
 
+// Come si chiamano le righe nei testi: "campagna" su Meta, "gruppo di annunci" su LinkedIn (in Campaign Manager
+// la "campaign" dell'API si chiama così dalla fine del 2025)
+export type Unita = { la: string; nella: string; attivaFerma: string };
+export const UNITA_CAMPAGNA: Unita = { la: "La campagna", nella: "nella campagna", attivaFerma: "è attiva ma non viene pubblicata" };
+export const UNITA_GRUPPO_ANNUNCI: Unita = { la: "Il gruppo di annunci", nella: "nel gruppo di annunci", attivaFerma: "è attivo ma non viene pubblicato" };
+
 export function calcolaCriticita({
   meta,
   lead,
@@ -29,6 +35,9 @@ export function calcolaCriticita({
   giorniPrec,
   obiettivoCpl,
   valuta,
+  canale = "Meta Ads",
+  campagnaDi = perIdCampagna,
+  unita = UNITA_CAMPAGNA,
 }: {
   meta: DatiMeta;
   lead: LeadRow[];
@@ -36,7 +45,8 @@ export function calcolaCriticita({
   giorniPrec: string[];
   obiettivoCpl?: number;
   valuta: string;
-}): Criticita[] {
+  unita?: Unita;
+} & OpzioniIncrocio): Criticita[] {
   const fmt = (n: number) => formatValuta(n, valuta);
   const elenco: Criticita[] = [];
 
@@ -46,15 +56,15 @@ export function calcolaCriticita({
       elenco.push({
         livello: "errore",
         tipo: "account-non-attivo",
-        testo: `L'account pubblicitario ${a.nome} è ${STATI_ACCOUNT[a.stato] ?? `in stato ${a.stato}`}: le inserzioni non vengono pubblicate.`,
+        testo: `L'account pubblicitario ${a.nome} è ${a.statoTesto ?? STATI_ACCOUNT[a.stato] ?? `in stato ${a.stato}`}: le inserzioni non vengono pubblicate.`,
       });
     }
   }
 
-  // Costo per lead reale (spesa / lead arrivati in GHL da Meta)
+  // Costo per lead (spesa / lead arrivati in GHL dal canale della piattaforma)
   const periodo = new Set(giorni);
   const precedente = new Set(giorniPrec);
-  const ora = kpiIncrocio(kpiMeta(meta.righe, periodo).spesa, lead, [], periodo);
+  const ora = kpiIncrocio(kpiMeta(meta.righe, periodo).spesa, lead, [], periodo, canale);
   if (obiettivoCpl && ora.cplReale !== null && ora.cplReale > obiettivoCpl) {
     elenco.push({
       livello: "attenzione",
@@ -62,7 +72,7 @@ export function calcolaCriticita({
       testo: `Costo per lead ${fmt(ora.cplReale)}: sopra l'obiettivo di ${fmt(obiettivoCpl)}.`,
     });
   } else if (!obiettivoCpl) {
-    const prima = kpiIncrocio(kpiMeta(meta.righe, precedente).spesa, lead, [], precedente);
+    const prima = kpiIncrocio(kpiMeta(meta.righe, precedente).spesa, lead, [], precedente, canale);
     if (
       ora.cplReale !== null &&
       prima.cplReale !== null &&
@@ -90,12 +100,12 @@ export function calcolaCriticita({
         leadMeta += r.leadMeta;
       }
     }
-    const leadGhl = lead.filter((l) => l.campagnaId === c.id && ultimi.has(l.giorno)).length;
+    const leadGhl = lead.filter((l) => l.canale === canale && campagnaDi(l) === c.id && ultimi.has(l.giorno)).length;
     if (spesa >= soglia && leadMeta === 0 && leadGhl === 0) {
       elenco.push({
         livello: "errore",
         tipo: "spesa-senza-risultati",
-        testo: `La campagna ${c.nome} ha speso ${fmt(spesa)} negli ultimi ${GIORNI_SENZA_RISULTATI} giorni senza nessun lead.`,
+        testo: `${unita.la} ${c.nome} ha speso ${fmt(spesa)} negli ultimi ${GIORNI_SENZA_RISULTATI} giorni senza nessun lead.`,
         campagnaId: c.id,
       });
     }
@@ -113,8 +123,20 @@ export function calcolaCriticita({
     elenco.push({
       livello: annunci.some((a) => a.stato === "DISAPPROVED") ? "errore" : "attenzione",
       tipo: "annunci-con-problemi",
-      testo: `${annunci.length === 1 ? "1 annuncio" : `${annunci.length} annunci`} con problemi nella campagna ${attive.get(campagnaId)}${esempio ? ` (per esempio: «${esempio}»)` : ""}.`,
+      testo: `${annunci.length === 1 ? "1 annuncio" : `${annunci.length} annunci`} con problemi ${unita.nella} ${attive.get(campagnaId)}${esempio ? ` (per esempio: «${esempio}»)` : ""}.`,
       campagnaId,
+    });
+  }
+
+  // Campagne attive che la piattaforma non sta pubblicando (LinkedIn: budget esaurito, date, account bloccato...)
+  for (const f of meta.campagneFerme ?? []) {
+    const nome = attive.get(f.campagnaId);
+    if (!nome) continue;
+    elenco.push({
+      livello: "attenzione",
+      tipo: "campagna-ferma",
+      testo: `${unita.la} ${nome} ${unita.attivaFerma}: ${f.motivo}.`,
+      campagnaId: f.campagnaId,
     });
   }
 

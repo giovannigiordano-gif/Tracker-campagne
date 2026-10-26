@@ -4,6 +4,7 @@
 // Canale di provenienza, ricavato dai campi di attribuzione
 export type Canale =
   | "Meta Ads"
+  | "LinkedIn Ads"
   | "Google Ads"
   | "Ricerca organica"
   | "Social organico"

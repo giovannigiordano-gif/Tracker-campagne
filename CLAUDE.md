@@ -125,21 +125,38 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - Privacy: `analisi_cliente` usa `caricaDashboardCliente(…, { conDatiPersonali: false })` e `riepilogoCliente` (`lib/connettore/riepilogo.ts`, testato), che produce solo aggregati. Verificato sui dati reali: nessuna email né telefono, le sole sequenze lunghe di cifre sono ID di campagne Meta.
   - Analisi salvate in `reports/<locationId>.json` nell'archivio (ultime 50, `lib/analisi.ts`); in PROGETTO.md era un `.md` per analisi, ma online così si consumano meno scritture. Sezione "Analisi" nella dashboard, solo per il titolare (non nel link condiviso), con storico ed "Elimina".
   - Provato in locale l'intero giro: consenso, scambio, rinnovo, strumenti, salvataggio, revoca. Online il connettore funziona solo con `APP_PASSWORD` e `SESSION_SECRET` impostati.
+- **LinkedIn Ads** (fatto il 2026-10-26, richiesta del titolare: le stesse funzioni di Meta). Non esiste un server MCP ufficiale di LinkedIn: si usa la Marketing API, solo GET.
+  - Documentazione verificata su learn.microsoft.com (linkedin/shared/authentication, linkedin/marketing/integrations/ads-reporting/ads-reporting, ads/account-structure/create-and-manage-accounts e campaigns, versioning):
+    - OAuth a 3 passi: `https://www.linkedin.com/oauth/v2/authorization` e `…/accessToken` (form-urlencoded con client_secret). Permessi chiesti: solo `r_ads r_ads_reporting`.
+    - Il token dura 60 giorni. Il token di rinnovo (365 giorni) LinkedIn lo dà solo ad alcune app: se arriva, l'app rinnova da sola 7 giorni prima della scadenza; altrimenti si preme "Collega di nuovo".
+    - Header `Linkedin-Version: AAAAMM` (predefinita `202610`, variabile `LINKEDIN_API_VERSION`; ogni versione dura circa un anno, 426 = versione ritirata) e `X-Restli-Protocol-Version: 2.0.0`.
+    - Statistiche: `GET /rest/adAnalytics?q=analytics&pivot=CAMPAIGN&timeGranularity=DAILY`, campi `costInLocalCurrency` (stringa), `impressions`, `clicks`, `landingPageClicks`, `oneClickLeads`. Niente paginazione (massimo 15.000 righe), giorni in UTC, `approximateMemberReach` solo fino a 92 giorni.
+    - Account: `GET /rest/adAccounts?q=search` e `/rest/adAccounts/{id}`; campagne: `GET /rest/adAccounts/{id}/adCampaigns?q=search`, pagine con `pageToken`/`metadata.nextPageToken`. `servingStatuses` diversi da RUNNABLE = campagna ferma (motivi in italiano in `lib/linkedin/normalize.ts`).
+    - Per leggere basta il livello "Development" del prodotto Advertising API, sugli account dove il profilo che collega ha almeno il ruolo Viewer.
+  - Codice in `lib/linkedin/` (`restli.ts` e `normalize.ts` puri e testati, `api.ts`, `oauth.ts`, `store.ts`, `indirizzi.ts`), rotte `app/api/linkedin/collega` (POST, `state` in un cookie httpOnly) e `app/api/linkedin/ritorno` (GET), scheda "LinkedIn Ads" in Impostazioni (`app/(agenzia)/impostazioni/linkedin-ads.tsx`).
+  - Client ID e Client Secret si incollano in Impostazioni e si salvano cifrati in `secrets/linkedin.json` nell'archivio, insieme ai token (`LINKEDIN_CLIENT_ID`/`LINKEDIN_CLIENT_SECRET` nell'ambiente hanno la precedenza). Indirizzo di ritorno da registrare nell'app LinkedIn: `<sito>/api/linkedin/ritorno`.
+  - Account per cliente in `linkedinAdAccountIds` (solo il numero), scelta multipla nella scheda del cliente dopo il collegamento. Chiavi di cache `linkedin:<id>:…`, svuotate da "Aggiorna i dati".
+  - I dati LinkedIn hanno la stessa forma di quelli Meta (`DatiMeta`, `lib/data/linkedin-cliente.ts`), così calcoli, criticità, grafici e tabella sono gli stessi. Le piattaforme sono descritte in `lib/metrics/piattaforme.ts`; il pannello è unico (`components/dashboard/pannello-ads.tsx`).
+  - Canale GHL "LinkedIn Ads" (`lib/ghl/normalize.ts`, testato): fonte linkedin/lnkd/li più un segno di traffico a pagamento (sessione "Paid", utm_medium paid/cpc/ppc/cpm/sponsor/ad, ID di campagna o annuncio, utm_campaign numerico). Senza quel segno è "Social organico". **Regola provvisoria**: nessun lead LinkedIn reale ancora visto in GHL, da confermare sui primi lead.
+  - Abbinamento lead → campagna LinkedIn: per ID (utm_campaign con l'ID dinamico) oppure per nome della campagna, senza distinguere maiuscole. Consigliato in Campaign Manager: `utm_source=linkedin`, `utm_medium=paid_social`, `utm_campaign={{CAMPAIGN_ID}}`.
+  - Criticità uguali a Meta, più "campagna attiva ma non in pubblicazione" (da `servingStatuses`). Il costo per lead è sempre spesa / lead del CRM: i lead dei moduli LinkedIn servono solo alla criticità "spesa senza risultati" e non arrivano a Claude.
+  - Il connettore per Claude ha la sezione `linkedin` in `analisi_cliente` e i numeri LinkedIn in `panoramica_clienti`.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
   - il token Meta scade intorno al 2026-12-19: il titolare deve premere "Collega di nuovo" in Impostazioni.
+  - confermare la regola del canale "LinkedIn Ads" sui primi lead LinkedIn reali in GHL.
 
 ## Comandi
 - `npm run dev`: avvia l'app in locale (http://localhost:3000)
 - `npm run check`: verifica i collegamenti a GHL, Meta e Anthropic
-- `npm test`: test automatici (accesso, archivio, link condivisi, conteggi per canale, Meta e criticità, connettore per Claude)
+- `npm test`: test automatici (accesso, archivio, link condivisi, conteggi per canale, Meta, LinkedIn e criticità, connettore per Claude)
 - `npm run build`: build di produzione
 
 ## Stato delle fasi
 - [x] Fase 0: scaffold, .env.example, `npm run check`, test di accesso GHL (2026-10-12)
 - [x] Fase 1: client GHL, cache, Panoramica agency, Contatti e lead, Impostazioni con token cifrati (2026-10-12)
 - [x] Fase 2: pipeline, opportunità e venduto, insieme al restyling Sales Process e alla dashboard interattiva (2026-10-12)
-- [x] Fase 3: client Meta Marketing API, sezione Campagne Meta con criticità, mappatura in Impostazioni (2026-10-20)
+- [x] Fase 3: client Meta Marketing API, sezione Campagne Meta con criticità, mappatura in Impostazioni (2026-10-20); LinkedIn Ads con le stesse funzioni (2026-10-26)
 - [ ] Fase 4: attribuzione e pagina Incrocio
 - [x] Fase 5: MCP Meta (2026-10-20) e analisi AI tramite il connettore per Claude, con l'abbonamento del titolare (2026-10-20)
 - [ ] Fase 6: login, Dockerfile, deploy su Railway o Render, README per utente non tecnico

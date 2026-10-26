@@ -16,7 +16,7 @@ export type EsitoRitornoMeta = "collegato" | "annullato" | "errore" | null;
 function Collega({ etichetta, secondario = false }: { etichetta: string; secondario?: boolean }) {
   return (
     <form action="/api/meta-mcp/collega" method="post">
-      <Button type="submit" variant={secondario ? "ghost" : "inverse"} size={secondario ? "sm" : "default"}>
+      <Button type="submit" variant={secondario ? "ghost" : "default"} size={secondario ? "sm" : "default"}>
         <LogIn aria-hidden /> {etichetta}
       </Button>
     </form>

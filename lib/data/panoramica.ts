@@ -8,12 +8,18 @@ import { GhlError } from "../ghl/http";
 import { calcolaKpi, leadPerCanale, variazionePct, type Kpi, type LeadCanale } from "../metrics/dashboard";
 import { risolviPeriodo, type Selezione } from "../period";
 import { costruisciRighe, datiGrezziCliente } from "./cliente";
-import { caricaMetaCliente } from "./meta-cliente";
+import { caricaLinkedInCliente } from "./linkedin-cliente";
+import { caricaMetaCliente, type EsitoMeta } from "./meta-cliente";
 import { calcolaCriticita } from "../metrics/criticita";
 import { kpiIncrocio, kpiMeta } from "../metrics/meta";
+import { opzioniIncrocio, PIATTAFORME, type Piattaforma } from "../metrics/piattaforme";
 import type { LeadRow } from "../metrics/dashboard";
+import type { Canale } from "../ghl/types";
 
 export type Avviso = { livello: "errore" | "attenzione"; testo: string };
+
+// Spesa e costo per lead (spesa / lead arrivati in GHL dal canale della piattaforma), periodo e precedente
+export type NumeriAds = { spesa: number; spesaPrec: number; cplReale: number | null; cplRealePrec: number | null };
 
 export type RigaPanoramica = {
   locationId: string;
@@ -27,7 +33,8 @@ export type RigaPanoramica = {
   leadGiornalieri: number[]; // per il mini-grafico
   canali: LeadCanale[]; // lead del periodo per canale (solo conteggi)
   avvisi: Avviso[];
-  meta: { spesa: number; spesaPrec: number; cplReale: number | null; cplRealePrec: number | null } | null; // null: nessun account Meta
+  meta: NumeriAds | null; // null: nessun account Meta
+  linkedin: NumeriAds | null; // null: nessun account LinkedIn
   problemaToken: boolean; // i dati mancano perché il token GHL manca o è scaduto
   aggiornatoIl: number | null;
 };
@@ -45,20 +52,21 @@ export function messaggioErrore(e: unknown, nomeCliente: string): string {
   return `${nomeCliente}: errore imprevisto (${(e as Error).message})`;
 }
 
-// leadMeta: lead del canale Meta Ads (giorno e campagna, nessun dato personale) per incrociarli con la spesa
+// leadAds: lead dei canali Meta Ads e LinkedIn Ads (giorno e campagna, nessun dato personale) per incrociarli con la spesa
+type LeadAds = { giorno: string; canale: Canale; campagnaId: string | null; campagna: string | null };
 type Totali = {
   kpi: Kpi;
   kpiPrec: Kpi;
   leadGiornalieri: number[];
   canali: LeadCanale[];
-  leadMeta: { giorno: string; campagnaId: string | null }[];
+  leadAds: LeadAds[];
   aggiornatoIl: number;
 };
 
 async function totaliCliente(account: Account, sel: Selezione): Promise<Totali> {
   const { corrente, precedente } = risolviPeriodo(sel, account.timezone);
   const { value } = await cache.get<Totali>(
-    `ghl:${account.locationId}:panoramica:v3:${precedente.daGiorno}:${corrente.aGiorno}`,
+    `ghl:${account.locationId}:panoramica:v4:${precedente.daGiorno}:${corrente.aGiorno}`,
     cache.ttlPerIntervallo(corrente.fine),
     async () => {
       const grezzi = await datiGrezziCliente(account, sel);
@@ -70,7 +78,9 @@ async function totaliCliente(account: Account, sel: Selezione): Promise<Totali> 
         kpiPrec: calcolaKpi(lead, opp, new Set(precedente.giorni)),
         leadGiornalieri: corrente.giorni.map((g) => perGiorno.get(g) ?? 0),
         canali: leadPerCanale(lead, new Set(corrente.giorni)),
-        leadMeta: lead.filter((r) => r.canale === "Meta Ads").map((r) => ({ giorno: r.giorno, campagnaId: r.campagnaId })),
+        leadAds: lead
+          .filter((r) => r.canale === "Meta Ads" || r.canale === "LinkedIn Ads")
+          .map((r) => ({ giorno: r.giorno, canale: r.canale, campagnaId: r.campagnaId, campagna: r.campagna })),
         aggiornatoIl: grezzi.aggiornatoIl,
       };
     },
@@ -94,6 +104,7 @@ async function caricaRiga(account: Account, sel: Selezione): Promise<RigaPanoram
     canali: [],
     avvisi: [],
     meta: null,
+    linkedin: null,
     problemaToken: false,
     aggiornatoIl: null,
   };
@@ -109,7 +120,10 @@ async function caricaRiga(account: Account, sel: Selezione): Promise<RigaPanoram
         testo: `Lead in calo del ${formatPercentuale(-calo)} rispetto al periodo precedente (soglia ${soglia}%)`,
       });
     }
-    await aggiungiMeta(riga, account, sel, t);
+    await Promise.all([
+      aggiungiAds(riga, account, sel, t, PIATTAFORME.meta, account.metaAdAccountIds.length > 0, caricaMetaCliente),
+      aggiungiAds(riga, account, sel, t, PIATTAFORME.linkedin, account.linkedinAdAccountIds.length > 0, caricaLinkedInCliente),
+    ]);
   } catch (e) {
     riga.avvisi.push({ livello: "errore", testo: messaggioErrore(e, account.name) });
     riga.problemaToken = e instanceof GhlError && (e.tipo === "auth" || e.tipo === "token_mancante");
@@ -129,26 +143,38 @@ async function caricaRiga(account: Account, sel: Selezione): Promise<RigaPanoram
   return riga;
 }
 
-// Spesa Meta, costo per lead reale e criticità delle campagne (solo per i clienti con account Meta associati)
-async function aggiungiMeta(riga: RigaPanoramica, account: Account, sel: Selezione, t: Totali) {
-  if (!account.metaAdAccountIds.length) return;
-  const esito = await caricaMetaCliente(account, sel).catch(() => null);
+// Spesa, costo per lead e criticità delle campagne di una piattaforma (solo per i clienti con account associati).
+// Le criticità vanno tra gli avvisi della scheda, con il nome della piattaforma davanti.
+async function aggiungiAds(
+  riga: RigaPanoramica,
+  account: Account,
+  sel: Selezione,
+  t: Totali,
+  p: Piattaforma,
+  associato: boolean,
+  carica: (a: Account, s: Selezione) => Promise<EsitoMeta>
+) {
+  if (!associato) return;
+  const esito = await carica(account, sel).catch(() => null);
   if (!esito || esito.stato === "errore") {
-    riga.avvisi.push({ livello: "attenzione", testo: `Meta: ${esito?.messaggio ?? "dati non disponibili in questo momento"}` });
+    riga.avvisi.push({ livello: "attenzione", testo: `${p.nome}: ${esito?.messaggio ?? "dati non disponibili in questo momento"}` });
     return;
   }
   if (esito.stato !== "ok") return;
   const { corrente, precedente } = risolviPeriodo(sel, account.timezone);
-  const lead: LeadRow[] = t.leadMeta.map((l) => ({ id: "", giorno: l.giorno, canale: "Meta Ads", campagnaId: l.campagnaId, campagna: null, fonte: "", tags: [], attribuito: !!l.campagnaId }));
+  const lead: LeadRow[] = t.leadAds
+    .filter((l) => l.canale === p.canale)
+    .map((l) => ({ id: "", giorno: l.giorno, canale: l.canale, campagnaId: l.campagnaId, campagna: l.campagna, fonte: "", tags: [], attribuito: !!l.campagnaId }));
+  const opz = opzioniIncrocio(p, esito.dati);
   const g = new Set(corrente.giorni);
   const gp = new Set(precedente.giorni);
   const spesa = kpiMeta(esito.dati.righe, g).spesa;
   const spesaPrec = kpiMeta(esito.dati.righe, gp).spesa;
-  riga.meta = {
+  riga[p.id] = {
     spesa,
     spesaPrec,
-    cplReale: kpiIncrocio(spesa, lead, [], g).cplReale,
-    cplRealePrec: kpiIncrocio(spesaPrec, lead, [], gp).cplReale,
+    cplReale: kpiIncrocio(spesa, lead, [], g, opz.canale).cplReale,
+    cplRealePrec: kpiIncrocio(spesaPrec, lead, [], gp, opz.canale).cplReale,
   };
   const criticita = calcolaCriticita({
     meta: esito.dati,
@@ -157,8 +183,9 @@ async function aggiungiMeta(riga: RigaPanoramica, account: Account, sel: Selezio
     giorniPrec: precedente.giorni,
     obiettivoCpl: account.thresholds.maxCpl,
     valuta: account.currency,
+    ...opz,
   });
-  riga.avvisi.push(...criticita.map((c) => ({ livello: c.livello, testo: c.testo })));
+  riga.avvisi.push(...criticita.map((c) => ({ livello: c.livello, testo: `${p.nome}: ${c.testo}` })));
 }
 
 export async function caricaPanoramica(sel: Selezione) {

@@ -7,6 +7,7 @@ import { getLocationClient } from "../ghl/client";
 import type { Contact, Opportunity, Pipeline } from "../ghl/types";
 import { SENZA_FONTE, type LeadRow, type OppRow } from "../metrics/dashboard";
 import { giornoInFuso, risolviPeriodo, type Selezione } from "../period";
+import { caricaLinkedInCliente } from "./linkedin-cliente";
 import { caricaMetaCliente, type EsitoMeta } from "./meta-cliente";
 
 export type AperteFase = { n: number; valore: number; giorniMedi: number | null };
@@ -28,6 +29,7 @@ export type DatiCliente = {
   aperte: Record<string, Record<string, AperteFase>>;
   aggiornatoIl: number;
   meta: EsitoMeta; // campagne Meta degli account associati al cliente (sola lettura)
+  linkedin: EsitoMeta; // campagne LinkedIn degli account associati, nella stessa forma dei dati Meta
   obiettivoCpl: number | null; // costo per lead obiettivo impostato in Impostazioni
 };
 
@@ -138,11 +140,14 @@ export async function caricaDashboardCliente(
   sel: Selezione,
   { conDatiPersonali = true }: { conDatiPersonali?: boolean } = {},
 ): Promise<DatiCliente> {
-  // GHL e Meta in parallelo; un problema con Meta non deve bloccare i dati di GHL
-  const [grezzi, meta] = await Promise.all([
+  // GHL, Meta e LinkedIn in parallelo; un problema con le piattaforme pubblicitarie non deve bloccare i dati di GHL
+  const [grezzi, meta, linkedin] = await Promise.all([
     datiGrezziCliente(account, sel),
     caricaMetaCliente(account, sel).catch(
       (e): EsitoMeta => ({ stato: "errore", tipo: "altro", messaggio: `Non riesco a leggere i dati da Meta (${(e as Error).message}).` })
+    ),
+    caricaLinkedInCliente(account, sel).catch(
+      (e): EsitoMeta => ({ stato: "errore", tipo: "altro", messaggio: `Non riesco a leggere i dati da LinkedIn (${(e as Error).message}).` })
     ),
   ]);
   const { lead, opp, aperte } = costruisciRighe(grezzi, { conDatiPersonali });
@@ -163,6 +168,7 @@ export async function caricaDashboardCliente(
     aperte,
     aggiornatoIl: grezzi.aggiornatoIl,
     meta,
+    linkedin,
     obiettivoCpl: account.thresholds.maxCpl ?? null,
   };
 }

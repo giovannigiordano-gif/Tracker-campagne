@@ -42,26 +42,40 @@ const pulito = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : n
 const minuscolo = (v: unknown) => (pulito(v) ?? "").toLowerCase();
 
 const SORGENTI_META = new Set(["facebook", "fb", "instagram", "ig", "meta"]);
+const SORGENTI_LINKEDIN = new Set(["linkedin", "linkedin.com", "lnkd", "lnkd.in", "li"]);
+// Medium che indicano un annuncio a pagamento (utm_medium scelto da chi imposta il tracciamento su LinkedIn)
+const MEDIUM_PAGATO = /paid|cpc|ppc|cpm|sponsor|\bads?\b/;
 
 // Regole verificate sui dati reali:
 // - "Paid Social" + facebook/instagram (o ID campagna/annuncio presenti) = annuncio Meta;
 // - "Social media" + facebook/instagram = messaggi o commenti organici, NON annunci:
 //   non devono entrare nei lead Meta, altrimenti il CPL reale risulterebbe falsato.
+// LinkedIn (2026-10-26, nessun lead LinkedIn ancora nei dati reali: da confermare sui primi):
+// - sorgente linkedin + un segnale di annuncio (sessione "Paid", utm_medium a pagamento, ID campagna/annuncio
+//   o utm_campaign numerico, cioè l'ID campagna messo da LinkedIn con i parametri UTM dinamici) = LinkedIn Ads;
+// - sorgente linkedin senza segnali di annuncio = social organico.
 function ricavaCanale(a: RawAttribution): Canale {
   const utmSource = minuscolo(a.utmSource);
   const medium = minuscolo(a.medium);
   const adSource = minuscolo(a.adSource);
   const sessione = minuscolo(a.sessionSource);
   const segnaleMeta = SORGENTI_META.has(adSource) || SORGENTI_META.has(medium) || SORGENTI_META.has(utmSource);
+  const segnaleLinkedin = [adSource, medium, utmSource].some((v) => SORGENTI_LINKEDIN.has(v) || v.includes("linkedin"));
 
   if (segnaleMeta && (sessione.includes("paid") || SORGENTI_META.has(adSource) || pulito(a.campaignId) || pulito(a.adId))) {
     return "Meta Ads";
+  }
+  if (
+    segnaleLinkedin &&
+    (sessione.includes("paid") || MEDIUM_PAGATO.test(minuscolo(a.utmMedium)) || pulito(a.campaignId) || pulito(a.adId) || /^\d{5,}$/.test(pulito(a.utmCampaign) ?? ""))
+  ) {
+    return "LinkedIn Ads";
   }
   if (adSource.startsWith("google") || pulito(a.gclid) || (utmSource === "google" && sessione.includes("paid"))) {
     return "Google Ads";
   }
   if (sessione === "crm ui" || medium === "manual") return "Inserito a mano";
-  if (sessione.includes("social") || segnaleMeta) return "Social organico";
+  if (sessione.includes("social") || segnaleMeta || segnaleLinkedin) return "Social organico";
   if (sessione.includes("organic search")) return "Ricerca organica";
   if (sessione.includes("direct")) return "Diretto";
   if (sessione.includes("referral")) return "Referral";

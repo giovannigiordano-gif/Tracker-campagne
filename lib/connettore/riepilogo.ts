@@ -1,9 +1,11 @@
 // Riepilogo dei dati di un cliente per Claude: SOLO numeri aggregati (conteggi, somme, medie), mai righe
 // di singoli contatti o opportunità. Funzione pura (testata in riepilogo.test.ts).
-// Ogni blocco dice da dove vengono i numeri (GoHighLevel o Meta) e il periodo, come chiede PROGETTO.md.
+// Ogni blocco dice da dove vengono i numeri (GoHighLevel, Meta o LinkedIn) e il periodo, come chiede PROGETTO.md.
 import type { Account } from "../accounts";
 import type { DatiCliente } from "../data/cliente";
+import type { EsitoMeta } from "../data/meta-cliente";
 import { calcolaCriticita } from "../metrics/criticita";
+import { opzioniIncrocio, PIATTAFORME, type IdPiattaforma, type Piattaforma } from "../metrics/piattaforme";
 import {
   calcolaClassifica,
   calcolaImbuto,
@@ -26,14 +28,21 @@ function arrotondaTutto<T extends Record<string, unknown>>(o: T): T {
 
 const MASSIMO_VOCI = 25;
 
+const FONTI: Record<IdPiattaforma, string> = {
+  meta: "Meta Marketing API (insights per campagna e giorno) incrociata con GoHighLevel",
+  linkedin: "LinkedIn Marketing API (statistiche per campagna e giorno) incrociata con GoHighLevel",
+};
+
 export const DEFINIZIONI = {
   lead: "Contatti creati in GoHighLevel nel periodo.",
   opportunita: "Opportunità create in GoHighLevel nel periodo.",
   vinte_perse_venduto: "Opportunità vinte o perse nel periodo (data dell'ultimo cambio di stato); venduto = valore delle vinte.",
   tassoChiusura: "Vinte / (vinte + perse), in %.",
   canale_meta_ads: "Lead e opportunità con attribuzione 'Paid Social' o con ID di campagna/annuncio Meta.",
-  costoPerLead: "Spesa Meta / lead arrivati in GHL dal canale Meta Ads (i lead si contano solo nel CRM).",
-  roasCrm: "Venduto in GHL dal canale Meta Ads / spesa Meta.",
+  canale_linkedin_ads:
+    "Lead e opportunità con fonte LinkedIn e un segno di traffico a pagamento (sessione 'Paid', utm_medium a pagamento, ID di campagna); senza quel segno sono 'Social organico'.",
+  costoPerLead: "Spesa della piattaforma / lead arrivati in GHL dal suo canale (Meta Ads o LinkedIn Ads): i lead si contano solo nel CRM.",
+  roasCrm: "Venduto in GHL dal canale della piattaforma / spesa della piattaforma.",
   pipeline:
     "GHL non conserva lo storico dei cambi di fase: 'oggiInQuestaFase' è reale, 'raggiunteStima' e 'conversioneStimaPct' sono stime (fasi percorse in ordine) e possono essere inaffidabili con fasi di uscita intermedie.",
   campagne_ghl:
@@ -65,7 +74,7 @@ function variazioni(a: Kpi, p: Kpi) {
 }
 
 export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "notes" | "thresholds">) {
-  const { periodo, lead, opp, pipelines, aperte, meta } = dati;
+  const { periodo, lead, opp, pipelines, aperte, meta, linkedin } = dati;
   const giorni = new Set(periodo.giorni);
   const giorniPrec = new Set(periodo.giorniPrec);
   const kpi = calcolaKpi(lead, opp, giorni);
@@ -123,17 +132,18 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
     })),
   };
 
-  let sezioneMeta: Record<string, unknown>;
-  if (meta.stato === "non-associato") {
-    sezioneMeta = { stato: "non-associato", nota: "Nessun account pubblicitario Meta associato a questo cliente (Impostazioni dell'app)." };
-  } else if (meta.stato === "errore") {
-    sezioneMeta = { stato: "errore", messaggio: meta.messaggio };
-  } else {
-    const d = meta.dati;
+  // Sezione di una piattaforma pubblicitaria (Meta o LinkedIn): stessi campi, stessa regola sui lead (solo dal CRM)
+  function sezioneAds(p: Piattaforma, esito: EsitoMeta): Record<string, unknown> {
+    if (esito.stato === "non-associato") {
+      return { stato: "non-associato", nota: `Nessun account pubblicitario ${p.nome} associato a questo cliente (Impostazioni dell'app).` };
+    }
+    if (esito.stato === "errore") return { stato: "errore", messaggio: esito.messaggio };
+    const d = esito.dati;
+    const opz = opzioniIncrocio(p, d);
     const km = kpiMeta(d.righe, giorni);
     const kmPrec = kpiMeta(d.righe, giorniPrec);
     const obiettivi = new Map(d.campagne.map((c) => [c.id, c.obiettivo]));
-    const punti = serieGiornaliera(d.righe, lead, periodo.giorni);
+    const punti = serieGiornaliera(d.righe, lead, periodo.giorni, opz.canale);
     // Stessa granularità dell'andamento GHL
     const andamento =
       granularita === "giorno"
@@ -147,16 +157,17 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
               lead: blocco.reduce((s, p) => s + p.leadGhl, 0),
             };
           });
-    sezioneMeta = {
+    return {
       stato: "ok",
-      fonte: "Meta Marketing API (insights per campagna e giorno) incrociata con GoHighLevel",
-      account: d.account.map((a) => ({ id: a.id, nome: a.nome, valuta: a.valuta, stato: STATI_ACCOUNT[a.stato] ?? `codice ${a.stato}` })),
+      fonte: FONTI[p.id],
+      ...(p.giorniUtc ? { notaGiorni: "LinkedIn conta spesa e risultati per giorno in UTC: a cavallo della mezzanotte un giorno può differire di qualche ora da GHL." } : {}),
+      account: d.account.map((a) => ({ id: a.id, nome: a.nome, valuta: a.valuta, stato: a.statoTesto ?? STATI_ACCOUNT[a.stato] ?? `codice ${a.stato}` })),
       numeri: { attuale: numeriMeta(km), precedente: numeriMeta(kmPrec) },
       incrocio: {
-        attuale: incrocio(kpiIncrocio(km.spesa, lead, opp, giorni)),
-        precedente: incrocio(kpiIncrocio(kmPrec.spesa, lead, opp, giorniPrec)),
+        attuale: incrocio(kpiIncrocio(km.spesa, lead, opp, giorni, opz.canale)),
+        precedente: incrocio(kpiIncrocio(kmPrec.spesa, lead, opp, giorniPrec, opz.canale)),
       },
-      campagne: righeCampagne(d, lead, opp, giorni).map(({ leadMeta: _leadMeta, leadGhl, cplReale, ...c }) => ({
+      campagne: righeCampagne(d, lead, opp, giorni, opz).map(({ leadMeta: _leadMeta, leadGhl, cplReale, ...c }) => ({
         ...arrotondaTutto(c),
         lead: leadGhl,
         costoPerLead: arrotonda(cplReale),
@@ -172,6 +183,7 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
         giorniPrec: periodo.giorniPrec,
         obiettivoCpl: account.thresholds.maxCpl,
         valuta: dati.cliente.valuta,
+        ...opz,
       }).map(({ livello, tipo, testo }) => ({ livello, tipo, testo })),
       accountNonLetti: d.errori,
     };
@@ -195,6 +207,7 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
     datiAggiornatiIl: new Date(dati.aggiornatoIl).toISOString(),
     definizioni: DEFINIZIONI,
     ghl,
-    meta: sezioneMeta,
+    meta: sezioneAds(PIATTAFORME.meta, meta),
+    linkedin: sezioneAds(PIATTAFORME.linkedin, linkedin),
   };
 }

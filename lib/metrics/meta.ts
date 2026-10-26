@@ -1,11 +1,39 @@
-// Calcoli della sezione "Campagne Meta": numeri di Meta e incrocio con lead, opportunità e vendite di GHL.
-// Funzioni pure (girano anche nel browser). Fonte dei numeri: Meta (spesa, impression, clic, lead secondo Meta)
-// e GoHighLevel (lead, opportunità e vendite con canale "Meta Ads", abbinati per ID campagna).
+// Calcoli delle sezioni "Campagne Meta" e "Campagne LinkedIn": numeri della piattaforma pubblicitaria e incrocio
+// con lead, opportunità e vendite di GHL. Funzioni pure (girano anche nel browser).
+// Fonte dei numeri: la piattaforma (spesa, impression, clic) e GoHighLevel (lead, opportunità e vendite del canale
+// della piattaforma, abbinati alle campagne). Senza opzioni valgono le regole di Meta (canale "Meta Ads", per ID).
+import type { Canale } from "../ghl/types";
 import type { DatiMeta, InsightGiorno } from "../meta/normalize";
 import type { LeadRow, OppRow } from "./dashboard";
 
 const dividi = (a: number, b: number) => (b > 0 ? a / b : null);
-const daMeta = (canale: string) => canale === "Meta Ads";
+
+// ---------------------------------------------------------------- abbinamento lead → campagna
+// Meta scrive l'ID campagna nell'attribuzione di GHL. Su LinkedIn lo decide chi imposta il tracciamento:
+// utm_campaign con l'ID (parametro dinamico CAMPAIGN_ID) oppure con il nome (CAMPAIGN_NAME).
+export type ChiaveCampagna = (r: { campagnaId: string | null; campagna: string | null }) => string | null;
+
+export const perIdCampagna: ChiaveCampagna = (r) => r.campagnaId;
+
+// Cerca la campagna per ID (campo ID o utm_campaign) e poi per nome, senza badare a maiuscole e spazi
+export function risolutoreCampagne(dati: Pick<DatiMeta, "campagne">): ChiaveCampagna {
+  const ids = new Set(dati.campagne.map((c) => c.id));
+  const perNome = new Map(dati.campagne.map((c) => [c.nome.trim().toLowerCase(), c.id]));
+  return (r) => {
+    if (r.campagnaId && ids.has(r.campagnaId)) return r.campagnaId;
+    const testo = r.campagna?.trim();
+    if (testo && ids.has(testo)) return testo;
+    if (testo && perNome.has(testo.toLowerCase())) return perNome.get(testo.toLowerCase())!;
+    return r.campagnaId ?? null;
+  };
+}
+
+export type OpzioniIncrocio = { canale?: Canale; campagnaDi?: ChiaveCampagna };
+
+const SENZA_CAMPAGNA_NOME: Partial<Record<Canale, string>> = {
+  "Meta Ads": "Lead da Meta senza campagna riconosciuta",
+  "LinkedIn Ads": "Lead da LinkedIn senza gruppo di annunci riconosciuto",
+};
 
 // ---------------------------------------------------------------- numeri di Meta
 export type KpiMeta = {
@@ -47,7 +75,7 @@ export function kpiMeta(righe: InsightGiorno[], giorni: Set<string>): KpiMeta {
 
 // ---------------------------------------------------------------- incrocio con GHL
 export type KpiIncrocio = {
-  leadGhl: number; // lead arrivati in GHL dal canale Meta Ads
+  leadGhl: number; // lead arrivati in GHL dal canale della piattaforma (Meta Ads o LinkedIn Ads)
   opportunita: number;
   vinte: number;
   venduto: number;
@@ -57,9 +85,9 @@ export type KpiIncrocio = {
   roas: number | null; // venduto / spesa
 };
 
-export function kpiIncrocio(spesa: number, lead: LeadRow[], opp: OppRow[], giorni: Set<string>): KpiIncrocio {
-  const leadGhl = lead.filter((r) => daMeta(r.canale) && giorni.has(r.giorno)).length;
-  const oppMeta = opp.filter((o) => daMeta(o.canale));
+export function kpiIncrocio(spesa: number, lead: LeadRow[], opp: OppRow[], giorni: Set<string>, canale: Canale = "Meta Ads"): KpiIncrocio {
+  const leadGhl = lead.filter((r) => r.canale === canale && giorni.has(r.giorno)).length;
+  const oppMeta = opp.filter((o) => o.canale === canale);
   const opportunita = oppMeta.filter((o) => o.creata && giorni.has(o.creata)).length;
   const vinteRighe = oppMeta.filter((o) => o.status === "won" && o.chiusa && giorni.has(o.chiusa));
   const venduto = vinteRighe.reduce((s, o) => s + o.valore, 0);
@@ -97,7 +125,14 @@ export type RigaCampagna = {
   roas: number | null;
 };
 
-export function righeCampagne(dati: DatiMeta, lead: LeadRow[], opp: OppRow[], giorni: Set<string>): RigaCampagna[] {
+export function righeCampagne(
+  dati: DatiMeta,
+  lead: LeadRow[],
+  opp: OppRow[],
+  giorni: Set<string>,
+  { canale = "Meta Ads", campagnaDi = perIdCampagna }: OpzioniIncrocio = {}
+): RigaCampagna[] {
+  const senzaNome = SENZA_CAMPAGNA_NOME[canale] ?? "Lead senza campagna riconosciuta";
   const mappa = new Map<string, RigaCampagna>();
   const nuova = (id: string, nome: string): RigaCampagna => ({
     id, nome, stato: null, spesa: 0, impression: 0, clic: 0, ctr: null, cpc: null, leadMeta: 0, leadGhl: 0, cplReale: null, opportunita: 0, vinte: 0, venduto: 0, roas: null,
@@ -113,14 +148,15 @@ export function righeCampagne(dati: DatiMeta, lead: LeadRow[], opp: OppRow[], gi
     c.leadMeta += r.leadMeta;
   }
   for (const l of lead) {
-    if (!daMeta(l.canale) || !giorni.has(l.giorno)) continue;
-    const id = l.campagnaId ?? SENZA_CAMPAGNA_META;
-    riga(id, l.campagnaId ? (l.campagna ?? l.campagnaId) : "Lead da Meta senza campagna riconosciuta").leadGhl++;
+    if (l.canale !== canale || !giorni.has(l.giorno)) continue;
+    const trovata = campagnaDi(l);
+    riga(trovata ?? SENZA_CAMPAGNA_META, trovata ? (l.campagna ?? trovata) : senzaNome).leadGhl++;
   }
   for (const o of opp) {
-    if (!daMeta(o.canale)) continue;
-    const id = o.campagnaId ?? SENZA_CAMPAGNA_META;
-    const nome = o.campagnaId ? (o.campagna ?? o.campagnaId) : "Lead da Meta senza campagna riconosciuta";
+    if (o.canale !== canale) continue;
+    const trovata = campagnaDi(o);
+    const id = trovata ?? SENZA_CAMPAGNA_META;
+    const nome = trovata ? (o.campagna ?? trovata) : senzaNome;
     if (o.creata && giorni.has(o.creata)) riga(id, nome).opportunita++;
     if (o.status === "won" && o.chiusa && giorni.has(o.chiusa)) {
       const c = riga(id, nome);
@@ -151,7 +187,7 @@ export function righeCampagne(dati: DatiMeta, lead: LeadRow[], opp: OppRow[], gi
 // ---------------------------------------------------------------- andamento giorno per giorno
 export type PuntoMeta = { giorno: string; spesa: number; leadMeta: number; leadGhl: number };
 
-export function serieGiornaliera(righe: InsightGiorno[], lead: LeadRow[], giorni: string[]): PuntoMeta[] {
+export function serieGiornaliera(righe: InsightGiorno[], lead: LeadRow[], giorni: string[], canale: Canale = "Meta Ads"): PuntoMeta[] {
   const punti = new Map(giorni.map((g) => [g, { giorno: g, spesa: 0, leadMeta: 0, leadGhl: 0 }]));
   for (const r of righe) {
     const p = punti.get(r.giorno);
@@ -162,7 +198,7 @@ export function serieGiornaliera(righe: InsightGiorno[], lead: LeadRow[], giorni
   }
   for (const l of lead) {
     const p = punti.get(l.giorno);
-    if (p && daMeta(l.canale)) p.leadGhl++;
+    if (p && l.canale === canale) p.leadGhl++;
   }
   return [...punti.values()];
 }

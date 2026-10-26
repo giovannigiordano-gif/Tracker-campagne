@@ -9,10 +9,13 @@ import {
   modificaCliente,
   rimuoviCliente,
   rimuoviToken,
+  salvaCredenzialiLinkedInAzione,
   salvaToken,
   scollegaConnettore,
+  scollegaLinkedInAzione,
   scollegaMetaMcp,
   svuotaCache,
+  verificaLinkedInAzione,
   verificaMetaMcp,
   type EsitoAzione,
 } from "@/app/actions";
@@ -24,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifica } from "@/components/ui/toast";
 import type { Account } from "@/lib/accounts";
+import type { AccountLinkedIn } from "@/lib/linkedin/normalize";
 import type { AccountMeta } from "@/lib/meta-mcp/account";
 import type { GhlLocation } from "@/lib/ghl/types";
 
@@ -247,10 +251,14 @@ export function ClienteForm({
   cliente,
   accountMeta = [],
   assegnati = {},
+  accountLinkedIn = [],
+  assegnatiLinkedIn = {},
 }: {
   cliente: Account;
   accountMeta?: AccountMeta[];
   assegnati?: Record<string, string>;
+  accountLinkedIn?: AccountLinkedIn[];
+  assegnatiLinkedIn?: Record<string, string>;
 }) {
   const [esito, azione] = useActionState(modificaCliente, null);
   const errore = useEsito(esito, "Modifiche salvate");
@@ -303,7 +311,7 @@ export function ClienteForm({
           <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{cliente.currency}</span>
         </div>
         <p id={id("aiuto-cpl")} className="text-caption text-muted-foreground">
-          Sopra questo costo per lead (spesa Meta / lead arrivati in GHL) l&apos;app lo segnala tra le criticità.
+          Sopra questo costo per lead (spesa Meta o LinkedIn / lead arrivati in GHL da quel canale) l&apos;app lo segnala tra le criticità.
         </p>
       </div>
       <div className="flex flex-col gap-2 sm:col-span-2">
@@ -317,6 +325,7 @@ export function ClienteForm({
         />
       </div>
       <AccountMetaCampo cliente={cliente} disponibili={accountMeta} assegnati={assegnati} />
+      <AccountLinkedInCampo cliente={cliente} disponibili={accountLinkedIn} assegnati={assegnatiLinkedIn} />
       <label className="flex items-center gap-3 text-sm font-medium text-titolo sm:col-span-2">
         <Switch name="active" defaultChecked={cliente.active} />
         Mostra il cliente in Panoramica e nel menu
@@ -417,26 +426,36 @@ export function ScollegaMetaButton() {
   );
 }
 
-// ---------------------------------------------------------------- connettore per Claude
-export function CopiaIndirizzo({ indirizzo }: { indirizzo: string }) {
+// ---------------------------------------------------------------- indirizzi da copiare (connettore Claude, ritorno LinkedIn)
+export function CopiaIndirizzo({
+  indirizzo,
+  id = "indirizzo-connettore",
+  etichetta = "Indirizzo del connettore",
+  dopo = "Incollalo in Claude, nel nuovo connettore.",
+}: {
+  indirizzo: string;
+  id?: string;
+  etichetta?: string;
+  dopo?: string;
+}) {
   const notifica = useNotifica();
   async function copia() {
     try {
       await navigator.clipboard.writeText(indirizzo);
-      notifica("successo", "Indirizzo copiato", "Incollalo in Claude, nel nuovo connettore.");
+      notifica("successo", "Indirizzo copiato", dopo);
     } catch {
       // Senza accesso agli appunti si seleziona il testo, da copiare a mano
-      const campo = document.getElementById("indirizzo-connettore") as HTMLInputElement | null;
+      const campo = document.getElementById(id) as HTMLInputElement | null;
       campo?.select();
       notifica("info", "Copia l'indirizzo a mano", "È già selezionato: premi Ctrl+C.");
     }
   }
   return (
     <div className="flex gap-2">
-      <Label htmlFor="indirizzo-connettore" className="sr-only">
-        Indirizzo del connettore
+      <Label htmlFor={id} className="sr-only">
+        {etichetta}
       </Label>
-      <Input id="indirizzo-connettore" readOnly value={indirizzo} onFocus={(e) => e.currentTarget.select()} className="font-mono text-sm" />
+      <Input id={id} readOnly value={indirizzo} onFocus={(e) => e.currentTarget.select()} className="font-mono text-sm" />
       <Button type="button" variant="outline" onClick={copia}>
         <Copy aria-hidden /> Copia
       </Button>
@@ -456,5 +475,136 @@ export function ScollegaClaudeButton() {
       successo="Claude scollegato"
       esegui={() => scollegaConnettore()}
     />
+  );
+}
+
+// ---------------------------------------------------------------- LinkedIn Ads
+// Client ID e Client Secret dell'app LinkedIn: si salvano cifrati e non tornano mai nella pagina
+export function CredenzialiLinkedInForm({ sostituisci = false }: { sostituisci?: boolean }) {
+  const [esito, azione] = useActionState(salvaCredenzialiLinkedInAzione, null);
+  const errore = useEsito(esito, "Credenziali LinkedIn salvate");
+  return (
+    <form action={azione} className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="linkedin-client-id">Client ID</Label>
+        <Input id="linkedin-client-id" name="clientId" autoComplete="off" spellCheck={false} required className="font-mono text-sm" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="linkedin-client-secret">Client Secret</Label>
+        <Input
+          id="linkedin-client-secret"
+          name="clientSecret"
+          type="password"
+          autoComplete="off"
+          required
+          aria-describedby="linkedin-aiuto-segreto"
+        />
+        <p id="linkedin-aiuto-segreto" className="text-caption text-muted-foreground">
+          Si salva cifrato nell&apos;app e non si mostra più. Lo trovi nella scheda «Auth» della tua app su LinkedIn Developers.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <Invia variant={sostituisci ? "outline" : "default"}>
+          <KeyRound aria-hidden /> {sostituisci ? "Sostituisci credenziali" : "Salva credenziali"}
+        </Invia>
+        <ErroreCampo id="linkedin-errore" testo={errore} />
+      </div>
+    </form>
+  );
+}
+
+export function VerificaLinkedInButton() {
+  const [inCorso, setInCorso] = useState(false);
+  const notifica = useNotifica();
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      loading={inCorso}
+      onClick={async () => {
+        setInCorso(true);
+        try {
+          const esito = await verificaLinkedInAzione();
+          if (esito?.ok) notifica("successo", "LinkedIn Ads risponde", esito.messaggio);
+          else notifica("errore", "Verifica non riuscita", esito?.messaggio);
+        } catch {
+          notifica("errore", "Verifica non riuscita", "Riprova tra un momento.");
+        } finally {
+          setInCorso(false);
+        }
+      }}
+    >
+      {!inCorso && <RefreshCw aria-hidden />}
+      {inCorso ? "Verifica in corso" : "Verifica collegamento"}
+    </Button>
+  );
+}
+
+export function ScollegaLinkedInButton() {
+  return (
+    <ConfermaAzione
+      etichetta="Scollega"
+      icona={<Link2Off aria-hidden />}
+      variantePulsante="ghost"
+      titolo="Scollegare LinkedIn Ads dall'app?"
+      descrizione="L'app dimentica il collegamento e non potrà più leggere le campagne da LinkedIn finché non lo ricolleghi. Le credenziali dell'app LinkedIn restano salvate. Su LinkedIn non cambia nulla."
+      conferma="Scollega"
+      successo="LinkedIn Ads scollegato"
+      esegui={() => scollegaLinkedInAzione()}
+    />
+  );
+}
+
+// Scelta degli account pubblicitari LinkedIn del cliente (uno o più). Elenco dall'ultima verifica del collegamento.
+function AccountLinkedInCampo({
+  cliente,
+  disponibili,
+  assegnati,
+}: {
+  cliente: Account;
+  disponibili: AccountLinkedIn[];
+  assegnati: Record<string, string>; // account già scelti per altri clienti: id -> nome del cliente
+}) {
+  const scelti = new Set(cliente.linkedinAdAccountIds);
+  const nonVisibili = cliente.linkedinAdAccountIds.filter((id) => !disponibili.some((a) => a.id === id));
+  // Senza collegamento LinkedIn e senza account già scelti il campo non serve: si evita rumore
+  if (disponibili.length === 0 && nonVisibili.length === 0) return null;
+  const titoloId = `titolo-linkedin-${cliente.locationId}`;
+  return (
+    <fieldset className="flex flex-col gap-2 sm:col-span-2" aria-labelledby={titoloId}>
+      <input type="hidden" name="linkedinAdAccountIdsPresenti" value="1" />
+      <legend id={titoloId} className="text-sm font-semibold text-titolo">Account pubblicitari LinkedIn</legend>
+      <p className="text-caption text-muted-foreground">
+        Scegli gli account LinkedIn del cliente: serviranno per spesa, costo per lead e incrocio con i lead di GHL.
+      </p>
+      <ul className="flex flex-col gap-1">
+        {disponibili.map((a) => (
+          <li key={a.id}>
+            <label className="flex min-h-11 items-center gap-3 rounded-block px-3 py-2 transition-colors motion-fast hover:bg-muted">
+              <input type="checkbox" name="linkedinAdAccountIds" value={a.id} defaultChecked={scelti.has(a.id)} className="size-4 shrink-0" />
+              <span className="flex min-w-0 flex-col">
+                <span className="font-semibold text-titolo">{a.nome}</span>
+                <span className="text-caption text-muted-foreground">
+                  {a.id}, {a.valuta}
+                  {assegnati[a.id] && `, già scelto per ${assegnati[a.id]}`}
+                  {!a.attivo && ", non attivo"}
+                </span>
+              </span>
+            </label>
+          </li>
+        ))}
+        {nonVisibili.map((id) => (
+          <li key={id}>
+            <label className="flex min-h-11 items-center gap-3 rounded-block px-3 py-2 transition-colors motion-fast hover:bg-muted">
+              <input type="checkbox" name="linkedinAdAccountIds" value={id} defaultChecked className="size-4 shrink-0" />
+              <span className="flex min-w-0 flex-col">
+                <span className="font-semibold text-titolo">{id}</span>
+                <span className="text-caption text-muted-foreground">Non più visibile nel collegamento LinkedIn</span>
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </fieldset>
   );
 }

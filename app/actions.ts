@@ -19,6 +19,8 @@ import { verificaTokenLocation } from "@/lib/ghl/client";
 import { deleteLocationToken, saveLocationToken } from "@/lib/ghl/tokens";
 import { fusoValido } from "@/lib/period";
 import { eliminaAnalisi } from "@/lib/analisi";
+import { verificaLinkedIn } from "@/lib/linkedin/api";
+import { salvaCredenzialiLinkedIn, scollegaLinkedIn } from "@/lib/linkedin/oauth";
 import { indirizzoRisposta, leggiRichiesta } from "@/lib/connettore/autorizza";
 import { ErroreClient, verificaClient } from "@/lib/connettore/client";
 import { indirizzoBase } from "@/lib/connettore/indirizzi";
@@ -43,13 +45,16 @@ function leggiId(formData: FormData) {
 export async function aggiornaDati(formData: FormData) {
   await richiediAccesso();
   const id = formData.get("locationId");
-  // Con un cliente: svuota solo la sua cache (GHL e account Meta associati). Senza: tutta la cache GHL e Meta.
+  // Con un cliente: svuota solo la sua cache (GHL e account Meta e LinkedIn associati). Senza: tutta la cache.
   if (typeof id === "string" && ID_RE.test(id)) {
     await cache.invalidate(`ghl:${id}:`);
-    for (const act of (await getAccount(id))?.metaAdAccountIds ?? []) await cache.invalidate(`meta:${act}:`);
+    const cliente = await getAccount(id);
+    for (const act of cliente?.metaAdAccountIds ?? []) await cache.invalidate(`meta:${act}:`);
+    for (const li of cliente?.linkedinAdAccountIds ?? []) await cache.invalidate(`linkedin:${li}:`);
   } else {
     await cache.invalidate("ghl:");
     await cache.invalidate("meta:");
+    await cache.invalidate("linkedin:");
   }
   refresh();
 }
@@ -72,6 +77,7 @@ export async function aggiungiCliente(_prev: EsitoAzione, formData: FormData): P
     locationId: id,
     name: sub.name,
     metaAdAccountIds: [],
+    linkedinAdAccountIds: [],
     currency: "EUR",
     timezone: fusoValido(sub.timezone),
     notes: "",
@@ -107,6 +113,10 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
   // Un identificativo di sole cifre (elenchi salvati prima del 2026-10-20) diventa act_<numero>
   const accountMeta = [...new Set(formData.getAll("metaAdAccountIds").map((v) => idAccountMeta(String(v).trim())))];
   if (accountMeta.some((a) => !/^act_\d{3,30}$/.test(a))) return { ok: false, messaggio: "Account pubblicitario Meta non valido" };
+  // Account pubblicitari LinkedIn scelti (ID numerici); si aggiornano solo se il modulo li contiene
+  const conAccountLinkedIn = formData.get("linkedinAdAccountIdsPresenti") === "1";
+  const accountLinkedIn = [...new Set(formData.getAll("linkedinAdAccountIds").map((v) => String(v).trim()))];
+  if (accountLinkedIn.some((a) => !/^\d{3,20}$/.test(a))) return { ok: false, messaggio: "Account pubblicitario LinkedIn non valido" };
   if (sogliaNum !== undefined && !(sogliaNum > 0 && sogliaNum <= 100)) {
     return { ok: false, messaggio: "La soglia di calo lead deve essere un numero tra 1 e 100" };
   }
@@ -118,6 +128,7 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
     currency: valuta,
     notes: String(formData.get("notes") ?? "").trim(),
     metaAdAccountIds: conAccountMeta ? accountMeta : attuale.metaAdAccountIds,
+    linkedinAdAccountIds: conAccountLinkedIn ? accountLinkedIn : attuale.linkedinAdAccountIds,
     active: formData.get("active") === "on",
     thresholds: { ...attuale.thresholds, leadDropPct: sogliaNum, maxCpl: obiettivoCplNum },
   };
@@ -300,5 +311,35 @@ export async function eliminaAnalisiSalvata(locationId: string, id: string) {
   verificaId(locationId);
   if (typeof id !== "string" || !/^[A-Za-z0-9-]{1,40}$/.test(id)) throw new Error("Analisi non valida");
   await eliminaAnalisi(locationId, id);
+  refresh();
+}
+
+// ---------------------------------------------------------------- LinkedIn Ads
+// Credenziali dell'app LinkedIn (Client ID e Client Secret), salvate cifrate nell'archivio. Mai rimandate al browser.
+export async function salvaCredenzialiLinkedInAzione(_prev: EsitoAzione, formData: FormData): Promise<EsitoAzione> {
+  await richiediAccesso();
+  const clientId = String(formData.get("clientId") ?? "").trim();
+  const clientSecret = String(formData.get("clientSecret") ?? "").trim();
+  if (!/^[A-Za-z0-9]{6,40}$/.test(clientId)) return { ok: false, messaggio: "Client ID non valido: copialo dalla scheda «Auth» dell'app LinkedIn" };
+  if (clientSecret.length < 8 || clientSecret.length > 200 || /\s/.test(clientSecret)) {
+    return { ok: false, messaggio: "Client Secret non valido: copialo dalla scheda «Auth» dell'app LinkedIn" };
+  }
+  await salvaCredenzialiLinkedIn(clientId, clientSecret);
+  refresh();
+  return { ok: true, messaggio: "Credenziali salvate. Ora premi «Collega LinkedIn Ads»." };
+}
+
+// Verifica con sole letture: account pubblicitari visibili
+export async function verificaLinkedInAzione(): Promise<EsitoAzione> {
+  await richiediAccesso();
+  const esito = await verificaLinkedIn();
+  refresh();
+  return esito;
+}
+
+// L'app dimentica il collegamento (su LinkedIn non cambia nulla); le credenziali restano
+export async function scollegaLinkedInAzione() {
+  await richiediAccesso();
+  await scollegaLinkedIn();
   refresh();
 }

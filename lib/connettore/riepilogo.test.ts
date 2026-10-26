@@ -64,6 +64,7 @@ function dati(): DatiCliente {
         aggiornatoIl: 0,
       },
     },
+    linkedin: { stato: "non-associato" },
     obiettivoCpl: 40,
   };
 }
@@ -103,4 +104,56 @@ test("a Claude arrivano solo i lead del CRM: niente lead contati da Meta né cos
 test("senza account Meta il riepilogo lo dice invece di inventare numeri", () => {
   const r = riepilogoCliente({ ...dati(), meta: { stato: "non-associato" } }, { notes: "", thresholds: {} });
   assert.equal((r.meta as { stato: string }).stato, "non-associato");
+  assert.equal((r.linkedin as { stato: string }).stato, "non-associato");
+});
+
+test("LinkedIn: spesa incrociata solo con i lead del canale LinkedIn Ads, abbinati anche per nome", () => {
+  const d = dati();
+  const leadLinkedIn = (giorno: string, campagna: string | null): LeadRow => ({
+    ...lead(giorno, null),
+    canale: "LinkedIn Ads",
+    campagna,
+    attribuito: !!campagna,
+  });
+  d.lead.push(leadLinkedIn("2026-10-01", "Campagna LinkedIn B2B"), leadLinkedIn("2026-10-02", "campagna linkedin b2b"), leadLinkedIn("2026-10-03", null));
+  d.linkedin = {
+    stato: "ok",
+    dati: {
+      account: [{ id: "500100", nome: "Account LinkedIn di prova", valuta: "EUR", stato: 0, fuso: "UTC", statoTesto: "In pausa" }],
+      righe: giorni.map((g) => ({ act: "500100", giorno: g, campagnaId: "900200", campagna: "Campagna LinkedIn B2B", spesa: 100, impression: 1000, reach: 0, frequenza: 0, clic: 10, clicLink: 8, leadMeta: 2 })),
+      campagne: [{ act: "500100", id: "900200", nome: "Campagna LinkedIn B2B", stato: "ACTIVE", obiettivo: "LEAD_GENERATION" }],
+      problemi: [],
+      campagneFerme: [{ act: "500100", campagnaId: "900200", motivo: "il pubblico è troppo piccolo" }],
+      frequenza7g: { "500100": null },
+      errori: [],
+      aggiornatoIl: 0,
+    },
+  };
+  const r = riepilogoCliente(d, { notes: "", thresholds: {} });
+  const li = r.linkedin as {
+    stato: string;
+    fonte: string;
+    account: { stato: string }[];
+    incrocio: { attuale: { lead: number; costoPerLead: number } };
+    campagne: { id: string | null; lead: number }[];
+    criticita: { tipo: string; testo: string }[];
+  };
+  // Nei testi le righe LinkedIn sono "gruppi di annunci", come in Campaign Manager
+  assert.equal(
+    li.criticita.find((c) => c.tipo === "campagna-ferma")?.testo,
+    "Il gruppo di annunci Campagna LinkedIn B2B è attivo ma non viene pubblicato: il pubblico è troppo piccolo."
+  );
+  assert.equal(li.stato, "ok");
+  assert.ok(li.fonte.includes("LinkedIn"));
+  assert.equal(li.account[0].stato, "In pausa");
+  // 3 lead LinkedIn Ads nel CRM (i lead Meta non contano), 300 di spesa
+  assert.equal(li.incrocio.attuale.lead, 3);
+  assert.equal(li.incrocio.attuale.costoPerLead, 100);
+  // Due abbinati alla campagna per nome (maiuscole diverse), uno senza campagna
+  assert.equal(li.campagne.find((c) => c.id === "900200")?.lead, 2);
+  assert.equal(li.campagne.find((c) => c.id === null)?.lead, 1);
+  // Meta resta com'era: i lead LinkedIn non entrano nel suo costo per lead
+  assert.equal((r.meta as { incrocio: { attuale: { lead: number } } }).incrocio.attuale.lead, 2);
+  const json = JSON.stringify(r.linkedin);
+  assert.ok(!/"(leadMeta|cplMeta|leadGhl|cplReale)"/.test(json), "trovato un campo con i lead della piattaforma");
 });

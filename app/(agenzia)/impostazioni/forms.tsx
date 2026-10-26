@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNotifica } from "@/components/ui/toast";
 import type { Account } from "@/lib/accounts";
 import type { AccountLinkedIn } from "@/lib/linkedin/normalize";
+import { cn } from "@/lib/utils";
 import type { AccountMeta } from "@/lib/meta-mcp/account";
 import type { GhlLocation } from "@/lib/ghl/types";
 
@@ -575,24 +576,48 @@ function AccountLinkedInCampo({
       <input type="hidden" name="linkedinAdAccountIdsPresenti" value="1" />
       <legend id={titoloId} className="text-sm font-semibold text-titolo">Account pubblicitari LinkedIn</legend>
       <p className="text-caption text-muted-foreground">
-        Scegli gli account LinkedIn del cliente: serviranno per spesa, costo per lead e incrocio con i lead di GHL.
+        Scegli gli account LinkedIn del cliente: serviranno per spesa, costo per lead e incrocio con i lead di GHL. Ogni account
+        può appartenere a un solo cliente.
       </p>
       <ul className="flex flex-col gap-1">
-        {disponibili.map((a) => (
-          <li key={a.id}>
-            <label className="flex min-h-11 items-center gap-3 rounded-block px-3 py-2 transition-colors motion-fast hover:bg-muted">
-              <input type="checkbox" name="linkedinAdAccountIds" value={a.id} defaultChecked={scelti.has(a.id)} className="size-4 shrink-0" />
-              <span className="flex min-w-0 flex-col">
-                <span className="font-semibold text-titolo">{a.nome}</span>
-                <span className="text-caption text-muted-foreground">
-                  {a.id}, {a.valuta}
-                  {assegnati[a.id] && `, già scelto per ${assegnati[a.id]}`}
-                  {!a.attivo && ", non attivo"}
+        {disponibili.map((a) => {
+          const altrove = assegnati[a.id];
+          // Già di un altro cliente: non si può scegliere. Se per errore fosse anche di questo, resta togglibile
+          const bloccato = !!altrove && !scelti.has(a.id);
+          return (
+            <li key={a.id}>
+              <label
+                className={cn(
+                  "flex min-h-11 items-center gap-3 rounded-block px-3 py-2 transition-colors motion-fast",
+                  bloccato ? "cursor-not-allowed opacity-60" : "hover:bg-muted"
+                )}
+              >
+                <input
+                  type="checkbox"
+                  name="linkedinAdAccountIds"
+                  value={a.id}
+                  defaultChecked={scelti.has(a.id)}
+                  disabled={bloccato}
+                  className="size-4 shrink-0"
+                />
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold text-titolo">{a.nome}</span>
+                  <span className="text-caption text-muted-foreground">
+                    {a.id}, {a.valuta}
+                    {!a.attivo && ", non attivo"}
+                  </span>
+                  {altrove && (
+                    <span className={cn("text-caption", bloccato ? "text-muted-foreground" : "font-semibold text-danger")}>
+                      {bloccato
+                        ? `Associato a ${altrove}: per spostarlo toglilo prima da lì`
+                        : `Associato anche a ${altrove}: deve restare a un solo cliente`}
+                    </span>
+                  )}
                 </span>
-              </span>
-            </label>
-          </li>
-        ))}
+              </label>
+            </li>
+          );
+        })}
         {nonVisibili.map((id) => (
           <li key={id}>
             <label className="flex min-h-11 items-center gap-3 rounded-block px-3 py-2 transition-colors motion-fast hover:bg-muted">

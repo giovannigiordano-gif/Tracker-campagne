@@ -8,7 +8,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { configAccesso, richiediAccesso } from "@/lib/accesso";
 import { creaSessione, DURATA_SESSIONE_MS, NOME_COOKIE, passwordCorretta, percorsoSicuro } from "@/lib/sessione";
-import { getAccount, removeAccount, upsertAccount, type Account } from "@/lib/accounts";
+import { ErroreAccountGiaAssociato, getAccount, removeAccount, upsertAccount, type Account } from "@/lib/accounts";
 import * as cache from "@/lib/cache";
 import { condivisioni } from "@/lib/condivisioni";
 import { idAccountMeta } from "@/lib/meta-mcp/account";
@@ -21,6 +21,7 @@ import { fusoValido } from "@/lib/period";
 import { eliminaAnalisi } from "@/lib/analisi";
 import { verificaLinkedIn } from "@/lib/linkedin/api";
 import { salvaCredenzialiLinkedIn, scollegaLinkedIn } from "@/lib/linkedin/oauth";
+import { riepilogoLinkedIn } from "@/lib/linkedin/store";
 import { indirizzoRisposta, leggiRichiesta } from "@/lib/connettore/autorizza";
 import { ErroreClient, verificaClient } from "@/lib/connettore/client";
 import { indirizzoBase } from "@/lib/connettore/indirizzi";
@@ -132,7 +133,15 @@ export async function modificaCliente(_prev: EsitoAzione, formData: FormData): P
     active: formData.get("active") === "on",
     thresholds: { ...attuale.thresholds, leadDropPct: sogliaNum, maxCpl: obiettivoCplNum },
   };
-  await upsertAccount(aggiornato);
+  try {
+    await upsertAccount(aggiornato);
+  } catch (e) {
+    if (!(e instanceof ErroreAccountGiaAssociato)) throw e;
+    // Un account LinkedIn appartiene a un solo cliente: si dice a chi è già associato, col nome dell'account se noto
+    const nomi = new Map((await riepilogoLinkedIn()).ultimaVerifica?.account.map((a) => [a.id, a.nome]) ?? []);
+    const elenco = e.conflitti.map((c) => `«${nomi.get(c.id) ?? c.id}» è già associato a ${c.cliente}`).join("; ");
+    return { ok: false, messaggio: `Ogni account LinkedIn può appartenere a un solo cliente: ${elenco}. Toglilo prima da quel cliente.` };
+  }
   // Il fuso orario cambia il modo di contare i giorni: si ricalcola tutto
   await cache.invalidate(`ghl:${id}:`);
   refresh();

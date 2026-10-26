@@ -193,12 +193,10 @@ export function ClientDashboard({
       </header>
 
       <SectionNav
-        // Nella pagina condivisa niente analisi e niente Meta senza account associati;
-        // LinkedIn compare solo per i clienti con un account LinkedIn associato
+        // Nella pagina condivisa niente analisi e niente Meta o LinkedIn senza account associati
         sezioni={SEZIONI.filter((s) => {
-          if (s.id === "linkedin") return dati.linkedin.stato !== "non-associato";
           if (modo !== "condivisa") return true;
-          return s.id !== "analisi" && !(s.id === "meta" && dati.meta.stato === "non-associato");
+          return s.id !== "analisi" && !((s.id === "meta" || s.id === "linkedin") && dati[s.id].stato === "non-associato");
         })}
         sottoBarra={modo === "agenzia"}
       />

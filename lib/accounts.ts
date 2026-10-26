@@ -51,8 +51,29 @@ export function updateAccounts(modifica: (lista: Account[]) => Account[]) {
   return archivio.modifica<Partial<Account>[]>(NOME, [], (lista) => modifica(completa(lista)));
 }
 
+// Un account pubblicitario LinkedIn appartiene a un solo cliente (scelta del titolare del 2026-10-26):
+// restituisce gli account del cliente che sono già associati a un altro cliente, con il nome di quel cliente
+export type ConflittoAccount = { id: string; cliente: string };
+export function conflittiLinkedIn(lista: Account[], account: Pick<Account, "locationId" | "linkedinAdAccountIds">): ConflittoAccount[] {
+  const altrove = new Map<string, string>();
+  for (const a of lista) {
+    if (a.locationId === account.locationId) continue;
+    for (const id of a.linkedinAdAccountIds) altrove.set(id, a.name);
+  }
+  return account.linkedinAdAccountIds.flatMap((id) => (altrove.has(id) ? [{ id, cliente: altrove.get(id)! }] : []));
+}
+
+export class ErroreAccountGiaAssociato extends Error {
+  constructor(readonly conflitti: ConflittoAccount[]) {
+    super(`Account LinkedIn già associati ad altri clienti: ${conflitti.map((c) => c.id).join(", ")}`);
+  }
+}
+
 export function upsertAccount(account: Account) {
   return updateAccounts((lista) => {
+    // Controllo dentro la scrittura: vale anche se due salvataggi arrivano insieme
+    const conflitti = conflittiLinkedIn(lista, account);
+    if (conflitti.length) throw new ErroreAccountGiaAssociato(conflitti);
     const i = lista.findIndex((a) => a.locationId === account.locationId);
     if (i === -1) return [...lista, account];
     const copia = [...lista];

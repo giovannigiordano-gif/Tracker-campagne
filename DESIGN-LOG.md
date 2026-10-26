@@ -185,7 +185,7 @@ Richiesta del titolare: una grafica come le app Apple, coi colori SalesProcess. 
 ## 2026-10-26 — Sezione "Campagne LinkedIn"
 Richiesta del titolare: le stesse funzioni di Meta anche per LinkedIn Ads.
 - **Un pannello per due piattaforme**: `components/dashboard/pannello-ads.tsx` (ex `meta-panel.tsx`) disegna sia "Campagne Meta" sia "Campagne LinkedIn" con la stessa griglia di numeri, lo stesso grafico e la stessa tabella; cambiano solo nomi, fonte e stati delle campagne (`lib/metrics/piattaforme.ts`).
-- La sezione LinkedIn compare (anche nell'indice delle sezioni) solo se il cliente ha account LinkedIn associati, come Meta nel link condiviso.
+- La sezione LinkedIn compare sempre nella dashboard del titolare (anche nell'indice delle sezioni), con il passo da fare se mancano account; nel link condiviso solo se il cliente ha account LinkedIn, come Meta. Aggiornato il 2026-10-26 su richiesta del titolare.
 - **Panoramica**: nella scheda del cliente "Spesa" e "Costo lead" diventano "Spesa Meta"/"Costo lead Meta" e, se c'è, "Spesa LinkedIn"/"Costo lead LinkedIn"; gli avvisi hanno davanti il nome della piattaforma.
 - **Impostazioni**: nuova scheda "LinkedIn Ads" accanto a "Meta Ads", con gli stessi elementi (indirizzo di ritorno da copiare, passi numerati, credenziali, collega/verifica/scollega, elenco account). Nella scheda di ogni cliente la scelta multipla "Account pubblicitari LinkedIn" appare solo dopo il collegamento.
 - I pulsanti "Collega" di Meta e LinkedIn sono arancio (azione principale, variante normale) invece che neri: il nero resta solo nel pannello dei numeri e nella tessera del logo.

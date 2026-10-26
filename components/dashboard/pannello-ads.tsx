@@ -144,13 +144,18 @@ export function PannelloAds({
 
   // ---------------------------------------------------------------- stati senza dati
   if (esito.stato === "non-associato") {
-    // LinkedIn compare solo per i clienti che hanno un account associato: per gli altri sarebbe rumore
-    if (modo === "condivisa" || p.id !== "meta") return null;
+    // Il cliente che guarda il link condiviso non vede sezioni vuote; il titolare sì, con il passo da fare
+    if (modo === "condivisa") return null;
     return (
       <Riquadro id={p.id} titolo={p.titolo} descrizione={descrizione}>
         <div className="flex flex-col items-start gap-3 text-sm">
-          <p>Nessun account pubblicitario {p.nome} associato a questo cliente.</p>
-          <Link href="/impostazioni" className={buttonVariants({ variant: "outline", size: "sm" })}>Associa un account in Impostazioni</Link>
+          <p>
+            Nessun account pubblicitario {p.nome} associato a questo cliente. In Impostazioni collega {p.nome} Ads, poi scegli
+            l&apos;account nella scheda del cliente.
+          </p>
+          <Link href={p.impostazioni} className={buttonVariants({ variant: "outline", size: "sm" })}>
+            Apri Impostazioni
+          </Link>
         </div>
       </Riquadro>
     );

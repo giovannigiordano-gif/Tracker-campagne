@@ -190,3 +190,14 @@ Richiesta del titolare: le stesse funzioni di Meta anche per LinkedIn Ads.
 - **Impostazioni**: nuova scheda "LinkedIn Ads" accanto a "Meta Ads", con gli stessi elementi (indirizzo di ritorno da copiare, passi numerati, credenziali, collega/verifica/scollega, elenco account). Nella scheda di ogni cliente la scelta multipla "Account pubblicitari LinkedIn" appare solo dopo il collegamento.
 - I pulsanti "Collega" di Meta e LinkedIn sono arancio (azione principale, variante normale) invece che neri: il nero resta solo nel pannello dei numeri e nella tessera del logo.
 - Tolta la colonna destra "appiccicata" in Impostazioni: con due schede di collegamento diventava più alta dello schermo.
+
+## 2026-10-26 — Panoramica a strisce
+Richiesta del titolare: la Panoramica non a schede ma a strisce, con i dati importanti e chiara.
+- Una striscia per cliente in un unico pannello bianco con intestazione e righe alternate, come le liste del Mac e le tabelle dell'app (`components/dashboard/striscia-cliente.tsx`). Sostituisce `scheda-cliente.tsx`.
+- Da 1280px tutto su una riga, numeri allineati a destra sotto l'intestazione: Lead, Opportunità, Vinte, Venduto, Chiusura, Spesa ads, Costo per lead; da 1536px anche l'andamento dei lead (linea arancio). Variazioni sul periodo precedente sotto ogni numero.
+- Sotto 1280px la striscia va a capo: nome in alto, numeri in griglia (3, 4 o 7 colonne) con l'etichetta sopra ognuno.
+- Numeri in Red Hat Display 800 a 17px (`text-numero-riga`), più piccoli dei numeri del pannello nero.
+- Il nome del cliente va su due righe al massimo (mai troncato a metà parola); sotto il nome il numero di avvisi, rosso se c'è un problema. I testi degli avvisi (al massimo 2, prima i problemi) stanno sotto la riga, su tutta la larghezza.
+- Tutta la striscia è un link alla dashboard del cliente (anello di focus su tutta la riga); il pulsante "Apri Impostazioni" dei clienti senza token resta cliccabile da solo.
+- Tolta dalla Panoramica la barra "Da dove arrivano i lead" per canale: è nella dashboard del cliente.
+- Il segnaposto di caricamento ha la forma delle strisce.

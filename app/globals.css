@@ -347,6 +347,15 @@
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
 }
+/* Numeri delle strisce della Panoramica: stesso carattere, misura da riga di lista */
+@utility text-numero-riga {
+  font-family: var(--font-red-hat), system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
 @utility text-body {
   font-size: 0.9375rem;
   line-height: 1.5;

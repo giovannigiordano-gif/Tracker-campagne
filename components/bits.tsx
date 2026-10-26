@@ -87,34 +87,31 @@ export function ScheletroPanoramica() {
       <ScheletroNumeri />
       <div className="flex flex-col gap-4">
         <Skeleton className="h-6 w-40" />
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          {Array.from({ length: 3 }, (_, i) => <ScheletroScheda key={i} />)}
+        <div className="overflow-hidden rounded-panel bg-card shadow-card">
+          <div className="hidden h-10 shadow-[inset_0_-1px_0_var(--border)] xl:block" />
+          {Array.from({ length: 3 }, (_, i) => <ScheletroStriscia key={i} />)}
         </div>
       </div>
     </div>
   );
 }
 
-// Segnaposto di una scheda cliente della Panoramica, con la sua forma reale
-function ScheletroScheda() {
+// Segnaposto di una striscia cliente della Panoramica, con la sua forma reale
+function ScheletroStriscia() {
   return (
-    <div className="flex min-w-0 flex-col gap-5 rounded-panel bg-card p-panel shadow-card">
-      <Skeleton className="h-5 w-48 max-w-full" />
-      <div className="grid grid-cols-3 gap-x-4 gap-y-3">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="flex min-w-0 flex-col gap-1.5">
-            <Skeleton className="h-3 w-14 max-w-full" />
-            <Skeleton className="h-6 w-16 max-w-full" />
+    <div className="flex flex-col gap-3 px-5 py-4 even:bg-background/70 xl:flex-row xl:items-center xl:gap-4">
+      <div className="flex items-center gap-2.5 xl:w-56 xl:shrink-0">
+        <Skeleton className="size-8 rounded-[0.5rem]" />
+        <Skeleton className="h-4 w-40 max-w-full" />
+      </div>
+      <div className="grid flex-1 grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-4 lg:grid-cols-7">
+        {Array.from({ length: 7 }, (_, i) => (
+          <div key={i} className="flex min-w-0 flex-col gap-1.5 xl:items-end">
+            <Skeleton className="h-3 w-12 max-w-full xl:hidden" />
+            <Skeleton className="h-5 w-14 max-w-full" />
           </div>
         ))}
       </div>
-      <Skeleton className="h-10" />
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-2.5 rounded-full" />
-        <Skeleton className="h-3.5 w-3/4" />
-        <Skeleton className="h-3.5 w-2/3" />
-      </div>
-      <Skeleton className="h-9 w-32 rounded-control" />
     </div>
   );
 }

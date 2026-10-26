@@ -1,6 +1,6 @@
 "use client";
-// Panoramica dell'agenzia: totali di tutti i clienti e una scheda per cliente con lo spaccato rapido
-// dei suoi dati (numeri chiave, andamento, canali, avvisi) e il pulsante per aprire la sua dashboard.
+// Panoramica dell'agenzia: totali di tutti i clienti e una striscia per cliente con i numeri importanti
+// sulla stessa riga (lead, opportunità, vendite, spesa ads, costo per lead) e i suoi avvisi.
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { RefreshButton } from "@/components/refresh-button";
@@ -13,7 +13,7 @@ import { formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
 import { variazionePct } from "@/lib/metrics/dashboard";
 import { formatGiorno } from "@/lib/period";
 import { cn } from "@/lib/utils";
-import { SchedaCliente } from "./scheda-cliente";
+import { IntestazioneStrisce, StrisciaCliente } from "./striscia-cliente";
 import { Fonte, PannelloNumeri, type VoceNumero } from "./ui";
 
 type Ordine = "venduto" | "lead" | "vinte" | "nome";
@@ -65,7 +65,7 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
     { etichetta: "Da controllare", valore: `${conAvvisi} su ${righe.length}`, spiegazione: "Clienti con token mancanti o scaduti, limiti GHL o lead in calo oltre la soglia" },
   ];
 
-  // ------------------------------------------------ schede dei clienti
+  // ------------------------------------------------ strisce dei clienti
   const schede = useMemo(() => {
     const testo = cerca.trim().toLowerCase();
     const valore = (r: RigaPanoramica) =>
@@ -140,13 +140,14 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
             </Button>
           </div>
         ) : (
-          <ul className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-            {schede.map((r, i) => (
-              <li key={r.locationId} className="entra-a-scaletta flex" style={{ "--i": i } as React.CSSProperties}>
-                <SchedaCliente riga={r} confronto={confronto} query={query} />
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-hidden rounded-panel bg-card shadow-card">
+            <IntestazioneStrisce />
+            <ul aria-label="Clienti">
+              {schede.map((r, i) => (
+                <StrisciaCliente key={r.locationId} riga={r} confronto={confronto} query={query} indice={i} />
+              ))}
+            </ul>
+          </div>
         )}
       </section>
     </div>

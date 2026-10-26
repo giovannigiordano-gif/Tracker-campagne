@@ -19,8 +19,16 @@ export async function GET(request: NextRequest) {
   const errore = p.get("error");
   if (errore) {
     const annullato = errore.startsWith("user_cancelled");
+    const descrizione = p.get("error_description") ?? errore;
+    // Permessi non validi: l'app LinkedIn non ha (ancora) il prodotto "Advertising API" approvato.
+    // Visto il 2026-10-26: "The requested permission scope is not valid"
+    const permessi = /scope/i.test(`${errore} ${descrizione}`);
     await registraErroreLinkedIn(
-      annullato ? "Accesso a LinkedIn annullato: nessun collegamento salvato." : `LinkedIn ha rifiutato l'accesso (${p.get("error_description") ?? errore}).`
+      annullato
+        ? "Accesso a LinkedIn annullato: nessun collegamento salvato."
+        : permessi
+          ? "LinkedIn non ha ancora autorizzato la tua app a leggere le campagne (permessi r_ads e r_ads_reporting): serve l'approvazione di «Advertising API» nella scheda Products dell'app su LinkedIn Developers. Quando è approvata, premi di nuovo «Collega LinkedIn Ads»."
+          : `LinkedIn ha rifiutato l'accesso (${descrizione}).`
     ).catch(() => {});
     return vai(annullato ? "annullato" : "errore");
   }

@@ -102,11 +102,13 @@ export function ProvenienzaPanel({
   onToggle,
   valuta,
   id,
+  scarica,
 }: {
   schede: SchedaProvenienza[];
   onToggle: (d: Dimensione, chiave: string) => void;
   valuta: string;
   id?: string;
+  scarica?: React.ReactNode; // pulsante "Scarica" della sezione
 }) {
   const [ordine, setOrdine] = useState<"lead" | "venduto">("lead");
   return (
@@ -115,12 +117,15 @@ export function ProvenienzaPanel({
       titolo="Da dove arrivano lead e vendite"
       descrizione="Clicca una voce per filtrare tutta la pagina. Puoi sceglierne più di una, anche in schede diverse."
       azioni={
-        <Segmented
-          etichetta="Ordina per"
-          opzioni={[{ v: "lead", label: "Più lead" }, { v: "venduto", label: "Più venduto" }]}
-          valore={ordine}
-          onChange={setOrdine}
-        />
+        <>
+          <Segmented
+            etichetta="Ordina per"
+            opzioni={[{ v: "lead", label: "Più lead" }, { v: "venduto", label: "Più venduto" }]}
+            valore={ordine}
+            onChange={setOrdine}
+          />
+          {scarica}
+        </>
       }
     >
       <Tabs defaultValue={schede[0]?.dimensione}>

@@ -1,7 +1,8 @@
 "use client";
-// Tabella riusabile (TanStack Table v9): ricerca, ordinamento, pagine ed export CSV.
-// Il CSV viene creato qui nel browser e scaricato sul tuo computer: non viene salvato sul server.
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Download, Search } from "lucide-react";
+// Tabella riusabile (TanStack Table v9): ricerca, ordinamento, pagine e pulsante "Scarica" (CSV o Excel).
+// I file vengono creati qui nel browser e scaricati sul tuo computer: non vengono salvati sul server.
+// Si scaricano le righe come si vedono: con la ricerca e l'ordinamento attuali, tutte le pagine.
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Search } from "lucide-react";
 import {
   columnFilteringFeature,
   createFilteredRowModel,
@@ -21,8 +22,10 @@ import {
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { ColonnaExport, RigaInfo, ValoreExport } from "@/lib/export/tabella";
 import { formatNumero } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { MenuScarica } from "./scarica";
 
 export const funzioniTabella = tableFeatures({
   columnFilteringFeature,
@@ -38,25 +41,14 @@ export const funzioniTabella = tableFeatures({
 
 export type Colonna<T extends RowData> = ColumnDef<typeof funzioniTabella, T, any>;
 
-// ---------------------------------------------------------------- CSV
-function cellaCsv(valore: unknown) {
-  let s = String(valore ?? "");
-  // Evita che Excel interpreti il contenuto come una formula
-  if (/^[=@]/.test(s) || /^[+-][^\d\s]/.test(s)) s = `'${s}`;
-  return `"${s.replace(/"/g, '""')}"`;
-}
-
-export function scaricaCsv(intestazione: string[], righe: unknown[][], nomeFile: string) {
-  const testo = [intestazione, ...righe].map((r) => r.map(cellaCsv).join(";")).join("\r\n");
-  // ";" e BOM UTF-8: così Excel in italiano apre il file correttamente
-  const blob = new Blob(["﻿" + testo], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = nomeFile;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+// Cosa scaricare: titolo (nome del file e del foglio), cliente e periodo, colonne con il loro tipo e valori di una riga
+export type EsportaTabella<T> = {
+  titolo: string;
+  contesto: string[];
+  colonne: ColonnaExport[];
+  riga: (r: T) => ValoreExport[];
+  info?: () => RigaInfo[];
+};
 
 // ---------------------------------------------------------------- tabella
 export function DataTable<T extends RowData>({
@@ -65,7 +57,7 @@ export function DataTable<T extends RowData>({
   ordinamento,
   cercabili,
   segnapostoRicerca = "Cerca…",
-  csv,
+  esporta,
   vuoto = "Nessun risultato",
   perPagina = 25,
   strumenti,
@@ -75,7 +67,7 @@ export function DataTable<T extends RowData>({
   ordinamento?: SortingState;
   cercabili?: string[];
   segnapostoRicerca?: string;
-  csv?: { nomeFile: string; intestazione: string[]; riga: (r: T) => unknown[] };
+  esporta?: EsportaTabella<T>;
   vuoto?: string;
   perPagina?: number;
   strumenti?: React.ReactNode; // altri controlli accanto alla ricerca
@@ -110,16 +102,19 @@ export function DataTable<T extends RowData>({
           </div>
         )}
         {strumenti}
-        {csv && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="ml-auto"
-            disabled={filtrate === 0}
-            onClick={() => scaricaCsv(csv.intestazione, table.getSortedRowModel().rows.map((r) => csv.riga(r.original)), csv.nomeFile)}
-          >
-            <Download aria-hidden /> Esporta CSV ({formatNumero(filtrate)})
-          </Button>
+        {esporta && (
+          <div className="ml-auto">
+            <MenuScarica
+              etichetta={`Scarica (${formatNumero(filtrate)})`}
+              disabilitato={filtrate === 0}
+              titolo={esporta.titolo}
+              contesto={esporta.contesto}
+              info={esporta.info}
+              tabelle={() => [
+                { nome: esporta.titolo, colonne: esporta.colonne, righe: table.getSortedRowModel().rows.map((r) => esporta.riga(r.original)) },
+              ]}
+            />
+          </div>
         )}
       </div>
 

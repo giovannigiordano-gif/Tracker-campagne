@@ -7,6 +7,22 @@ import { perIdCampagna, risolutoreCampagne, type OpzioniIncrocio } from "./meta"
 
 export type IdPiattaforma = "meta" | "linkedin";
 
+// Stati delle campagne di Meta (effective_status) e di LinkedIn (status), in italiano
+export const STATI_CAMPAGNA: Record<string, string> = {
+  ACTIVE: "Attiva",
+  PAUSED: "In pausa",
+  CAMPAIGN_PAUSED: "In pausa",
+  ARCHIVED: "Archiviata",
+  DELETED: "Eliminata",
+  IN_PROCESS: "In elaborazione",
+  WITH_ISSUES: "Con problemi",
+  COMPLETED: "Conclusa",
+  CANCELED: "Annullata",
+  DRAFT: "Bozza",
+  PENDING_DELETION: "In eliminazione",
+  REMOVED: "Rimossa",
+};
+
 // Testi della tabella per riga: su LinkedIn ogni riga è un "gruppo di annunci" di Campaign Manager
 // (l'API lo chiama ancora "campaign"), su Meta una campagna
 type Tabella = { colonna: string; titolo: string; cerca: string; vuoto: string };

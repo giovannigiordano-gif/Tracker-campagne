@@ -13,6 +13,8 @@ import { formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
 import { variazionePct } from "@/lib/metrics/dashboard";
 import { formatGiorno } from "@/lib/period";
 import { cn } from "@/lib/utils";
+import { tabellaPanoramica } from "@/lib/export/panoramica";
+import { MenuScarica } from "./scarica";
 import { IntestazioneStrisce, StrisciaCliente } from "./striscia-cliente";
 import { Fonte, PannelloNumeri, type VoceNumero } from "./ui";
 
@@ -128,6 +130,20 @@ export function AgencyDashboard({ righe, confronto, query }: { righe: RigaPanora
               ]}
               valore={ordine}
               onChange={setOrdine}
+            />
+            {/* Si scaricano i clienti come si vedono: con la ricerca, il filtro e l'ordine attuali */}
+            <MenuScarica
+              titolo="Panoramica"
+              contesto={righe[0] ? [righe[0].daGiorno, righe[0].aGiorno] : []}
+              disabilitato={schede.length === 0}
+              tabelle={() => [tabellaPanoramica(schede)]}
+              info={() => [
+                ["Periodo", intervallo],
+                ["Clienti", soloAvvisi || cerca.trim() ? `${schede.length} su ${righe.length} (filtrati nella pagina)` : `${righe.length}, tutti i clienti attivi`],
+                ["Fonte", "GoHighLevel (lead, opportunità, venduto); Meta e LinkedIn (spesa). Costo per lead = spesa / lead arrivati nel CRM dal canale della piattaforma."],
+                ["Giorni", "ogni cliente conta i giorni nel proprio fuso orario; LinkedIn in UTC"],
+                ["Scaricato il", new Date().toLocaleString("it-IT")],
+              ]}
             />
           </div>
         </div>

@@ -17,6 +17,7 @@ export function FunnelPanel({
   aperte,
   valuta,
   id,
+  scarica,
 }: {
   pipelines: Pipeline[];
   pipelineId: string;
@@ -26,6 +27,7 @@ export function FunnelPanel({
   aperte: Record<string, AperteFase>;
   valuta: string;
   id?: string;
+  scarica?: React.ReactNode; // pulsante "Scarica" della sezione
 }) {
   const pipeline = pipelines.find((p) => p.id === pipelineId) ?? pipelines[0];
   if (!pipeline) {
@@ -47,16 +49,19 @@ export function FunnelPanel({
       titolo="Pipeline"
       descrizione={`${formatNumero(create)} opportunità create nel periodo in questa pipeline: in che fase si trovano oggi`}
       azioni={
-        <NativeSelect
-          value={pipeline.id}
-          onChange={(e) => onPipeline(e.target.value)}
-          aria-label="Pipeline"
-          className="max-w-72"
-        >
-          {pipelines.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </NativeSelect>
+        <>
+          <NativeSelect
+            value={pipeline.id}
+            onChange={(e) => onPipeline(e.target.value)}
+            aria-label="Pipeline"
+            className="max-w-72"
+          >
+            {pipelines.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </NativeSelect>
+          {scarica}
+        </>
       }
     >
       <div className="overflow-x-auto">

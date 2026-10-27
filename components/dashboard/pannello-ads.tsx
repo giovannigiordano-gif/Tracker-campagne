@@ -14,27 +14,13 @@ import { formatGiornoBreve, formatNumero, formatPercentuale, formatValuta } from
 import { calcolaCriticita } from "@/lib/metrics/criticita";
 import { variazionePct } from "@/lib/metrics/dashboard";
 import { kpiIncrocio, kpiMeta, righeCampagne, serieGiornaliera, SENZA_CAMPAGNA_META, type RigaCampagna } from "@/lib/metrics/meta";
-import { opzioniIncrocio, PIATTAFORME, type IdPiattaforma } from "@/lib/metrics/piattaforme";
+import { opzioniIncrocio, PIATTAFORME, STATI_CAMPAGNA, type IdPiattaforma } from "@/lib/metrics/piattaforme";
 import { useRiduciMovimento } from "@/lib/use-riduci-movimento";
 import { cn } from "@/lib/utils";
+import { colonneCampagne, nomeTabellaCampagne, righeInfo, rigaCampagna, tabelleAds } from "@/lib/export/cliente";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
+import { MenuScarica } from "./scarica";
 import { Delta, Fonte, Riquadro } from "./ui";
-
-// Stati delle campagne di Meta (effective_status) e di LinkedIn (status)
-const STATI_CAMPAGNA: Record<string, string> = {
-  ACTIVE: "Attiva",
-  PAUSED: "In pausa",
-  CAMPAIGN_PAUSED: "In pausa",
-  ARCHIVED: "Archiviata",
-  DELETED: "Eliminata",
-  IN_PROCESS: "In elaborazione",
-  WITH_ISSUES: "Con problemi",
-  COMPLETED: "Conclusa",
-  CANCELED: "Annullata",
-  DRAFT: "Bozza",
-  PENDING_DELETION: "In eliminazione",
-  REMOVED: "Rimossa",
-};
 
 function Numero({
   etichetta,
@@ -180,8 +166,29 @@ export function PannelloAds({
   const d = (a: number | null, b: number | null) => (confronto && a !== null && b !== null ? variazionePct(a, b) : undefined);
   const errori = esito.stato === "ok" ? esito.dati.errori : [];
 
+  // File da scaricare: cliente e periodo nel nome, fonte nel foglio "Info". Le criticità solo per l'agenzia.
+  const contesto = [dati.cliente.nome, periodo.daGiorno, periodo.aGiorno];
+  const info = () =>
+    righeInfo(
+      dati,
+      `${p.nome} (spesa, impression, clic${p.giorniUtc ? "; giorni in UTC" : ""}) e GoHighLevel (lead, opportunità e vendite dal canale ${p.canale})`,
+      "nessuno: questa sezione non dipende dai filtri della pagina"
+    );
+
   return (
-    <Riquadro id={p.id} titolo={p.titolo} descrizione={descrizione}>
+    <Riquadro
+      id={p.id}
+      titolo={p.titolo}
+      descrizione={descrizione}
+      azioni={
+        <MenuScarica
+          titolo={p.titolo}
+          contesto={contesto}
+          info={info}
+          tabelle={() => tabelleAds(p.id, esito, dati, valuta, modo === "agenzia")}
+        />
+      }
+    >
       {/* Criticità: solo per l'agenzia (sono note di lavoro, non per il cliente) */}
       {modo === "agenzia" && criticita.length > 0 && (
         <section aria-label="Criticità" className="flex flex-col gap-2">
@@ -284,10 +291,12 @@ export function PannelloAds({
           cercabili={["nome"]}
           segnapostoRicerca={p.tabella.cerca}
           vuoto={p.tabella.vuoto}
-          csv={{
-            nomeFile: `campagne-${p.id}-${dati.cliente.nome}`,
-            intestazione: [p.tabella.colonna, "Stato", "Spesa", "Lead", "Costo per lead", "Opportunità", "Vendite", "Venduto", "ROAS CRM", "CTR %", "Costo per clic"],
-            riga: (r) => [r.nome, r.stato ?? "", r.spesa.toFixed(2), r.leadGhl, r.cplReale?.toFixed(2) ?? "", r.opportunita, r.vinte, r.venduto.toFixed(2), r.roas?.toFixed(2) ?? "", r.ctr?.toFixed(2) ?? "", r.cpc?.toFixed(2) ?? ""],
+          esporta={{
+            titolo: nomeTabellaCampagne(p.id),
+            contesto,
+            info,
+            colonne: colonneCampagne(p.id, valuta),
+            riga: rigaCampagna,
           }}
         />
       </section>

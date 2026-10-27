@@ -4,7 +4,7 @@
 // modo "agenzia": la vede il titolare (con Aggiorna e Condividi).
 // modo "condivisa": la vede il cliente dal link condiviso, identica ma senza Aggiorna e Condividi.
 import { useMemo, useState } from "react";
-import { SearchX, X } from "lucide-react";
+import { FileSpreadsheet, SearchX, X } from "lucide-react";
 import { RefreshButton } from "@/components/refresh-button";
 import { Condividi } from "./condividi";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -29,7 +29,21 @@ import {
   type OppRow,
 } from "@/lib/metrics/dashboard";
 import { formatGiorno } from "@/lib/period";
+import {
+  cartellaCliente,
+  COLONNE_CONTATTI,
+  colonneVendite as colonneExportVendite,
+  righeInfo,
+  rigaContatto,
+  rigaVendita,
+  tabellaClassifica,
+  tabellaNumeri,
+  tabellaPipeline,
+} from "@/lib/export/cliente";
+import { scaricaExcel } from "@/lib/export/scarica";
+import { nomeFileExport } from "@/lib/export/tabella";
 import { DataTable, funzioniTabella, type Colonna } from "./data-table";
+import { MenuScarica } from "./scarica";
 import { FunnelPanel } from "./funnel-panel";
 import { PannelloAds } from "./pannello-ads";
 import { AnalisiPanel } from "./analisi-panel";
@@ -162,8 +176,16 @@ export function ClientDashboard({
   ];
 
   const periodoTesto = `dal ${formatGiorno(periodo.daGiorno)} al ${formatGiorno(periodo.aGiorno)}`;
-  const nomeFile = (tipo: string) =>
-    `${tipo}-${cliente.nome.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}-${periodo.daGiorno}-${periodo.aGiorno}.csv`;
+
+  // File da scaricare: nome con cliente e periodo; foglio "Info" con fonte, periodo e filtri attivi
+  const contesto = [cliente.nome, periodo.daGiorno, periodo.aGiorno];
+  const info = (fonte: string) => () =>
+    righeInfo(dati, fonte, chips.length ? chips.map((c) => `${c.gruppo}: ${c.etichetta}`).join("; ") : "nessuno");
+  const scaricaTutto = () =>
+    scaricaExcel(
+      cartellaCliente(dati, { modo, scaricatoIl: new Date().toLocaleString("it-IT") }),
+      nomeFileExport(["dati completi", cliente.nome, periodo.daGiorno, periodo.aGiorno], "xlsx")
+    );
 
   const nessunDato = kpi.lead === 0 && kpi.oppCreate === 0 && kpi.vinte === 0 && kpi.perse === 0;
   const azzera = () => setFiltri(FILTRI_VUOTI);
@@ -186,6 +208,14 @@ export function ClientDashboard({
         </div>
         {modo === "agenzia" && (
           <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={scaricaTutto}
+              title="Tutti i dati del periodo in un file Excel, un foglio per sezione (senza i filtri della pagina)"
+            >
+              <FileSpreadsheet aria-hidden /> Scarica Excel
+            </Button>
             <Condividi locationId={cliente.locationId} nome={cliente.nome} />
             <RefreshButton locationId={cliente.locationId} />
           </div>
@@ -252,10 +282,15 @@ export function ClientDashboard({
 
       <div id="numeri" className="flex scroll-mt-32 flex-col gap-2">
         <PannelloNumeri voci={numeri} confronto={confronto} />
-        <Fonte aggiornatoIl={dati.aggiornatoIl}>
-          Fonte GoHighLevel, periodo {periodoTesto}. Lead e opportunità si contano alla data di creazione; vinte, venduto e tasso
-          di chiusura alla data in cui l&apos;opportunità è stata chiusa.
-        </Fonte>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <Fonte aggiornatoIl={dati.aggiornatoIl}>
+            Fonte GoHighLevel, periodo {periodoTesto}. Lead e opportunità si contano alla data di creazione; vinte, venduto e tasso
+            di chiusura alla data in cui l&apos;opportunità è stata chiusa.
+          </Fonte>
+          <div className="ml-auto">
+            <MenuScarica titolo="Numeri" contesto={contesto} info={info("GoHighLevel")} tabelle={() => [tabellaNumeri(lead, opp, periodo, valuta)]} />
+          </div>
+        </div>
       </div>
 
       <PannelloAds dati={dati} confronto={confronto} modo={modo} piattaforma="meta" />
@@ -264,9 +299,31 @@ export function ClientDashboard({
 
       {modo === "agenzia" && <AnalisiPanel analisi={analisi} locationId={cliente.locationId} nomeCliente={cliente.nome} />}
 
-      <TrendPanel id="andamento" lead={lead} opp={opp} giorni={periodo.giorni} giorniPrec={periodo.giorniPrec} confronto={confronto} valuta={valuta} />
+      <TrendPanel
+        id="andamento"
+        lead={lead}
+        opp={opp}
+        giorni={periodo.giorni}
+        giorniPrec={periodo.giorniPrec}
+        confronto={confronto}
+        valuta={valuta}
+        esporta={{ contesto, info: info("GoHighLevel") }}
+      />
 
-      <ProvenienzaPanel id="provenienza" schede={schede} onToggle={(d, k) => toggle(d)(k)} valuta={valuta} />
+      <ProvenienzaPanel
+        id="provenienza"
+        schede={schede}
+        onToggle={(d, k) => toggle(d)(k)}
+        valuta={valuta}
+        scarica={
+          <MenuScarica
+            titolo="Provenienza"
+            contesto={contesto}
+            info={info("GoHighLevel: canale dall'attribuzione, campagna, campo «Fonte» e tag del contatto")}
+            tabelle={() => schede.map((s) => tabellaClassifica(s.dimensione, s.voci, valuta))}
+          />
+        }
+      />
 
       <FunnelPanel
         id="pipeline"
@@ -277,6 +334,14 @@ export function ClientDashboard({
         giorni={giorni}
         aperte={dati.aperte[pipelineImbuto] ?? {}}
         valuta={valuta}
+        scarica={
+          <MenuScarica
+            titolo="Pipeline"
+            contesto={contesto}
+            info={info("GoHighLevel: fase attuale delle opportunità create nel periodo; «arrivate» e «passaggio» sono stime")}
+            tabelle={() => [tabellaPipeline(pipelines, opp, giorni, dati.aperte, valuta)]}
+          />
+        }
       />
 
       <Riquadro id="vendite" titolo="Vendite del periodo" descrizione={`Opportunità vinte ${periodoTesto}, con i filtri attivi.`}>
@@ -288,10 +353,12 @@ export function ClientDashboard({
           segnapostoRicerca="Cerca opportunità, campagna, fonte…"
           vuoto={quantiFiltri(filtri) > 0 ? "Nessuna vendita con questi filtri. Prova ad azzerarli." : "Nessuna opportunità vinta in questo periodo. Prova un periodo più lungo."}
           perPagina={10}
-          csv={{
-            nomeFile: nomeFile("vendite"),
-            intestazione: ["Vinta il", "Opportunità", "Valore", "Pipeline", "Canale", "Campagna", "Fonte"],
-            riga: (r) => [formatGiorno(r.chiusa ?? ""), r.nome ?? "", r.valore, r.pipeline, r.canale, r.campagna ?? "", r.fonte],
+          esporta={{
+            titolo: "Vendite",
+            contesto,
+            info: info("GoHighLevel: opportunità vinte nel periodo"),
+            colonne: colonneExportVendite(valuta),
+            riga: (r) => rigaVendita(r, r.pipeline),
           }}
         />
       </Riquadro>
@@ -299,7 +366,7 @@ export function ClientDashboard({
       <Riquadro
         id="contatti"
         titolo="Contatti del periodo"
-        descrizione="Nomi, email e telefoni compaiono solo qui e l'app non li salva. Il CSV si scarica sul tuo computer."
+        descrizione="Nomi, email e telefoni compaiono solo qui e l'app non li salva. I file CSV o Excel si creano nel browser e si scaricano sul tuo computer."
       >
         <DataTable
           key={soloSenza ? "senza" : "tutti"}
@@ -315,10 +382,12 @@ export function ClientDashboard({
               Solo senza campagna
             </label>
           }
-          csv={{
-            nomeFile: nomeFile("contatti"),
-            intestazione: ["Creato il", "Nome", "Email", "Telefono", "Fonte", "Canale", "Campagna", "Gruppo di inserzioni", "Annuncio", "Tag"],
-            riga: (r) => [formatDataOra(r.persona.data), r.persona.nome, r.persona.email, r.persona.telefono, r.fonte, r.canale, r.campagna ?? "", r.persona.gruppo, r.persona.annuncio, r.tags.join(", ")],
+          esporta={{
+            titolo: "Contatti",
+            contesto,
+            info: info("GoHighLevel: contatti creati nel periodo"),
+            colonne: COLONNE_CONTATTI,
+            riga: rigaContatto,
           }}
         />
       </Riquadro>

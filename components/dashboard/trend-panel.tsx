@@ -8,6 +8,9 @@ import { formatGiornoBreve, formatNumero, formatValuta } from "@/lib/format";
 import { calcolaSerie, type Granularita, type LeadRow, type Metrica, type OppRow, type PuntoSerie } from "@/lib/metrics/dashboard";
 import { Segmented } from "@/components/ui/segmented";
 import { useRiduciMovimento } from "@/lib/use-riduci-movimento";
+import { tabellaAndamento } from "@/lib/export/cliente";
+import type { RigaInfo } from "@/lib/export/tabella";
+import { MenuScarica } from "./scarica";
 import { Riquadro } from "./ui";
 
 const METRICHE: { v: Metrica; label: string; descrizione: string }[] = [
@@ -27,6 +30,7 @@ export function TrendPanel({
   confronto,
   valuta,
   id,
+  esporta,
 }: {
   lead: LeadRow[];
   opp: OppRow[];
@@ -35,6 +39,7 @@ export function TrendPanel({
   confronto: boolean;
   valuta: string;
   id?: string;
+  esporta?: { contesto: string[]; info: () => RigaInfo[] }; // per il pulsante "Scarica"
 }) {
   const riduci = useRiduciMovimento();
   const [metrica, setMetrica] = useState<Metrica>("lead");
@@ -66,6 +71,14 @@ export function TrendPanel({
             valore={granularita}
             onChange={setGranularita}
           />
+          {esporta && (
+            <MenuScarica
+              titolo="Andamento"
+              contesto={esporta.contesto}
+              info={esporta.info}
+              tabelle={() => [tabellaAndamento(lead, opp, giorni, giorniPrec, valuta, granularita)]}
+            />
+          )}
         </>
       }
     >

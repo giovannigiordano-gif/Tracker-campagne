@@ -201,3 +201,10 @@ Richiesta del titolare: la Panoramica non a schede ma a strisce, con i dati impo
 - Tutta la striscia è un link alla dashboard del cliente (anello di focus su tutta la riga); il pulsante "Apri Impostazioni" dei clienti senza token resta cliccabile da solo.
 - Tolta dalla Panoramica la barra "Da dove arrivano i lead" per canale: è nella dashboard del cliente.
 - Il segnaposto di caricamento ha la forma delle strisce.
+
+## 2026-10-27 — Pulsanti "Scarica" (CSV o Excel)
+Richiesta del titolare: tutti i dati scaricabili in CSV o Excel, più un Excel completo del cliente.
+- Un solo componente in tutta l'app: pulsante grigio "Scarica" con freccia, che apre un menu come quelli del Mac (scheda bianca sospesa, voci con evidenziazione arrotondata, icone arancio). Prima voce Excel, con sotto quante righe o quali fogli contiene; poi i CSV, uno per tabella.
+- Dove sta: nell'intestazione di ogni sezione accanto agli altri controlli (Andamento, Provenienza, Pipeline, Campagne Meta e LinkedIn); sotto il pannello nero dei numeri, allineato a destra accanto alla fonte; nelle tabelle al posto di "Esporta CSV", con il numero di righe ("Scarica (338)"); nella Panoramica accanto all'ordinamento.
+- "Scarica Excel" nell'intestazione del cliente, accanto a Condividi e Aggiorna, con l'icona del foglio di calcolo.
+- Il menu si apre allineato al bordo destro del pulsante; per questo il pulsante dei numeri sta a destra (a sinistra il menu sconfinava verso la barra laterale).

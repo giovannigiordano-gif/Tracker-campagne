@@ -144,6 +144,13 @@ Le specifiche complete del progetto sono in PROGETTO.md; le regole di Next.js pe
   - Abbinamento lead → campagna LinkedIn: per ID (utm_campaign con l'ID dinamico) oppure per nome della campagna, senza distinguere maiuscole. Consigliato in Campaign Manager: `utm_source=linkedin`, `utm_medium=paid_social`, `utm_campaign={{CAMPAIGN_ID}}`.
   - Criticità uguali a Meta, più "campagna attiva ma non in pubblicazione" (da `servingStatuses`). Il costo per lead è sempre spesa / lead del CRM: i lead dei moduli LinkedIn servono solo alla criticità "spesa senza risultati" e non arrivano a Claude.
   - Il connettore per Claude ha la sezione `linkedin` in `analisi_cliente` e i numeri LinkedIn in `panoramica_clienti`.
+- **Scaricare i dati in CSV o Excel** (richiesta del titolare del 2026-10-27: tutti i dati scaricabili, più un Excel completo del cliente).
+  - Ogni sezione e ogni tabella ha il pulsante "Scarica" (`components/dashboard/scarica.tsx`, menu Base UI in `components/ui/menu.tsx`): Excel con un foglio per tabella più un foglio "Info" (cliente, periodo, filtri attivi, fonte), oppure CSV, uno per tabella. Le tabelle si scaricano come si vedono (ricerca, ordinamento, filtri della pagina); la Panoramica come le strisce visibili.
+  - "Scarica Excel" nell'intestazione del cliente, solo per il titolare: tutti i dati del periodo senza filtri, un foglio per sezione (`cartellaCliente`); le criticità solo nella versione del titolare. Nel link condiviso ci sono i pulsanti delle sezioni, non il file completo.
+  - I file si creano nel browser con i dati già presenti nella pagina (`lib/export/scarica.ts`): niente passa dal server e niente si salva. I contatti con nome, email e telefono finiscono solo nel file scaricato, come prima col CSV.
+  - Excel scritto a mano senza dipendenze (`lib/export/xlsx.ts`, testato): ZIP non compresso con CRC32, stili per intestazione in grassetto, interi, importi, percentuali (`0.0%`) e date vere (`dd/mm/yyyy`), riga bloccata e filtri. Verificato il 2026-10-27 rileggendo i file con ExcelJS 4.4.0 (solo in una cartella temporanea, non è una dipendenza) e, sui dati reali, controllando nel browser CRC e XML senza leggere il contenuto.
+  - CSV per Excel in italiano (`lib/export/csv.ts`): ";", virgola decimale, date gg/mm/aaaa, BOM UTF-8, protezione dalle formule.
+  - Tabelle e colonne in `lib/export/cliente.ts` e `lib/export/panoramica.ts` (testate), con le stesse funzioni di calcolo della dashboard. I lead contati da Meta o LinkedIn non si esportano.
 - **Test**: `npm test` (node:test lanciato da tsx, nessuna dipendenza in più), file `*.test.ts` accanto al codice in `lib/`.
 - **Idee in sospeso**:
   - il token Meta scade intorno al 2026-12-19: il titolare deve premere "Collega di nuovo" in Impostazioni.

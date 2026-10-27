@@ -128,6 +128,7 @@ export function creaServerMcp() {
               lead: r.kpi.lead,
               leadPrecedente: r.kpiPrec?.lead ?? null,
               leadDaMetaAds: r.kpi.leadMeta,
+              leadDaLinkedInAds: r.kpi.leadLinkedin,
               opportunita: r.kpi.oppCreate,
               vinte: r.kpi.vinte,
               perse: r.kpi.perse,

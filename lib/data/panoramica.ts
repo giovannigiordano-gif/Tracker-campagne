@@ -66,7 +66,7 @@ type Totali = {
 async function totaliCliente(account: Account, sel: Selezione): Promise<Totali> {
   const { corrente, precedente } = risolviPeriodo(sel, account.timezone);
   const { value } = await cache.get<Totali>(
-    `ghl:${account.locationId}:panoramica:v4:${precedente.daGiorno}:${corrente.aGiorno}`,
+    `ghl:${account.locationId}:panoramica:v5:${precedente.daGiorno}:${corrente.aGiorno}`,
     cache.ttlPerIntervallo(corrente.fine),
     async () => {
       const grezzi = await datiGrezziCliente(account, sel);
@@ -164,7 +164,7 @@ async function aggiungiAds(
   const { corrente, precedente } = risolviPeriodo(sel, account.timezone);
   const lead: LeadRow[] = t.leadAds
     .filter((l) => l.canale === p.canale)
-    .map((l) => ({ id: "", giorno: l.giorno, canale: l.canale, campagnaId: l.campagnaId, campagna: l.campagna, fonte: "", tags: [], attribuito: !!l.campagnaId }));
+    .map((l) => ({ id: "", giorno: l.giorno, canale: l.canale, campagnaId: l.campagnaId, campagna: l.campagna, fonte: "", tags: [], attribuito: !!l.campagnaId, pipelines: [] }));
   const opz = opzioniIncrocio(p, esito.dati);
   const g = new Set(corrente.giorni);
   const gp = new Set(precedente.giorni);

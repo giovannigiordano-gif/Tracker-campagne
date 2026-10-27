@@ -46,40 +46,83 @@ export type VoceNumero = {
   etichetta: string;
   valore: string;
   valoreBreve?: string; // versione compatta per gli schermi stretti (es. "124,5K €")
+  quota?: string; // parte del totale del gruppo (es. "80% dei lead")
   delta?: number | null;
   inversa?: boolean;
   precedente?: string; // valore del periodo precedente, già formattato
   spiegazione?: string; // come si calcola (compare al passaggio del mouse)
 };
 
-export function PannelloNumeri({ voci, confronto }: { voci: VoceNumero[]; confronto: boolean }) {
+// Gruppo di numeri con un titolo (es. "Lead"): ogni gruppo è una riga del pannello, con colonne allineate
+export type GruppoNumeri = { titolo: string; voci: VoceNumero[] };
+
+// "aGruppi": quattro colonne già dal tablet, quindi sotto i 1280px numeri un po' più piccoli e importi in forma breve
+function NumeroPannello({ v, confronto, aGruppi = false }: { v: VoceNumero; confronto: boolean; aGruppi?: boolean }) {
   return (
-    <section
-      aria-label="Numeri principali"
-      className={cn(
-        cardVariants({ variant: "inverse" }),
-        "grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 2xl:grid-cols-6 lg:px-8 lg:py-7"
+    <div className="flex min-w-0 flex-col gap-1.5" title={v.spiegazione}>
+      <span className="text-sm font-medium text-inverse-muted">{v.etichetta}</span>
+      <span
+        key={v.valore}
+        // Stringa semplice, non cn(): cn scambierebbe text-display per un colore e lo toglierebbe
+        className={`truncate text-display text-inverse-foreground motion-safe:animate-numero ${aGruppi ? "max-xl:text-[1.875rem]" : ""}`}
+        title={v.valore}
+      >
+        {v.valoreBreve ? (
+          <>
+            <span className={aGruppi ? "xl:hidden" : "sm:hidden"}>{v.valoreBreve}</span>
+            <span className={aGruppi ? "hidden xl:inline" : "hidden sm:inline"}>{v.valore}</span>
+          </>
+        ) : (
+          v.valore
+        )}
+      </span>
+      {v.quota && <span className="text-sm font-semibold text-inverse-foreground">{v.quota}</span>}
+      {confronto && v.delta !== undefined && (
+        <span className="flex flex-wrap items-center gap-x-1.5 text-sm">
+          <Delta pct={v.delta} inversa={v.inversa} suNero />
+          {v.precedente !== undefined && <span className="text-inverse-muted">da {v.precedente}</span>}
+        </span>
       )}
-    >
-      {voci.map((v) => (
-        <div key={v.etichetta} className="flex min-w-0 flex-col gap-1.5" title={v.spiegazione}>
-          <span className="text-label text-inverse-muted">{v.etichetta}</span>
-          <span key={v.valore} className="truncate text-display text-inverse-foreground motion-safe:animate-numero" title={v.valore}>
-            {v.valoreBreve ? (
-              <>
-                <span className="sm:hidden">{v.valoreBreve}</span>
-                <span className="hidden sm:inline">{v.valore}</span>
-              </>
-            ) : (
-              v.valore
-            )}
-          </span>
-          {confronto && v.delta !== undefined && (
-            <span className="flex flex-wrap items-center gap-x-1.5 text-sm">
-              <Delta pct={v.delta} inversa={v.inversa} suNero />
-              {v.precedente !== undefined && <span className="text-inverse-muted">da {v.precedente}</span>}
-            </span>
-          )}
+    </div>
+  );
+}
+
+// Con "gruppi" i numeri stanno su righe con un titolo (dashboard del cliente); con "voci" in un'unica griglia (Panoramica).
+// "nota" dice sopra i numeri quali filtri sono attivi.
+export function PannelloNumeri({
+  voci,
+  gruppi,
+  confronto,
+  nota,
+}: {
+  voci?: VoceNumero[];
+  gruppi?: GruppoNumeri[];
+  confronto: boolean;
+  nota?: React.ReactNode;
+}) {
+  if (!gruppi) {
+    return (
+      <section
+        aria-label="Numeri principali"
+        className={cn(
+          cardVariants({ variant: "inverse" }),
+          "grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 2xl:grid-cols-6 lg:px-8 lg:py-7"
+        )}
+      >
+        {voci?.map((v) => <NumeroPannello key={v.etichetta} v={v} confronto={confronto} />)}
+      </section>
+    );
+  }
+  return (
+    <section aria-label="Numeri principali" className={cn(cardVariants({ variant: "inverse" }), "gap-0 lg:px-8 lg:py-7")}>
+      {nota && <div className="mb-6 flex items-start gap-2 text-sm font-semibold text-inverse-foreground">{nota}</div>}
+      {gruppi.map((g, i) => (
+        <div key={g.titolo} className={cn("flex flex-col gap-4", i > 0 && "mt-6 border-t border-inverse-border pt-6")}>
+          <h3 className="text-section text-inverse-foreground">{g.titolo}</h3>
+          {/* Quattro colonne uguali in ogni riga, così i numeri dei due gruppi restano allineati */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-4 xl:gap-x-6">
+            {g.voci.map((v) => <NumeroPannello key={v.etichetta} v={v} confronto={confronto} aGruppi />)}
+          </div>
         </div>
       ))}
     </section>

@@ -12,6 +12,8 @@ export type LeadRow = {
   fonte: string;
   tags: string[];
   attribuito: boolean;
+  // Pipeline in cui il contatto ha almeno un'opportunità (di qualsiasi data): servono al filtro per pipeline
+  pipelines: string[];
   // Dati personali: presenti solo per i contatti del periodo corrente (tabella contatti)
   persona?: { data: string; nome: string; email: string; telefono: string; gruppo: string; annuncio: string };
 };
@@ -58,7 +60,9 @@ function passa(r: LeadRow | OppRow, f: Filtri) {
   return true;
 }
 
-export const filtraLead = (righe: LeadRow[], f: Filtri) => righe.filter((r) => passa(r, f));
+// Con una pipeline scelta contano solo i lead che hanno un'opportunità in quella pipeline
+export const filtraLead = (righe: LeadRow[], f: Filtri) =>
+  righe.filter((r) => passa(r, f) && (!f.pipeline || r.pipelines.includes(f.pipeline)));
 export const filtraOpp = (righe: OppRow[], f: Filtri) =>
   righe.filter((r) => passa(r, f) && (!f.pipeline || r.pipelineId === f.pipeline));
 
@@ -69,7 +73,8 @@ export function quantiFiltri(f: Filtri) {
 // ---------------------------------------------------------------- numeri chiave
 export type Kpi = {
   lead: number;
-  leadMeta: number;
+  leadMeta: number; // lead del CRM con canale "Meta Ads"
+  leadLinkedin: number; // lead del CRM con canale "LinkedIn Ads"
   oppCreate: number;
   vinte: number;
   perse: number;
@@ -86,6 +91,7 @@ export function calcolaKpi(lead: LeadRow[], opp: OppRow[], giorni: Set<string>):
   return {
     lead: leadPeriodo.length,
     leadMeta: leadPeriodo.filter((r) => r.canale === "Meta Ads").length,
+    leadLinkedin: leadPeriodo.filter((r) => r.canale === "LinkedIn Ads").length,
     oppCreate: opp.filter((r) => r.creata && giorni.has(r.creata)).length,
     vinte: vinte.length,
     perse: perse.length,

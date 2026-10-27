@@ -66,6 +66,15 @@ export function costruisciRighe(
   const nellaFinestra = (g: string) => g >= precedente.daGiorno && g <= corrente.aGiorno;
   const nelCorrente = (g: string) => g >= corrente.daGiorno && g <= corrente.aGiorno;
 
+  // Pipeline di ogni contatto, da tutte le sue opportunità: con il filtro per pipeline si contano solo i suoi lead
+  const pipelineDi = new Map<string, Set<string>>();
+  for (const o of opportunita) {
+    if (!o.contactId) continue;
+    const insieme = pipelineDi.get(o.contactId) ?? new Set<string>();
+    insieme.add(o.pipelineId);
+    pipelineDi.set(o.contactId, insieme);
+  }
+
   const lead: LeadRow[] = [];
   for (const c of contatti) {
     const giorno = giornoInFuso(c.dateAdded, fuso);
@@ -80,6 +89,7 @@ export function costruisciRighe(
       fonte: c.source ?? SENZA_FONTE,
       tags: c.tags,
       attribuito: c.attributed,
+      pipelines: [...(pipelineDi.get(c.id) ?? [])],
       ...(conDatiPersonali && nelCorrente(giorno)
         ? {
             persona: {

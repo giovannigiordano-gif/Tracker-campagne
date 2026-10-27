@@ -20,6 +20,7 @@ const lead = (giorno: string, campagnaId: string | null, persona = false): LeadR
   fonte: "Modulo sito",
   tags: ["nuovo"],
   attribuito: !!campagnaId,
+  pipelines: [],
   ...(persona ? { persona: { data: `${giorno}T10:00:00Z`, nome: "Persona di prova", email: "prova@example.com", telefono: "+390000000", gruppo: "", annuncio: "" } } : {}),
 });
 
@@ -137,8 +138,8 @@ test("Panoramica: una riga per cliente, celle vuote se mancano i dati", () => {
       daGiorno: "2026-10-01",
       aGiorno: "2026-10-30",
       fuso: "Europe/Rome",
-      kpi: { lead: 10, leadMeta: 4, oppCreate: 5, vinte: 2, perse: 1, venduto: 3000, tassoChiusura: 66.7, valoreMedio: 1500 },
-      kpiPrec: { lead: 8, leadMeta: 3, oppCreate: 4, vinte: 1, perse: 1, venduto: 1000, tassoChiusura: 50, valoreMedio: 1000 },
+      kpi: { lead: 10, leadMeta: 4, leadLinkedin: 1, oppCreate: 5, vinte: 2, perse: 1, venduto: 3000, tassoChiusura: 66.7, valoreMedio: 1500 },
+      kpiPrec: { lead: 8, leadMeta: 3, leadLinkedin: 0, oppCreate: 4, vinte: 1, perse: 1, venduto: 1000, tassoChiusura: 50, valoreMedio: 1000 },
       leadGiornalieri: [],
       canali: [],
       avvisi: [{ livello: "attenzione", testo: "Lead in calo" }],

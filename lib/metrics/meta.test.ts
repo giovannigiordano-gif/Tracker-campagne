@@ -16,7 +16,7 @@ function riga(giorno: string, campagnaId: string, spesa: number, leadMeta = 0, f
   return { act: ACT, giorno, campagnaId, campagna: `Campagna ${campagnaId}`, spesa, impression: spesa * 100, reach: spesa * 50, frequenza, clic: spesa * 2, clicLink: spesa, leadMeta };
 }
 function lead(giorno: string, canale: Canale, campagnaId: string | null = null): LeadRow {
-  return { id: Math.random().toString(36), giorno, canale, campagnaId, campagna: campagnaId, fonte: "", tags: [], attribuito: !!campagnaId };
+  return { id: Math.random().toString(36), giorno, canale, campagnaId, campagna: campagnaId, fonte: "", tags: [], attribuito: !!campagnaId, pipelines: [] };
 }
 function opp(creata: string, campagnaId: string, status: "open" | "won" = "open", valore = 0): OppRow {
   return { id: Math.random().toString(36), pipelineId: "p", stageId: "s", status, valore, creata, chiusa: status === "won" ? creata : null, canale: "Meta Ads", campagnaId, campagna: campagnaId, fonte: "", tags: [] };

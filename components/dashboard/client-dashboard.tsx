@@ -4,7 +4,7 @@
 // modo "agenzia": la vede il titolare (con Aggiorna e Condividi).
 // modo "condivisa": la vede il cliente dal link condiviso, identica ma senza Aggiorna e Condividi.
 import { useMemo, useState } from "react";
-import { FileSpreadsheet, SearchX, X } from "lucide-react";
+import { FileSpreadsheet, Filter, SearchX, X } from "lucide-react";
 import { RefreshButton } from "@/components/refresh-button";
 import { Condividi } from "./condividi";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -51,7 +51,7 @@ import type { Analisi } from "@/lib/analisi";
 import { ProvenienzaPanel, type SchedaProvenienza } from "./ranking-panel";
 import { SectionNav } from "./section-nav";
 import { TrendPanel } from "./trend-panel";
-import { Fonte, PannelloNumeri, Riquadro, type VoceNumero } from "./ui";
+import { Fonte, PannelloNumeri, Riquadro, type GruppoNumeri, type VoceNumero } from "./ui";
 import { createColumnHelper } from "@tanstack/react-table";
 
 // ---------------------------------------------------------------- colonne delle tabelle
@@ -149,16 +149,6 @@ export function ClientDashboard({
     [opp, giorni, nomiPipeline],
   );
 
-  const prec = (n: number) => formatNumero(n);
-  const numeri: VoceNumero[] = [
-    { etichetta: "Lead", valore: formatNumero(kpi.lead), delta: variazionePct(kpi.lead, kpiPrec.lead), precedente: prec(kpiPrec.lead), spiegazione: "Contatti creati in GHL nel periodo" },
-    { etichetta: "Da annunci Meta", valore: formatNumero(kpi.leadMeta), delta: variazionePct(kpi.leadMeta, kpiPrec.leadMeta), precedente: prec(kpiPrec.leadMeta), spiegazione: "Lead arrivati da annunci Facebook/Instagram (Paid Social)" },
-    { etichetta: "Opportunità", valore: formatNumero(kpi.oppCreate), delta: variazionePct(kpi.oppCreate, kpiPrec.oppCreate), precedente: prec(kpiPrec.oppCreate), spiegazione: "Opportunità create in GHL nel periodo" },
-    { etichetta: "Vinte", valore: formatNumero(kpi.vinte), delta: variazionePct(kpi.vinte, kpiPrec.vinte), precedente: prec(kpiPrec.vinte), spiegazione: "Opportunità chiuse come vinte nel periodo" },
-    { etichetta: "Venduto", valore: formatValuta(kpi.venduto, valuta, kpi.venduto >= 100_000), valoreBreve: formatValuta(kpi.venduto, valuta, kpi.venduto >= 10_000), delta: variazionePct(kpi.venduto, kpiPrec.venduto), precedente: formatValuta(kpiPrec.venduto, valuta, true), spiegazione: "Valore delle opportunità vinte nel periodo" },
-    { etichetta: "Tasso di chiusura", valore: formatPercentuale(kpi.tassoChiusura), delta: kpi.tassoChiusura !== null && kpiPrec.tassoChiusura !== null ? variazionePct(kpi.tassoChiusura, kpiPrec.tassoChiusura) : null, precedente: formatPercentuale(kpiPrec.tassoChiusura), spiegazione: "Vinte diviso (vinte + perse) nel periodo" },
-  ];
-
   // Etichette leggibili per i filtri attivi
   const etichettaCampagna = (k: string) => {
     if (k === SENZA_CAMPAGNA) return "(senza campagna)";
@@ -174,6 +164,71 @@ export function ClientDashboard({
       ? [{ gruppo: "Pipeline", etichetta: nomiPipeline.get(filtri.pipeline) ?? "", togli: () => setFiltri((f) => ({ ...f, pipeline: null })) }]
       : []),
   ];
+
+  // ------------------------------------------------ pannello nero dei numeri: seguono tutti i filtri della pagina
+  const nomePipeline = filtri.pipeline ? nomiPipeline.get(filtri.pipeline) ?? "" : null;
+  const conteggio = (etichetta: string, n: number, nPrec: number, spiegazione: string, conQuota = false): VoceNumero => ({
+    etichetta,
+    valore: formatNumero(n),
+    quota: conQuota && kpi.lead > 0 ? `${formatPercentuale((n / kpi.lead) * 100)} dei lead` : undefined,
+    delta: variazionePct(n, nPrec),
+    precedente: formatNumero(nPrec),
+    spiegazione,
+  });
+  // Nel link condiviso una piattaforma senza account e senza lead non compare
+  const mostraAds = (id: "meta" | "linkedin", n: number, nPrec: number) =>
+    modo !== "condivisa" || dati[id].stato !== "non-associato" || n + nPrec > 0;
+  const altri = (k: typeof kpi) => k.lead - k.leadMeta - k.leadLinkedin;
+  const gruppiNumeri: GruppoNumeri[] = [
+    {
+      titolo: "Lead",
+      voci: [
+        conteggio(
+          "Lead totali",
+          kpi.lead,
+          kpiPrec.lead,
+          nomePipeline !== null
+            ? `Contatti creati in GHL nel periodo con almeno un'opportunità nella pipeline «${nomePipeline}»`
+            : "Contatti creati in GHL nel periodo"
+        ),
+        ...(mostraAds("meta", kpi.leadMeta, kpiPrec.leadMeta)
+          ? [conteggio("Da annunci Meta", kpi.leadMeta, kpiPrec.leadMeta, "Lead con canale «Meta Ads»: annunci Facebook e Instagram", true)]
+          : []),
+        ...(mostraAds("linkedin", kpi.leadLinkedin, kpiPrec.leadLinkedin)
+          ? [conteggio("Da annunci LinkedIn", kpi.leadLinkedin, kpiPrec.leadLinkedin, "Lead con canale «LinkedIn Ads»: annunci a pagamento su LinkedIn", true)]
+          : []),
+        conteggio("Da altri canali", altri(kpi), altri(kpiPrec), "Tutti gli altri lead: ricerca, social organico, diretti, referral, inseriti a mano…", true),
+      ],
+    },
+    {
+      titolo: "Opportunità e vendite",
+      voci: [
+        conteggio("Opportunità", kpi.oppCreate, kpiPrec.oppCreate, "Opportunità create in GHL nel periodo"),
+        conteggio("Vinte", kpi.vinte, kpiPrec.vinte, "Opportunità chiuse come vinte nel periodo"),
+        {
+          etichetta: "Venduto",
+          valore: formatValuta(kpi.venduto, valuta, kpi.venduto >= 1_000_000),
+          valoreBreve: formatValuta(kpi.venduto, valuta, kpi.venduto >= 10_000),
+          delta: variazionePct(kpi.venduto, kpiPrec.venduto),
+          precedente: formatValuta(kpiPrec.venduto, valuta, kpiPrec.venduto >= 1_000_000),
+          spiegazione: "Valore delle opportunità vinte nel periodo",
+        },
+        {
+          etichetta: "Tasso di chiusura",
+          valore: formatPercentuale(kpi.tassoChiusura),
+          delta: kpi.tassoChiusura !== null && kpiPrec.tassoChiusura !== null ? variazionePct(kpi.tassoChiusura, kpiPrec.tassoChiusura) : null,
+          precedente: formatPercentuale(kpiPrec.tassoChiusura),
+          spiegazione: "Vinte diviso (vinte + perse) nel periodo",
+        },
+      ],
+    },
+  ];
+  const notaFiltri = chips.length > 0 && (
+    <>
+      <Filter className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+      <span>Numeri filtrati per {chips.map((c) => `${c.gruppo.toLowerCase()} «${c.etichetta}»`).join(", ")}</span>
+    </>
+  );
 
   const periodoTesto = `dal ${formatGiorno(periodo.daGiorno)} al ${formatGiorno(periodo.aGiorno)}`;
 
@@ -281,11 +336,12 @@ export function ClientDashboard({
       )}
 
       <div id="numeri" className="flex scroll-mt-32 flex-col gap-2">
-        <PannelloNumeri voci={numeri} confronto={confronto} />
+        <PannelloNumeri gruppi={gruppiNumeri} confronto={confronto} nota={notaFiltri} />
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <Fonte aggiornatoIl={dati.aggiornatoIl}>
             Fonte GoHighLevel, periodo {periodoTesto}. Lead e opportunità si contano alla data di creazione; vinte, venduto e tasso
-            di chiusura alla data in cui l&apos;opportunità è stata chiusa.
+            di chiusura alla data in cui l&apos;opportunità è stata chiusa. Il canale dei lead viene dall&apos;attribuzione in GHL.
+            {nomePipeline !== null && " Con una pipeline scelta, i lead sono i contatti che hanno almeno un'opportunità in quella pipeline."}
           </Fonte>
           <div className="ml-auto">
             <MenuScarica titolo="Numeri" contesto={contesto} info={info("GoHighLevel")} tabelle={() => [tabellaNumeri(lead, opp, periodo, valuta)]} />

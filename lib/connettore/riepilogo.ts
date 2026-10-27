@@ -58,15 +58,17 @@ function incrocio({ leadGhl, cplReale, ...resto }: KpiIncrocio) {
   return { lead: leadGhl, costoPerLead: arrotonda(cplReale), ...arrotondaTutto(resto) };
 }
 
-// Numeri GHL: "leadMeta" diventa "leadDaMetaAds" (sono contatti del CRM con canale Meta Ads, non lead contati da Meta)
-function numeriGhl({ leadMeta, ...resto }: Kpi) {
-  return { leadDaMetaAds: leadMeta, ...arrotondaTutto(resto) };
+// Numeri GHL: "leadMeta" diventa "leadDaMetaAds" e "leadLinkedin" "leadDaLinkedInAds"
+// (sono contatti del CRM arrivati da quei canali, non lead contati dalle piattaforme)
+function numeriGhl({ leadMeta, leadLinkedin, ...resto }: Kpi) {
+  return { leadDaMetaAds: leadMeta, leadDaLinkedInAds: leadLinkedin, ...arrotondaTutto(resto) };
 }
 
 function variazioni(a: Kpi, p: Kpi) {
   return {
     lead: arrotonda(variazionePct(a.lead, p.lead)),
     leadDaMetaAds: arrotonda(variazionePct(a.leadMeta, p.leadMeta)),
+    leadDaLinkedInAds: arrotonda(variazionePct(a.leadLinkedin, p.leadLinkedin)),
     opportunita: arrotonda(variazionePct(a.oppCreate, p.oppCreate)),
     vinte: arrotonda(variazionePct(a.vinte, p.vinte)),
     venduto: arrotonda(variazionePct(a.venduto, p.venduto)),

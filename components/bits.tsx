@@ -65,6 +65,28 @@ function ScheletroNumeri({ quanti = 6 }: { quanti?: number }) {
   );
 }
 
+// Pannello dei numeri del cliente: due righe con titolo (Lead; Opportunità e vendite), quattro numeri ciascuna
+function ScheletroNumeriGruppi() {
+  return (
+    <div className="flex flex-col rounded-panel bg-inverse p-panel lg:px-8 lg:py-7">
+      {[0, 1].map((g) => (
+        <div key={g} className={g > 0 ? "mt-6 border-t border-inverse-border pt-6" : undefined}>
+          <Skeleton className="h-5 w-24 bg-inverse-raised" />
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-4 xl:gap-x-6">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="flex min-w-0 flex-col gap-2">
+                <Skeleton className="h-3.5 w-20 max-w-full bg-inverse-raised" />
+                <Skeleton className="h-9 w-28 max-w-full bg-inverse-raised" />
+                <Skeleton className="h-3.5 w-24 max-w-full bg-inverse-raised" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ScheletroPannello({ className, righe = 4 }: { className?: string; righe?: number }) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-4 rounded-panel bg-card p-panel shadow-card", className)}>
@@ -124,7 +146,7 @@ export function ScheletroCliente() {
         <Skeleton className="h-4 w-[28rem] max-w-full" />
       </div>
       <Skeleton className="h-14 rounded-panel" />
-      <ScheletroNumeri />
+      <ScheletroNumeriGruppi />
       <div className="flex flex-col gap-4 rounded-panel bg-card p-panel shadow-card">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-72" />

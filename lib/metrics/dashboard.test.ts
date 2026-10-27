@@ -3,10 +3,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Canale } from "../ghl/types";
-import { leadPerCanale, raggruppaCanali, type LeadRow } from "./dashboard";
+import { calcolaKpi, FILTRI_VUOTI, filtraLead, filtraOpp, leadPerCanale, raggruppaCanali, type LeadRow, type OppRow } from "./dashboard";
 
-function lead(giorno: string, canale: Canale): LeadRow {
-  return { id: Math.random().toString(36), giorno, canale, campagnaId: null, campagna: null, fonte: "", tags: [], attribuito: false };
+function lead(giorno: string, canale: Canale, pipelines: string[] = []): LeadRow {
+  return { id: Math.random().toString(36), giorno, canale, campagnaId: null, campagna: null, fonte: "", tags: [], attribuito: false, pipelines };
 }
 
 const giorni = new Set(["2026-10-01", "2026-10-02"]);
@@ -58,4 +58,26 @@ test("raggruppaCanali senza resto non aggiunge Altro", () => {
     { canale: "Diretto" as const, lead: 1 },
   ];
   assert.deepEqual(raggruppaCanali(canali, 3), canali);
+});
+
+test("i numeri contano a parte i lead da annunci Meta e da annunci LinkedIn", () => {
+  const k = calcolaKpi([lead("2026-10-01", "Meta Ads"), lead("2026-10-01", "LinkedIn Ads"), lead("2026-10-02", "LinkedIn Ads"), lead("2026-10-02", "Diretto")], [], giorni);
+  assert.equal(k.lead, 4);
+  assert.equal(k.leadMeta, 1);
+  assert.equal(k.leadLinkedin, 2);
+});
+
+test("con una pipeline scelta contano solo i lead con un'opportunità in quella pipeline", () => {
+  const righe = [lead("2026-10-01", "Meta Ads", ["p1"]), lead("2026-10-01", "LinkedIn Ads", ["p1", "p2"]), lead("2026-10-02", "Meta Ads", ["p2"]), lead("2026-10-02", "Diretto")];
+  const opp: OppRow[] = [
+    { id: "o1", pipelineId: "p1", stageId: "s", status: "open", valore: 0, creata: "2026-10-01", chiusa: null, canale: "Meta Ads", campagnaId: null, campagna: null, fonte: "", tags: [] },
+    { id: "o2", pipelineId: "p2", stageId: "s", status: "won", valore: 500, creata: "2026-10-02", chiusa: "2026-10-02", canale: "Meta Ads", campagnaId: null, campagna: null, fonte: "", tags: [] },
+  ];
+  // Senza filtro: tutti i lead
+  assert.equal(filtraLead(righe, FILTRI_VUOTI).length, 4);
+  const f = { ...FILTRI_VUOTI, pipeline: "p1" };
+  const k = calcolaKpi(filtraLead(righe, f), filtraOpp(opp, f), giorni);
+  assert.deepEqual([k.lead, k.leadMeta, k.leadLinkedin, k.oppCreate, k.vinte], [2, 1, 1, 1, 0]);
+  const k2 = calcolaKpi(filtraLead(righe, { ...FILTRI_VUOTI, pipeline: "p2" }), filtraOpp(opp, { ...FILTRI_VUOTI, pipeline: "p2" }), giorni);
+  assert.deepEqual([k2.lead, k2.leadMeta, k2.leadLinkedin, k2.vinte, k2.venduto], [2, 1, 1, 1, 500]);
 });

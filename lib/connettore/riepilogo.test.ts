@@ -21,6 +21,7 @@ function lead(giorno: string, campagnaId: string | null, conPersona = false): Le
     fonte: "Modulo sito",
     tags: ["nuovo"],
     attribuito: !!campagnaId,
+    pipelines: [],
     ...(conPersona ? { persona: { data: giorno, nome: PERSONALI[0], email: PERSONALI[1], telefono: PERSONALI[2], gruppo: "", annuncio: "" } } : {}),
   };
 }

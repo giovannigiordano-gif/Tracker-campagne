@@ -29,10 +29,8 @@ const intervallo = (da: string, a: string) => `${da.split("-").reverse().join("/
 // ---------------------------------------------------------------- GoHighLevel
 export function tabellaNumeri(lead: LeadRow[], opp: OppRow[], periodo: Periodo, valuta: string): TabellaExport {
   const riga = (giorni: string[], da: string, a: string, nome: string) => {
-    const g = new Set(giorni);
-    const k = calcolaKpi(lead, opp, g);
-    const daCanale = (c: LeadRow["canale"]) => lead.filter((l) => l.canale === c && g.has(l.giorno)).length;
-    return [nome, da, a, k.lead, daCanale("Meta Ads"), daCanale("LinkedIn Ads"), k.oppCreate, k.vinte, k.perse, k.venduto, k.tassoChiusura];
+    const k = calcolaKpi(lead, opp, new Set(giorni));
+    return [nome, da, a, k.lead, k.leadMeta, k.leadLinkedin, k.oppCreate, k.vinte, k.perse, k.venduto, k.tassoChiusura];
   };
   return {
     nome: "Numeri",

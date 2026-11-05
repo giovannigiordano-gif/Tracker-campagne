@@ -18,7 +18,7 @@ function riga(giorno: string, campagnaId: string, spesa: number, leadMeta = 0, f
 function lead(giorno: string, canale: Canale, campagnaId: string | null = null): LeadRow {
   return { id: Math.random().toString(36), giorno, canale, campagnaId, campagna: campagnaId, fonte: "", tags: [], attribuito: !!campagnaId, pipelines: [] };
 }
-function opp(creata: string, campagnaId: string, status: "open" | "won" = "open", valore = 0): OppRow {
+function opp(creata: string, campagnaId: string | null, status: "open" | "won" = "open", valore = 0): OppRow {
   return { id: Math.random().toString(36), pipelineId: "p", stageId: "s", status, valore, creata, chiusa: status === "won" ? creata : null, canale: "Meta Ads", campagnaId, campagna: campagnaId, fonte: "", tags: [] };
 }
 function dati(parziale: Partial<DatiMeta> = {}): DatiMeta {
@@ -59,15 +59,8 @@ test("kpiMeta somma solo i giorni del periodo e calcola costo per lead, CTR, CPC
   assert.equal(k.cpm, 10);
 });
 
-test("kpiIncrocio usa solo i lead e le opportunità di GHL arrivati da Meta", () => {
-  const k = kpiIncrocio(
-    100,
-    [lead("2026-10-01", "Meta Ads", "c1"), lead("2026-10-02", "Meta Ads"), lead("2026-10-02", "Diretto"), lead("2026-09-30", "Meta Ads")],
-    [opp("2026-10-01", "c1"), opp("2026-10-02", "c1", "won", 500)],
-    new Set(giorni)
-  );
-  assert.equal(k.leadGhl, 2);
-  assert.equal(k.cplReale, 50);
+test("kpiIncrocio usa solo le opportunità di GHL arrivate da Meta", () => {
+  const k = kpiIncrocio(100, [opp("2026-10-01", "c1"), opp("2026-10-02", "c1", "won", 500)], new Set(giorni));
   assert.equal(k.opportunita, 2);
   assert.equal(k.vinte, 1);
   assert.equal(k.venduto, 500);
@@ -76,45 +69,46 @@ test("kpiIncrocio usa solo i lead e le opportunità di GHL arrivati da Meta", ()
 });
 
 test("senza spesa o senza lead i costi sono vuoti, non infiniti", () => {
-  const k = kpiIncrocio(0, [], [], new Set(giorni));
-  assert.equal(k.cplReale, null);
+  const k = kpiIncrocio(0, [], new Set(giorni));
+  assert.equal(k.costoVendita, null);
   assert.equal(k.roas, null);
   assert.equal(kpiMeta([], new Set(giorni)).cplMeta, null);
 });
 
-test("righeCampagne abbina i lead GHL alla campagna Meta tramite l'ID campagna", () => {
+test("righeCampagne: lead e costo per lead di Meta, opportunità GHL abbinate tramite l'ID campagna", () => {
   const righe = righeCampagne(
     dati({ righe: [riga("2026-10-01", "c1", 60, 3), riga("2026-10-01", "c2", 40, 0)] }),
-    [lead("2026-10-01", "Meta Ads", "c1"), lead("2026-10-01", "Meta Ads", "c1"), lead("2026-10-02", "Meta Ads")],
-    [opp("2026-10-02", "c1", "won", 300)],
+    [opp("2026-10-02", "c1", "won", 300), opp("2026-10-02", null)],
     new Set(giorni)
   );
   const c1 = righe.find((r) => r.id === "c1")!;
   assert.equal(c1.spesa, 60);
   assert.equal(c1.leadMeta, 3);
-  assert.equal(c1.leadGhl, 2);
-  assert.equal(c1.cplReale, 30);
+  assert.equal(c1.cplMeta, 20);
   assert.equal(c1.venduto, 300);
   assert.equal(c1.roas, 5);
-  assert.equal(righe.find((r) => r.id === "c2")!.leadGhl, 0);
-  // Il lead Meta senza ID campagna finisce in una riga a parte
-  assert.equal(righe.find((r) => r.id === "senza-campagna")?.leadGhl, 1);
+  const c2 = righe.find((r) => r.id === "c2")!;
+  assert.equal(c2.leadMeta, 0);
+  assert.equal(c2.cplMeta, null, "spesa senza lead: costo per lead non disponibile, non infinito");
+  // L'opportunità Meta senza ID campagna finisce in una riga a parte
+  assert.equal(righe.find((r) => r.id === "senza-campagna")?.opportunita, 1);
   // Ordine: dalla campagna che spende di più
   assert.equal(righe[0].id, "c1");
 });
 
-test("serieGiornaliera dà spesa, lead Meta e lead GHL per ogni giorno del periodo", () => {
-  const s = serieGiornaliera([riga("2026-10-02", "c1", 30, 2)], [lead("2026-10-02", "Meta Ads", "c1")], giorni);
+test("serieGiornaliera dà spesa e lead di Meta per ogni giorno del periodo", () => {
+  const s = serieGiornaliera([riga("2026-10-02", "c1", 30, 2)], giorni);
   assert.equal(s.length, 4);
-  assert.deepEqual(s[1], { giorno: "2026-10-02", spesa: 30, leadMeta: 2, leadGhl: 1 });
-  assert.deepEqual(s[0], { giorno: "2026-10-01", spesa: 0, leadMeta: 0, leadGhl: 0 });
+  assert.deepEqual(s[1], { giorno: "2026-10-02", spesa: 30, leadMeta: 2 });
+  assert.deepEqual(s[0], { giorno: "2026-10-01", spesa: 0, leadMeta: 0 });
 });
 
 // ---------------------------------------------------------------- criticità
 const base = { giorni, giorniPrec, valuta: "EUR" };
 
-test("costo per lead reale sopra l'obiettivo: attenzione", () => {
-  const c = calcolaCriticita({ ...base, meta: dati({ righe: [riga("2026-10-01", "c1", 200, 4)] }), lead: [lead("2026-10-01", "Meta Ads", "c1"), lead("2026-10-02", "Meta Ads", "c1")], obiettivoCpl: 50 });
+test("costo per lead di Meta sopra l'obiettivo: attenzione", () => {
+  // 200 € e 2 lead secondo Meta = 100 € a lead; i lead del CRM non contano per il costo per lead
+  const c = calcolaCriticita({ ...base, meta: dati({ righe: [riga("2026-10-01", "c1", 200, 2)] }), lead: [lead("2026-10-01", "Meta Ads", "c1"), lead("2026-10-02", "Meta Ads", "c1"), lead("2026-10-02", "Meta Ads", "c1"), lead("2026-10-02", "Meta Ads", "c1")], obiettivoCpl: 50 });
   const cpl = c.find((x) => x.tipo === "cpl-alto");
   assert.ok(cpl, "deve segnalare il costo per lead alto");
   assert.equal(cpl.livello, "attenzione");
@@ -122,11 +116,10 @@ test("costo per lead reale sopra l'obiettivo: attenzione", () => {
 });
 
 test("senza obiettivo: segnala il costo per lead peggiorato di oltre il 50%, solo con abbastanza lead", () => {
-  const leadPrec = Array.from({ length: 5 }, () => lead("2026-09-28", "Meta Ads", "c1"));
-  const leadOra = Array.from({ length: 5 }, () => lead("2026-10-02", "Meta Ads", "c1"));
-  const peggiorato = calcolaCriticita({ ...base, meta: dati({ righe: [riga("2026-09-28", "c1", 100), riga("2026-10-02", "c1", 200)] }), lead: [...leadPrec, ...leadOra] });
+  // 100 € e 5 lead prima (20 €), 200 € e 5 lead ora (40 €): +100%
+  const peggiorato = calcolaCriticita({ ...base, meta: dati({ righe: [riga("2026-09-28", "c1", 100, 5), riga("2026-10-02", "c1", 200, 5)] }), lead: [] });
   assert.ok(peggiorato.some((x) => x.tipo === "cpl-alto"));
-  const pochiLead = calcolaCriticita({ ...base, meta: dati({ righe: [riga("2026-09-28", "c1", 10), riga("2026-10-02", "c1", 200)] }), lead: [lead("2026-09-28", "Meta Ads", "c1"), lead("2026-10-02", "Meta Ads", "c1")] });
+  const pochiLead = calcolaCriticita({ ...base, meta: dati({ righe: [riga("2026-09-28", "c1", 10, 1), riga("2026-10-02", "c1", 200, 1)] }), lead: [] });
   assert.ok(!pochiLead.some((x) => x.tipo === "cpl-alto"), "con meno di 5 lead è solo rumore");
 });
 

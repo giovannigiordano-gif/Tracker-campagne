@@ -31,6 +31,7 @@ export type Piattaforma = {
   id: IdPiattaforma;
   nome: string; // per le etichette ("Spesa", fonte "Meta + GHL"...)
   canale: Canale; // canale dei lead in GHL
+  lead: string; // che cosa conta come lead per la piattaforma (nella nota sulla fonte)
   titolo: string; // titolo della sezione nella dashboard
   impostazioni: string; // dove si collega e si associa l'account
   giorniUtc: boolean; // LinkedIn conta i giorni in UTC, Meta nel fuso dell'account pubblicitario
@@ -44,6 +45,7 @@ export const PIATTAFORME: Record<IdPiattaforma, Piattaforma> = {
     id: "meta",
     nome: "Meta",
     canale: "Meta Ads",
+    lead: "risultati «lead» di Meta, da moduli istantanei e dal sito",
     titolo: "Campagne Meta",
     impostazioni: "/impostazioni#meta-ads",
     giorniUtc: false,
@@ -60,6 +62,7 @@ export const PIATTAFORME: Record<IdPiattaforma, Piattaforma> = {
     id: "linkedin",
     nome: "LinkedIn",
     canale: "LinkedIn Ads",
+    lead: "lead dei moduli LinkedIn (Lead Gen Form)",
     titolo: "Campagne LinkedIn",
     impostazioni: "/impostazioni#linkedin-ads",
     giorniUtc: true,

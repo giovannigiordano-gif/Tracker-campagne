@@ -11,15 +11,15 @@ import { costruisciRighe, datiGrezziCliente } from "./cliente";
 import { caricaLinkedInCliente } from "./linkedin-cliente";
 import { caricaMetaCliente, type EsitoMeta } from "./meta-cliente";
 import { calcolaCriticita } from "../metrics/criticita";
-import { kpiIncrocio, kpiMeta } from "../metrics/meta";
+import { kpiMeta } from "../metrics/meta";
 import { opzioniIncrocio, PIATTAFORME, type Piattaforma } from "../metrics/piattaforme";
 import type { LeadRow } from "../metrics/dashboard";
 import type { Canale } from "../ghl/types";
 
 export type Avviso = { livello: "errore" | "attenzione"; testo: string };
 
-// Spesa e costo per lead (spesa / lead arrivati in GHL dal canale della piattaforma), periodo e precedente
-export type NumeriAds = { spesa: number; spesaPrec: number; cplReale: number | null; cplRealePrec: number | null };
+// Spesa, lead registrati dalla piattaforma e costo per lead (spesa / quei lead), periodo e precedente
+export type NumeriAds = { spesa: number; spesaPrec: number; lead: number; costoPerLead: number | null; costoPerLeadPrec: number | null };
 
 export type RigaPanoramica = {
   locationId: string;
@@ -168,14 +168,9 @@ async function aggiungiAds(
   const opz = opzioniIncrocio(p, esito.dati);
   const g = new Set(corrente.giorni);
   const gp = new Set(precedente.giorni);
-  const spesa = kpiMeta(esito.dati.righe, g).spesa;
-  const spesaPrec = kpiMeta(esito.dati.righe, gp).spesa;
-  riga[p.id] = {
-    spesa,
-    spesaPrec,
-    cplReale: kpiIncrocio(spesa, lead, [], g, opz.canale).cplReale,
-    cplRealePrec: kpiIncrocio(spesaPrec, lead, [], gp, opz.canale).cplReale,
-  };
+  const ora = kpiMeta(esito.dati.righe, g);
+  const prima = kpiMeta(esito.dati.righe, gp);
+  riga[p.id] = { spesa: ora.spesa, spesaPrec: prima.spesa, lead: ora.leadMeta, costoPerLead: ora.cplMeta, costoPerLeadPrec: prima.cplMeta };
   const criticita = calcolaCriticita({
     meta: esito.dati,
     lead,

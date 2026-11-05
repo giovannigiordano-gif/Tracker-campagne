@@ -41,7 +41,9 @@ export const DEFINIZIONI = {
   canale_meta_ads: "Lead e opportunità con attribuzione 'Paid Social' o con ID di campagna/annuncio Meta.",
   canale_linkedin_ads:
     "Lead e opportunità con fonte LinkedIn e un segno di traffico a pagamento (sessione 'Paid', utm_medium a pagamento, ID di campagna); senza quel segno sono 'Social organico'.",
-  costoPerLead: "Spesa della piattaforma / lead arrivati in GHL dal suo canale (Meta Ads o LinkedIn Ads): i lead si contano solo nel CRM.",
+  leadPiattaforma:
+    "Nelle sezioni meta e linkedin, 'lead' sono i lead registrati dalla piattaforma: su Meta le azioni 'lead' (moduli istantanei e sito), su LinkedIn i lead dei moduli (Lead Gen Form). Sono una misura diversa dai contatti creati in GHL (sezione ghl): non sommarle.",
+  costoPerLead: "Spesa della piattaforma / lead registrati dalla piattaforma.",
   roasCrm: "Venduto in GHL dal canale della piattaforma / spesa della piattaforma.",
   pipeline:
     "GHL non conserva lo storico dei cambi di fase: 'oggiInQuestaFase' è reale, 'raggiunteStima' e 'conversioneStimaPct' sono stime (fasi percorse in ordine) e possono essere inaffidabili con fasi di uscita intermedie.",
@@ -49,13 +51,13 @@ export const DEFINIZIONI = {
     "Abbinamento lead → campagna dai campi di attribuzione di GHL: una parte dei lead può non avere campagna (vedi percentualeAttribuiti).",
 };
 
-// Lead e costo per lead solo dal CRM (scelta del titolare del 2026-10-20): i lead conteggiati da Meta non si
-// mandano a Claude, così il confronto tra le due cifre non entra nelle analisi.
-function numeriMeta({ leadMeta: _leadMeta, cplMeta: _cplMeta, ...resto }: KpiMeta) {
-  return arrotondaTutto(resto);
+// Lead e costo per lead della piattaforma, come nelle sezioni della dashboard (scelta del titolare del 2026-11-05)
+function numeriMeta({ leadMeta, cplMeta, ...resto }: KpiMeta) {
+  return { lead: leadMeta, costoPerLead: arrotonda(cplMeta), ...arrotondaTutto(resto) };
 }
-function incrocio({ leadGhl, cplReale, ...resto }: KpiIncrocio) {
-  return { lead: leadGhl, costoPerLead: arrotonda(cplReale), ...arrotondaTutto(resto) };
+// Opportunità e vendite arrivate in GHL dal canale della piattaforma
+function incrocio(k: KpiIncrocio) {
+  return arrotondaTutto(k);
 }
 
 // Numeri GHL: "leadMeta" diventa "leadDaMetaAds" e "leadLinkedin" "leadDaLinkedInAds"
@@ -134,7 +136,7 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
     })),
   };
 
-  // Sezione di una piattaforma pubblicitaria (Meta o LinkedIn): stessi campi, stessa regola sui lead (solo dal CRM)
+  // Sezione di una piattaforma pubblicitaria (Meta o LinkedIn): stessi campi; lead e costo per lead della piattaforma
   function sezioneAds(p: Piattaforma, esito: EsitoMeta): Record<string, unknown> {
     if (esito.stato === "non-associato") {
       return { stato: "non-associato", nota: `Nessun account pubblicitario ${p.nome} associato a questo cliente (Impostazioni dell'app).` };
@@ -145,18 +147,18 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
     const km = kpiMeta(d.righe, giorni);
     const kmPrec = kpiMeta(d.righe, giorniPrec);
     const obiettivi = new Map(d.campagne.map((c) => [c.id, c.obiettivo]));
-    const punti = serieGiornaliera(d.righe, lead, periodo.giorni, opz.canale);
+    const punti = serieGiornaliera(d.righe, periodo.giorni);
     // Stessa granularità dell'andamento GHL
     const andamento =
       granularita === "giorno"
-        ? punti.map((p) => ({ da: p.giorno, a: p.giorno, spesa: arrotonda(p.spesa), lead: p.leadGhl }))
+        ? punti.map((p) => ({ da: p.giorno, a: p.giorno, spesa: arrotonda(p.spesa), lead: p.leadMeta }))
         : Array.from({ length: Math.ceil(punti.length / 7) }, (_, i) => {
             const blocco = punti.slice(i * 7, i * 7 + 7);
             return {
               da: blocco[0].giorno,
               a: blocco.at(-1)!.giorno,
               spesa: arrotonda(blocco.reduce((s, p) => s + p.spesa, 0)),
-              lead: blocco.reduce((s, p) => s + p.leadGhl, 0),
+              lead: blocco.reduce((s, p) => s + p.leadMeta, 0),
             };
           });
     return {
@@ -166,13 +168,13 @@ export function riepilogoCliente(dati: DatiCliente, account: Pick<Account, "note
       account: d.account.map((a) => ({ id: a.id, nome: a.nome, valuta: a.valuta, stato: a.statoTesto ?? STATI_ACCOUNT[a.stato] ?? `codice ${a.stato}` })),
       numeri: { attuale: numeriMeta(km), precedente: numeriMeta(kmPrec) },
       incrocio: {
-        attuale: incrocio(kpiIncrocio(km.spesa, lead, opp, giorni, opz.canale)),
-        precedente: incrocio(kpiIncrocio(kmPrec.spesa, lead, opp, giorniPrec, opz.canale)),
+        attuale: incrocio(kpiIncrocio(km.spesa, opp, giorni, opz.canale)),
+        precedente: incrocio(kpiIncrocio(kmPrec.spesa, opp, giorniPrec, opz.canale)),
       },
-      campagne: righeCampagne(d, lead, opp, giorni, opz).map(({ leadMeta: _leadMeta, leadGhl, cplReale, ...c }) => ({
+      campagne: righeCampagne(d, opp, giorni, opz).map(({ leadMeta, cplMeta, ...c }) => ({
         ...arrotondaTutto(c),
-        lead: leadGhl,
-        costoPerLead: arrotonda(cplReale),
+        lead: leadMeta,
+        costoPerLead: arrotonda(cplMeta),
         id: c.id === SENZA_CAMPAGNA_META ? null : c.id,
         obiettivo: obiettivi.get(c.id) ?? null,
       })),

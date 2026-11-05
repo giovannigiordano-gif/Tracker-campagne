@@ -43,9 +43,9 @@ export function tabellaPanoramica(righe: RigaPanoramica[]): TabellaExport {
       r.kpiPrec?.venduto ?? null,
       r.kpi?.tassoChiusura ?? null,
       r.meta?.spesa ?? null,
-      r.meta?.cplReale ?? null,
+      r.meta?.costoPerLead ?? null,
       r.linkedin?.spesa ?? null,
-      r.linkedin?.cplReale ?? null,
+      r.linkedin?.costoPerLead ?? null,
       r.avvisi.map((a) => a.testo).join(" | "),
     ]),
   };

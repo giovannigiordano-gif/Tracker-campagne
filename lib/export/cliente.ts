@@ -1,6 +1,7 @@
 // Tabelle da scaricare per la dashboard di un cliente: le stesse cifre delle sezioni, calcolate con le stesse funzioni.
 // Funzioni pure (cliente.test.ts): girano nel browser con i dati già presenti nella pagina.
-// I lead si contano solo nel CRM (scelta del titolare del 2026-10-20): i lead contati da Meta o LinkedIn non si esportano.
+// Nelle tabelle di Meta e LinkedIn lead e costo per lead sono quelli della piattaforma (scelta del titolare del
+// 2026-11-05), come nelle sezioni della pagina; opportunità e vendite vengono dal CRM.
 import type { AperteFase, DatiCliente } from "../data/cliente";
 import type { EsitoMeta } from "../data/meta-cliente";
 import type { Pipeline } from "../ghl/types";
@@ -210,7 +211,7 @@ export function colonneCampagne(id: IdPiattaforma, valuta: string): ColonnaExpor
     { titolo: "Clic", tipo: "intero" },
     { titolo: "CTR", tipo: "percentuale" },
     { titolo: `Costo per clic (${valuta})`, tipo: "valuta" },
-    { titolo: "Lead nel CRM", tipo: "intero" },
+    { titolo: `Lead (${PIATTAFORME[id].nome})`, tipo: "intero" },
     { titolo: `Costo per lead (${valuta})`, tipo: "valuta" },
     { titolo: "Opportunità", tipo: "intero" },
     { titolo: "Vendite", tipo: "intero" },
@@ -227,8 +228,8 @@ export const rigaCampagna = (r: RigaCampagna): ValoreExport[] => [
   r.clic,
   r.ctr,
   r.cpc,
-  r.leadGhl,
-  r.cplReale,
+  r.leadMeta,
+  r.cplMeta,
   r.opportunita,
   r.vinte,
   r.venduto,
@@ -253,8 +254,8 @@ export function tabelleAds(
 
   const riepilogo = (giorni: Set<string>, nome: string, da: string, a: string) => {
     const k = kpiMeta(esito.dati.righe, giorni);
-    const inc = kpiIncrocio(k.spesa, lead, opp, giorni, opz.canale);
-    return [nome, da, a, k.spesa, k.impression, k.clic, k.ctr, k.cpc, k.cpm, inc.leadGhl, inc.cplReale, inc.opportunita, inc.costoOpportunita, inc.vinte, inc.venduto, inc.costoVendita, inc.roas];
+    const inc = kpiIncrocio(k.spesa, opp, giorni, opz.canale);
+    return [nome, da, a, k.spesa, k.impression, k.clic, k.ctr, k.cpc, k.cpm, k.leadMeta, k.cplMeta, inc.opportunita, inc.costoOpportunita, inc.vinte, inc.venduto, inc.costoVendita, inc.roas];
   };
 
   const tabelle: TabellaExport[] = [
@@ -270,7 +271,7 @@ export function tabelleAds(
         { titolo: "CTR", tipo: "percentuale" },
         { titolo: `Costo per clic (${valuta})`, tipo: "valuta" },
         { titolo: `Costo per 1.000 impression (${valuta})`, tipo: "valuta" },
-        { titolo: `Lead da ${p.canale} nel CRM`, tipo: "intero" },
+        { titolo: `Lead (${p.nome})`, tipo: "intero" },
         { titolo: `Costo per lead (${valuta})`, tipo: "valuta" },
         { titolo: "Opportunità", tipo: "intero" },
         { titolo: `Costo per opportunità (${valuta})`, tipo: "valuta" },
@@ -289,11 +290,11 @@ export function tabelleAds(
       colonne: [
         { titolo: p.giorniUtc ? "Giorno (UTC)" : "Giorno", tipo: "data" },
         { titolo: `Spesa (${valuta})`, tipo: "valuta" },
-        { titolo: `Lead da ${p.canale} nel CRM`, tipo: "intero" },
+        { titolo: `Lead (${p.nome})`, tipo: "intero" },
       ],
-      righe: serieGiornaliera(esito.dati.righe, lead, periodo.giorni, opz.canale).map((s) => [s.giorno, s.spesa, s.leadGhl]),
+      righe: serieGiornaliera(esito.dati.righe, periodo.giorni).map((s) => [s.giorno, s.spesa, s.leadMeta]),
     },
-    { nome: nomeTabellaCampagne(id), colonne: colonneCampagne(id, valuta), righe: righeCampagne(esito.dati, lead, opp, g, opz).map(rigaCampagna) },
+    { nome: nomeTabellaCampagne(id), colonne: colonneCampagne(id, valuta), righe: righeCampagne(esito.dati, opp, g, opz).map(rigaCampagna) },
     {
       nome: `${prefisso}account`,
       colonne: [{ titolo: "ID account" }, { titolo: "Nome" }, { titolo: "Valuta" }, { titolo: "Stato" }, { titolo: "Frequenza ultimi 7 giorni", tipo: "decimale" }],

@@ -33,6 +33,23 @@ export function formatValuta(n: number, valuta = "EUR", compatto = false) {
   return f.format(n);
 }
 
+// Costi unitari (costo per lead, per clic, per vendita): sotto i 100 con i centesimi, perché lì contano
+// ("7,94 €" invece di "8 €", "0,45 €" invece di "0 €"); da 100 in su come gli altri importi
+const centesimi = new Map<string, Intl.NumberFormat>();
+export function formatCosto(n: number, valuta = "EUR") {
+  if (Math.abs(n) >= 100) return formatValuta(n, valuta);
+  let f = centesimi.get(valuta);
+  if (!f) {
+    try {
+      f = new Intl.NumberFormat("it-IT", { style: "currency", currency: valuta, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    } catch {
+      f = new Intl.NumberFormat("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    centesimi.set(valuta, f);
+  }
+  return f.format(n);
+}
+
 // Giorno YYYY-MM-DD in formato breve: "12 ott"
 const meseBreve = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short", timeZone: "UTC" });
 export const formatGiornoBreve = (g: string) => meseBreve.format(new Date(`${g}T12:00:00Z`)).replace(".", "");

@@ -1,10 +1,10 @@
 // Criticità delle campagne di un cliente su Meta e su LinkedIn (scelte dal titolare il 2026-10-20):
 // costo per lead troppo alto, spesa senza risultati, segnali della piattaforma (account non attivo, annunci con
 // problemi, campagne attive ma ferme, frequenza alta). Funzioni pure: le usano la dashboard del cliente e la Panoramica.
-import { formatValuta } from "../format";
+import { formatCosto, formatValuta } from "../format";
 import { STATI_ACCOUNT, type DatiMeta } from "../meta/normalize";
 import type { LeadRow } from "./dashboard";
-import { kpiIncrocio, kpiMeta, perIdCampagna, type OpzioniIncrocio } from "./meta";
+import { kpiMeta, perIdCampagna, type OpzioniIncrocio } from "./meta";
 
 export type Criticita = {
   livello: "errore" | "attenzione";
@@ -48,6 +48,7 @@ export function calcolaCriticita({
   unita?: Unita;
 } & OpzioniIncrocio): Criticita[] {
   const fmt = (n: number) => formatValuta(n, valuta);
+  const costo = (n: number) => formatCosto(n, valuta);
   const elenco: Criticita[] = [];
 
   // Account pubblicitario non attivo: le inserzioni non escono
@@ -61,30 +62,28 @@ export function calcolaCriticita({
     }
   }
 
-  // Costo per lead (spesa / lead arrivati in GHL dal canale della piattaforma)
-  const periodo = new Set(giorni);
-  const precedente = new Set(giorniPrec);
-  const ora = kpiIncrocio(kpiMeta(meta.righe, periodo).spesa, lead, [], periodo, canale);
-  if (obiettivoCpl && ora.cplReale !== null && ora.cplReale > obiettivoCpl) {
+  // Costo per lead (spesa / lead registrati dalla piattaforma, come nella sezione della dashboard)
+  const ora = kpiMeta(meta.righe, new Set(giorni));
+  if (obiettivoCpl && ora.cplMeta !== null && ora.cplMeta > obiettivoCpl) {
     elenco.push({
       livello: "attenzione",
       tipo: "cpl-alto",
-      testo: `Costo per lead ${fmt(ora.cplReale)}: sopra l'obiettivo di ${fmt(obiettivoCpl)}.`,
+      testo: `Costo per lead ${costo(ora.cplMeta)}: sopra l'obiettivo di ${costo(obiettivoCpl)}.`,
     });
   } else if (!obiettivoCpl) {
-    const prima = kpiIncrocio(kpiMeta(meta.righe, precedente).spesa, lead, [], precedente, canale);
+    const prima = kpiMeta(meta.righe, new Set(giorniPrec));
     if (
-      ora.cplReale !== null &&
-      prima.cplReale !== null &&
-      ora.leadGhl >= MINIMO_LEAD_CONFRONTO &&
-      prima.leadGhl >= MINIMO_LEAD_CONFRONTO &&
-      ora.cplReale > prima.cplReale * (1 + PEGGIORAMENTO_CPL)
+      ora.cplMeta !== null &&
+      prima.cplMeta !== null &&
+      ora.leadMeta >= MINIMO_LEAD_CONFRONTO &&
+      prima.leadMeta >= MINIMO_LEAD_CONFRONTO &&
+      ora.cplMeta > prima.cplMeta * (1 + PEGGIORAMENTO_CPL)
     ) {
-      const pct = Math.round((ora.cplReale / prima.cplReale - 1) * 100);
+      const pct = Math.round((ora.cplMeta / prima.cplMeta - 1) * 100);
       elenco.push({
         livello: "attenzione",
         tipo: "cpl-alto",
-        testo: `Costo per lead ${fmt(ora.cplReale)}: peggiorato del ${pct}% rispetto al periodo precedente (${fmt(prima.cplReale)}).`,
+        testo: `Costo per lead ${costo(ora.cplMeta)}: peggiorato del ${pct}% rispetto al periodo precedente (${costo(prima.cplMeta)}).`,
       });
     }
   }

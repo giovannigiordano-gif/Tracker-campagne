@@ -1,5 +1,5 @@
 // Test delle tabelle da scaricare del cliente (dati di fantasia): stessi numeri della dashboard, fogli giusti,
-// criticità solo per l'agenzia, nessun lead "secondo Meta"
+// criticità solo per l'agenzia, lead e costo per lead di Meta come nella sezione della pagina
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { DatiCliente } from "../data/cliente";
@@ -78,19 +78,21 @@ test("numeri del CRM: periodo attuale e precedente come nella dashboard", () => 
   assert.equal(precedente[col("Lead")], 1);
 });
 
-test("Meta: spesa, lead del CRM e costo per lead; nessun lead contato da Meta", () => {
+test("Meta: spesa, lead e costo per lead come li registra Meta, opportunità e vendite dal CRM", () => {
   const d = dati();
   const tabelle = tabelleAds("meta", d.meta, d, "EUR", true);
   assert.deepEqual(tabelle.map((t) => t.nome), ["Meta - riepilogo", "Meta - andamento", "Meta - campagne", "Meta - account", "Meta - criticità"]);
   const r = tabelle[0];
   const col = (inizio: string) => r.colonne.findIndex((c) => c.titolo.startsWith(inizio));
   assert.equal(r.righe[0][col("Spesa")], 150);
-  assert.equal(r.righe[0][col("Lead da Meta Ads nel CRM")], 2);
-  assert.equal(r.righe[0][col("Costo per lead")], 75);
-  // 7 lead al giorno "secondo Meta" (21) non devono comparire da nessuna parte
-  const tutto = JSON.stringify(tabelle);
-  assert.ok(!/secondo Meta|leadMeta/i.test(tutto));
-  assert.ok(!tabelle.some((t) => t.righe.some((riga) => riga.includes(21))), "trovati i lead contati da Meta");
+  // 7 lead al giorno per 3 giorni secondo Meta, 150 € di spesa
+  assert.equal(r.righe[0][col("Lead (Meta)")], 21);
+  assert.equal(r.righe[0][col("Costo per lead")], 150 / 21);
+  assert.equal(r.righe[0][col("Vendite")], 1);
+  const andamento = tabelle[1];
+  assert.deepEqual(andamento.righe[0], ["2026-10-01", 50, 7]);
+  const campagne = tabelle[2];
+  assert.equal(campagne.righe[0][campagne.colonne.findIndex((c) => c.titolo === "Lead (Meta)")], 21);
   // Frequenza 4 > 3: criticità presente per l'agenzia
   assert.ok(tabelle[4].righe.some((riga) => String(riga[1]).includes("Frequenza")));
 });
@@ -143,7 +145,7 @@ test("Panoramica: una riga per cliente, celle vuote se mancano i dati", () => {
       leadGiornalieri: [],
       canali: [],
       avvisi: [{ livello: "attenzione", testo: "Lead in calo" }],
-      meta: { spesa: 400, spesaPrec: 300, cplReale: 100, cplRealePrec: 100 },
+      meta: { spesa: 400, spesaPrec: 300, lead: 4, costoPerLead: 100, costoPerLeadPrec: 100 },
       linkedin: null,
       problemaToken: false,
       aggiornatoIl: null,

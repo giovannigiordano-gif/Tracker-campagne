@@ -1,8 +1,9 @@
 "use client";
 // Sezioni "Campagne Meta" e "Campagne LinkedIn" della dashboard cliente: criticità, numeri chiave, andamento e
 // tabella per campagna. Stesso pannello per le due piattaforme (lib/metrics/piattaforme.ts).
-// Fonti: la piattaforma (spesa, impression, clic) e GoHighLevel (lead, opportunità e vendite arrivati dal canale
-// della piattaforma, abbinati alle campagne). Non dipende dai filtri della pagina.
+// Fonti (scelta del titolare del 2026-11-05): la piattaforma per spesa, impression, clic, lead e costo per lead;
+// GoHighLevel per opportunità e vendite arrivate dal canale della piattaforma, abbinate alle campagne.
+// Non dipende dai filtri della pagina.
 import { useMemo } from "react";
 import Link from "next/link";
 import { AlertTriangle, CircleAlert } from "lucide-react";
@@ -10,7 +11,7 @@ import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Too
 import { createColumnHelper } from "@tanstack/react-table";
 import { buttonVariants } from "@/components/ui/button";
 import type { DatiCliente } from "@/lib/data/cliente";
-import { formatGiornoBreve, formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
+import { formatCosto, formatGiornoBreve, formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
 import { calcolaCriticita } from "@/lib/metrics/criticita";
 import { variazionePct } from "@/lib/metrics/dashboard";
 import { kpiIncrocio, kpiMeta, righeCampagne, serieGiornaliera, SENZA_CAMPAGNA_META, type RigaCampagna } from "@/lib/metrics/meta";
@@ -72,6 +73,7 @@ export function PannelloAds({
   const { periodo, lead, opp, obiettivoCpl } = dati;
   const valuta = dati.cliente.valuta;
   const fmt = (n: number | null) => (n === null ? "n.d." : formatValuta(n, valuta));
+  const costo = (n: number | null) => (n === null ? "n.d." : formatCosto(n, valuta));
 
   const calcoli = useMemo(() => {
     if (esito.stato !== "ok") return null;
@@ -83,10 +85,10 @@ export function PannelloAds({
     return {
       km,
       kmPrec,
-      inc: kpiIncrocio(km.spesa, lead, opp, g, opz.canale),
-      incPrec: kpiIncrocio(kmPrec.spesa, lead, opp, gp, opz.canale),
-      campagne: righeCampagne(esito.dati, lead, opp, g, opz),
-      serie: serieGiornaliera(esito.dati.righe, lead, periodo.giorni, opz.canale),
+      inc: kpiIncrocio(km.spesa, opp, g, opz.canale),
+      incPrec: kpiIncrocio(kmPrec.spesa, opp, gp, opz.canale),
+      campagne: righeCampagne(esito.dati, opp, g, opz),
+      serie: serieGiornaliera(esito.dati.righe, periodo.giorni),
       criticita: calcolaCriticita({
         meta: esito.dati,
         lead,
@@ -103,6 +105,7 @@ export function PannelloAds({
     const h = createColumnHelper<typeof funzioniTabella, RigaCampagna>();
     const num = (f: (r: RigaCampagna) => number | null) => (r: RigaCampagna) => f(r) ?? -1;
     const soldi = (v: number | null) => (v === null || v < 0 ? "n.d." : formatValuta(v, valuta));
+    const costoUnitario = (v: number | null) => (v === null || v < 0 ? "n.d." : formatCosto(v, valuta));
     return h.columns([
       h.accessor("nome", {
         header: p.tabella.colonna,
@@ -115,17 +118,17 @@ export function PannelloAds({
         ),
       }),
       h.accessor("spesa", { header: "Spesa", sortFn: "basic", meta: { numerica: true }, cell: (i) => <span className="font-semibold">{soldi(i.getValue())}</span> }),
-      h.accessor("leadGhl", { header: "Lead", sortFn: "basic", meta: { numerica: true }, cell: (i) => <span className="font-semibold">{formatNumero(i.getValue())}</span> }),
-      h.accessor(num((r) => r.cplReale), { id: "cpl", header: "Costo per lead", sortFn: "basic", meta: { numerica: true }, cell: (i) => soldi(i.row.original.cplReale) }),
+      h.accessor("leadMeta", { header: "Lead", sortFn: "basic", meta: { numerica: true }, cell: (i) => <span className="font-semibold">{formatNumero(i.getValue())}</span> }),
+      h.accessor(num((r) => r.cplMeta), { id: "cpl", header: "Costo per lead", sortFn: "basic", meta: { numerica: true }, cell: (i) => costoUnitario(i.row.original.cplMeta) }),
       h.accessor("opportunita", { header: "Opportunità", sortFn: "basic", meta: { numerica: true }, cell: (i) => formatNumero(i.getValue()) }),
       h.accessor("vinte", { header: "Vendite", sortFn: "basic", meta: { numerica: true }, cell: (i) => formatNumero(i.getValue()) }),
       h.accessor(num((r) => r.roas), { id: "roas", header: "ROAS CRM", sortFn: "basic", meta: { numerica: true }, cell: (i) => (i.row.original.roas === null ? "n.d." : `${i.row.original.roas.toFixed(1).replace(".", ",")}x`) }),
       h.accessor(num((r) => r.ctr), { id: "ctr", header: "CTR", sortFn: "basic", meta: { numerica: true }, cell: (i) => formatPercentuale(i.row.original.ctr) }),
-      h.accessor(num((r) => r.cpc), { id: "cpc", header: "Costo per clic", sortFn: "basic", meta: { numerica: true }, cell: (i) => soldi(i.row.original.cpc) }),
+      h.accessor(num((r) => r.cpc), { id: "cpc", header: "Costo per clic", sortFn: "basic", meta: { numerica: true }, cell: (i) => costoUnitario(i.row.original.cpc) }),
     ]) as Colonna<RigaCampagna>[];
   }, [valuta, p]);
 
-  const descrizione = `Spesa e risultati da ${p.nome}, incrociati con i lead, le opportunità e le vendite arrivati in GHL dal canale ${p.canale}. Non dipende dai filtri della pagina.`;
+  const descrizione = `Spesa, lead e costo per lead come li registra ${p.nome}; opportunità e vendite arrivate in GHL dal canale ${p.canale}. Non dipende dai filtri della pagina.`;
   const fonteIncrocio = `${p.nome} + GHL`;
 
   // ---------------------------------------------------------------- stati senza dati
@@ -171,7 +174,7 @@ export function PannelloAds({
   const info = () =>
     righeInfo(
       dati,
-      `${p.nome} (spesa, impression, clic${p.giorniUtc ? "; giorni in UTC" : ""}) e GoHighLevel (lead, opportunità e vendite dal canale ${p.canale})`,
+      `${p.nome} (spesa, impression, clic, lead${p.giorniUtc ? "; giorni in UTC" : ""}) e GoHighLevel (opportunità e vendite dal canale ${p.canale})`,
       "nessuno: questa sezione non dipende dai filtri della pagina"
     );
 
@@ -214,10 +217,10 @@ export function PannelloAds({
       {/* Numeri in una griglia divisa da fili sottili, come i riepiloghi delle app Apple (niente schede dentro la scheda) */}
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-block bg-border ring-1 ring-border md:grid-cols-3">
         <Numero etichetta="Spesa" fonte={p.nome} valore={fmt(km.spesa)} delta={d(km.spesa, kmPrec.spesa)} neutra />
-        <Numero etichetta={`Lead da ${p.nome}`} fonte="GHL" valore={formatNumero(inc.leadGhl)} delta={d(inc.leadGhl, incPrec.leadGhl)} />
-        <Numero etichetta="Costo per lead" fonte={fonteIncrocio} valore={fmt(inc.cplReale)} delta={d(inc.cplReale, incPrec.cplReale)} inversa />
+        <Numero etichetta="Lead" fonte={p.nome} valore={formatNumero(km.leadMeta)} delta={d(km.leadMeta, kmPrec.leadMeta)} />
+        <Numero etichetta="Costo per lead" fonte={p.nome} valore={costo(km.cplMeta)} delta={d(km.cplMeta, kmPrec.cplMeta)} inversa />
         <Numero etichetta={`Opportunità da ${p.nome}`} fonte="GHL" valore={formatNumero(inc.opportunita)} delta={d(inc.opportunita, incPrec.opportunita)} />
-        <Numero etichetta="Costo per vendita" fonte={fonteIncrocio} valore={fmt(inc.costoVendita)} delta={d(inc.costoVendita, incPrec.costoVendita)} inversa />
+        <Numero etichetta="Costo per vendita" fonte={fonteIncrocio} valore={costo(inc.costoVendita)} delta={d(inc.costoVendita, incPrec.costoVendita)} inversa />
         <Numero
           etichetta="ROAS dal CRM"
           fonte={fonteIncrocio}
@@ -254,8 +257,8 @@ export function PannelloAds({
           </div>
         </figure>
         <figure className="flex flex-col gap-2">
-          <figcaption className="text-label text-titolo">Lead al giorno da {p.nome}</figcaption>
-          <div className="h-48" role="img" aria-label={`Lead al giorno arrivati in GHL dal canale ${p.canale}: ${inc.leadGhl} nel periodo`}>
+          <figcaption className="text-label text-titolo">Lead al giorno su {p.nome}</figcaption>
+          <div className="h-48" role="img" aria-label={`Lead al giorno registrati da ${p.nome}: ${km.leadMeta} nel periodo`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={serie} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                 <CartesianGrid vertical={false} stroke="var(--viz-griglia)" />
@@ -268,12 +271,12 @@ export function PannelloAds({
                     if (!active || !punto) return null;
                     return (
                       <div className="hud px-3 py-2 text-xs">
-                        {formatGiornoBreve(punto.giorno)}: <span className="font-semibold">{punto.leadGhl} lead</span>
+                        {formatGiornoBreve(punto.giorno)}: <span className="font-semibold">{punto.leadMeta} lead</span>
                       </div>
                     );
                   }}
                 />
-                <Line type="monotone" dataKey="leadGhl" stroke="var(--viz-attuale)" strokeWidth={2} dot={false} isAnimationActive={!riduci} animationDuration={300} />
+                <Line type="monotone" dataKey="leadMeta" stroke="var(--viz-attuale)" strokeWidth={2} dot={false} isAnimationActive={!riduci} animationDuration={300} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -302,10 +305,10 @@ export function PannelloAds({
       </section>
 
       <Fonte aggiornatoIl={esito.stato === "ok" ? esito.dati.aggiornatoIl : null}>
-        Fonte {p.nome} (spesa, impression, clic; {p.giorniUtc ? "giorni in UTC" : "giorni nel fuso dell'account pubblicitario"}) e GoHighLevel
-        (lead, opportunità e vendite con canale {p.canale}, abbinati {p.perNome ? "ai gruppi di annunci per ID o nome in utm_campaign" : "alle campagne per ID"}).
+        Fonte {p.nome} (spesa, impression, clic e lead: {p.lead}; {p.giorniUtc ? "giorni in UTC" : "giorni nel fuso dell'account pubblicitario"}) e GoHighLevel
+        (opportunità e vendite con canale {p.canale}, abbinate {p.perNome ? "ai gruppi di annunci per ID o nome in utm_campaign" : "alle campagne per ID"}).
         {p.perNome && " In Campaign Manager le righe sono i «gruppi di annunci» (l'API di LinkedIn li chiama ancora campagne)."}
-        Periodo {formatGiornoBreve(periodo.daGiorno)} - {formatGiornoBreve(periodo.aGiorno)}.
+        {" "}Periodo {formatGiornoBreve(periodo.daGiorno)} - {formatGiornoBreve(periodo.aGiorno)}.
         {errori.length > 0 && modo === "agenzia" && ` Account non letti: ${errori.join("; ")}.`}
       </Fonte>
     </Riquadro>

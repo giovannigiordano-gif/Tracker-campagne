@@ -86,20 +86,24 @@ test("il riepilogo ha i numeri di GHL, di Meta e l'incrocio, con fonte e periodo
   assert.equal(r.ghl.numeri.attuale.venduto, 1000);
   assert.equal(r.ghl.percentualeAttribuiti, 66.67);
   assert.ok(r.ghl.fonte.includes("GoHighLevel"));
-  const meta = r.meta as { stato: string; numeri: { attuale: { spesa: number } }; incrocio: { attuale: { lead: number; costoPerLead: number; roas: number } } };
+  const meta = r.meta as { stato: string; numeri: { attuale: { spesa: number; lead: number; costoPerLead: number } }; incrocio: { attuale: { opportunita: number; roas: number } } };
   assert.equal(meta.stato, "ok");
   assert.equal(meta.numeri.attuale.spesa, 150);
-  assert.equal(meta.incrocio.attuale.lead, 2);
-  assert.equal(meta.incrocio.attuale.costoPerLead, 75);
+  // Lead e costo per lead come li registra Meta: 1 lead al giorno per 3 giorni, 150 € di spesa
+  assert.equal(meta.numeri.attuale.lead, 3);
+  assert.equal(meta.numeri.attuale.costoPerLead, 50);
+  // Opportunità e ROAS dal CRM
+  assert.equal(meta.incrocio.attuale.opportunita, 2);
   assert.equal(meta.incrocio.attuale.roas, 6.67);
   assert.equal(r.cliente.obiettivoCostoPerLead, 40);
 });
 
-test("a Claude arrivano solo i lead del CRM: niente lead contati da Meta né costo per lead di Meta", () => {
+test("lead della piattaforma e contatti del CRM restano separati, con nomi chiari", () => {
   const json = JSON.stringify(riepilogoCliente(dati(), { notes: "", thresholds: {} }));
-  assert.ok(!/"(leadMeta|cplMeta|leadGhl|cplReale)"/.test(json), "trovato un campo con i lead di Meta o il vecchio nome");
+  assert.ok(!/"(leadMeta|cplMeta|leadGhl|cplReale)"/.test(json), "trovato un campo con un vecchio nome interno");
   const r = riepilogoCliente(dati(), { notes: "", thresholds: {} });
   assert.equal(r.ghl.numeri.attuale.leadDaMetaAds, 2);
+  assert.ok(r.definizioni.leadPiattaforma.includes("non sommarle"));
 });
 
 test("senza account Meta il riepilogo lo dice invece di inventare numeri", () => {
@@ -108,15 +112,15 @@ test("senza account Meta il riepilogo lo dice invece di inventare numeri", () =>
   assert.equal((r.linkedin as { stato: string }).stato, "non-associato");
 });
 
-test("LinkedIn: spesa incrociata solo con i lead del canale LinkedIn Ads, abbinati anche per nome", () => {
+test("LinkedIn: lead dei moduli LinkedIn, opportunità del canale LinkedIn Ads abbinate anche per nome", () => {
   const d = dati();
-  const leadLinkedIn = (giorno: string, campagna: string | null): LeadRow => ({
-    ...lead(giorno, null),
+  const oppLinkedIn = (giorno: string, campagna: string | null): OppRow => ({
+    ...opp(giorno, "open", 0),
     canale: "LinkedIn Ads",
+    campagnaId: null,
     campagna,
-    attribuito: !!campagna,
   });
-  d.lead.push(leadLinkedIn("2026-10-01", "Campagna LinkedIn B2B"), leadLinkedIn("2026-10-02", "campagna linkedin b2b"), leadLinkedIn("2026-10-03", null));
+  d.opp.push(oppLinkedIn("2026-10-01", "Campagna LinkedIn B2B"), oppLinkedIn("2026-10-02", "campagna linkedin b2b"), oppLinkedIn("2026-10-03", null));
   d.linkedin = {
     stato: "ok",
     dati: {
@@ -135,8 +139,9 @@ test("LinkedIn: spesa incrociata solo con i lead del canale LinkedIn Ads, abbina
     stato: string;
     fonte: string;
     account: { stato: string }[];
-    incrocio: { attuale: { lead: number; costoPerLead: number } };
-    campagne: { id: string | null; lead: number }[];
+    numeri: { attuale: { lead: number; costoPerLead: number } };
+    incrocio: { attuale: { opportunita: number } };
+    campagne: { id: string | null; lead: number; opportunita: number }[];
     criticita: { tipo: string; testo: string }[];
   };
   // Nei testi le righe LinkedIn sono "gruppi di annunci", come in Campaign Manager
@@ -147,14 +152,16 @@ test("LinkedIn: spesa incrociata solo con i lead del canale LinkedIn Ads, abbina
   assert.equal(li.stato, "ok");
   assert.ok(li.fonte.includes("LinkedIn"));
   assert.equal(li.account[0].stato, "In pausa");
-  // 3 lead LinkedIn Ads nel CRM (i lead Meta non contano), 300 di spesa
-  assert.equal(li.incrocio.attuale.lead, 3);
-  assert.equal(li.incrocio.attuale.costoPerLead, 100);
-  // Due abbinati alla campagna per nome (maiuscole diverse), uno senza campagna
-  assert.equal(li.campagne.find((c) => c.id === "900200")?.lead, 2);
-  assert.equal(li.campagne.find((c) => c.id === null)?.lead, 1);
-  // Meta resta com'era: i lead LinkedIn non entrano nel suo costo per lead
-  assert.equal((r.meta as { incrocio: { attuale: { lead: number } } }).incrocio.attuale.lead, 2);
+  // 2 lead dei moduli LinkedIn al giorno per 3 giorni, 300 € di spesa
+  assert.equal(li.numeri.attuale.lead, 6);
+  assert.equal(li.numeri.attuale.costoPerLead, 50);
+  // Opportunità LinkedIn Ads del CRM: due abbinate al gruppo di annunci per nome (maiuscole diverse), una senza
+  assert.equal(li.incrocio.attuale.opportunita, 3);
+  assert.equal(li.campagne.find((c) => c.id === "900200")?.opportunita, 2);
+  assert.equal(li.campagne.find((c) => c.id === "900200")?.lead, 6);
+  assert.equal(li.campagne.find((c) => c.id === null)?.opportunita, 1);
+  // Meta resta com'era: le opportunità LinkedIn non entrano nei suoi numeri
+  assert.equal((r.meta as { incrocio: { attuale: { opportunita: number } } }).incrocio.attuale.opportunita, 2);
   const json = JSON.stringify(r.linkedin);
-  assert.ok(!/"(leadMeta|cplMeta|leadGhl|cplReale)"/.test(json), "trovato un campo con i lead della piattaforma");
+  assert.ok(!/"(leadMeta|cplMeta|leadGhl|cplReale)"/.test(json), "trovato un campo con un vecchio nome interno");
 });

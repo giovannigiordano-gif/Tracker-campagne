@@ -6,7 +6,7 @@ import Link from "next/link";
 import { AlertTriangle, ChevronRight, CircleAlert } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import type { NumeriAds, RigaPanoramica } from "@/lib/data/panoramica";
-import { formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
+import { formatCosto, formatNumero, formatPercentuale, formatValuta } from "@/lib/format";
 import { variazionePct } from "@/lib/metrics/dashboard";
 import { cn } from "@/lib/utils";
 import { Delta } from "./ui";
@@ -83,10 +83,10 @@ export function StrisciaCliente({ riga, confronto, query, indice }: { riga: Riga
     pct === undefined ? undefined : <Delta pct={pct} {...opz} />;
   const soldi = (n: number) => formatValuta(n, valuta, n >= 10_000);
 
-  // Piattaforme pubblicitarie con account associati, con i lead arrivati nel CRM dal loro canale
+  // Piattaforme pubblicitarie con account associati, con i lead registrati dalla piattaforma
   const ads = PIATTAFORME.flatMap((p) => {
     const n: NumeriAds | null = riga[p.chiave];
-    return n ? [{ ...p, n, lead: riga.canali.find((c) => c.canale === p.canale)?.lead ?? 0 }] : [];
+    return n ? [{ ...p, n, lead: n.lead }] : [];
   });
   const spesa = ads.reduce((s, a) => s + a.n.spesa, 0);
   const spesaPrec = ads.reduce((s, a) => s + a.n.spesaPrec, 0);
@@ -151,13 +151,13 @@ export function StrisciaCliente({ riga, confronto, query, indice }: { riga: Riga
             >
               {ads.length === 0 ? <span className="text-muted-foreground">-</span> : soldi(spesa)}
             </Cella>
-            {/* Costo per lead: spesa della piattaforma / lead arrivati nel CRM dal suo canale */}
+            {/* Costo per lead: spesa della piattaforma / lead registrati dalla piattaforma */}
             {ads.length === 2 ? (
               <div className="flex min-w-0 flex-col gap-0.5 xl:items-end xl:text-right">
                 <span className="text-caption text-muted-foreground xl:sr-only">Costo per lead</span>
                 {ads.map((a) => (
                   <span key={a.nome} className="truncate text-label text-titolo tabular-nums">
-                    <span className="font-medium text-muted-foreground">{a.nome}</span> {a.n.cplReale === null ? "n.d." : soldi(a.n.cplReale)}
+                    <span className="font-medium text-muted-foreground">{a.nome}</span> {a.n.costoPerLead === null ? "n.d." : formatCosto(a.n.costoPerLead, valuta)}
                   </span>
                 ))}
               </div>
@@ -166,12 +166,12 @@ export function StrisciaCliente({ riga, confronto, query, indice }: { riga: Riga
                 etichetta="Costo per lead"
                 sotto={
                   ads[0]
-                    ? (delta(d(ads[0].n.cplReale, ads[0].n.cplRealePrec), { inversa: true }) ??
+                    ? (delta(d(ads[0].n.costoPerLead, ads[0].n.costoPerLeadPrec), { inversa: true }) ??
                       `${ads[0].nome}, ${ads[0].lead === 1 ? "1 lead" : `${formatNumero(ads[0].lead)} lead`}`)
                     : undefined
                 }
               >
-                {!ads[0] ? <span className="text-muted-foreground">-</span> : ads[0].n.cplReale === null ? "n.d." : soldi(ads[0].n.cplReale)}
+                {!ads[0] ? <span className="text-muted-foreground">-</span> : ads[0].n.costoPerLead === null ? "n.d." : formatCosto(ads[0].n.costoPerLead, valuta)}
               </Cella>
             )}
           </div>

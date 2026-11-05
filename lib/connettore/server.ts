@@ -17,7 +17,7 @@ Come usarlo:
 - "panoramica_clienti" per un confronto veloce tra clienti, con avvisi e criticità.
 - "analisi_cliente" per tutti i numeri di un cliente: GHL, campagne Meta e LinkedIn, incrocio con il CRM, criticità.
 - "salva_analisi" per salvare nell'app un'analisi completa: il titolare la ritrova nella dashboard del cliente.
-Regole: cita sempre la fonte (GHL, Meta o LinkedIn) e il periodo dei numeri; i lead si contano solo nel CRM (GHL): non confrontarli con i lead conteggiati da Meta o LinkedIn e non parlare di discrepanze tra le cifre; non inventare dati che non ci sono; questa app non può modificare, mettere in pausa o creare campagne: le azioni consigliate le farà il titolare. Rispondi in italiano.`;
+Regole: cita sempre la fonte (GHL, Meta o LinkedIn) e il periodo dei numeri; nelle sezioni meta e linkedin lead e costo per lead sono quelli registrati dalla piattaforma, in ghl i lead sono i contatti creati nel CRM: sono misure diverse, non sommarle e non costruire l'analisi sulla differenza tra le due cifre; non inventare dati che non ci sono; questa app non può modificare, mettere in pausa o creare campagne: le azioni consigliate le farà il titolare. Rispondi in italiano.`;
 
 const SCHEMA_PERIODO = {
   giorni: z.enum(["7", "30", "90"]).optional().describe("Ultimi 7, 30 o 90 giorni (predefinito 30). Ignorato se ci sono da e a."),
@@ -60,15 +60,16 @@ async function protetto(fn: () => Promise<ReturnType<typeof testo>>) {
   }
 }
 
-// Spesa e costo per lead di una piattaforma nella panoramica (null: nessun account associato)
+// Spesa, lead e costo per lead di una piattaforma nella panoramica, come li registra la piattaforma (null: nessun account associato)
 const due = (n: number) => Math.round(n * 100) / 100;
 function numeriAds(n: NumeriAds | null) {
   return (
     n && {
       spesa: due(n.spesa),
       spesaPrecedente: due(n.spesaPrec),
-      costoPerLead: n.cplReale === null ? null : due(n.cplReale),
-      costoPerLeadPrecedente: n.cplRealePrec === null ? null : due(n.cplRealePrec),
+      lead: n.lead,
+      costoPerLead: n.costoPerLead === null ? null : due(n.costoPerLead),
+      costoPerLeadPrecedente: n.costoPerLeadPrec === null ? null : due(n.costoPerLeadPrec),
     }
   );
 }
@@ -108,7 +109,7 @@ export function creaServerMcp() {
     {
       title: "Panoramica clienti",
       description:
-        "Numeri chiave di tutti i clienti attivi nel periodo, con il periodo precedente per confronto: lead, opportunità, vinte, venduto (GHL), spesa e costo per lead di Meta e LinkedIn (spesa della piattaforma / lead nel CRM), avvisi e criticità.",
+        "Numeri chiave di tutti i clienti attivi nel periodo, con il periodo precedente per confronto: lead, opportunità, vinte, venduto (GHL), spesa, lead e costo per lead di Meta e LinkedIn (come li registra la piattaforma), avvisi e criticità.",
       inputSchema: SCHEMA_PERIODO,
       annotations: { title: "Panoramica clienti", ...SOLA_LETTURA },
     },
@@ -229,7 +230,7 @@ export function creaServerMcp() {
             text: `Analizza le campagne del cliente "${cliente}" negli ultimi ${giorni && ["7", "30", "90"].includes(giorni) ? giorni : "30"} giorni.
 1. Leggi i dati con analisi_cliente (e, se ci sono, l'ultima analisi con analisi_salvate per vedere cosa è cambiato).
 2. Scrivi un report in italiano con queste sezioni: Sintesi; Cosa funziona; Cosa non funziona; Azioni consigliate (da 3 a 5, in ordine di priorità).
-3. I lead sono quelli arrivati nel CRM (GHL): non confrontarli con i lead conteggiati da Meta o LinkedIn. Per ogni numero indica la fonte (GHL, Meta o LinkedIn) e il confronto con il periodo precedente quando è utile. Tieni conto delle note di contesto e del costo per lead obiettivo del cliente. Non inventare dati mancanti: dillo.
+3. Per le campagne usa lead e costo per lead della piattaforma (sezioni meta e linkedin); per il resto i contatti del CRM (GHL). Sono misure diverse: non sommarle. Per ogni numero indica la fonte (GHL, Meta o LinkedIn) e il confronto con il periodo precedente quando è utile. Tieni conto delle note di contesto e del costo per lead obiettivo del cliente. Non inventare dati mancanti: dillo.
 4. Le azioni le farà il titolare: l'app è in sola lettura.
 5. Alla fine salva il report con salva_analisi.`,
           },
